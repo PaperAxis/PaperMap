@@ -45,7 +45,6 @@ export default function MapView() {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const appliedThemeRef = useRef(null);
-  const socketRef = useRef(null);
   const peerMarkersRef = useRef({});
   const ownMarkerRef = useRef(null);
   const geofencesRef = useRef([]);
@@ -164,7 +163,6 @@ export default function MapView() {
   // Socket baglantisi
   useEffect(() => {
     const socket = createSocket(getToken());
-    socketRef.current = socket;
     socket.on('peers:snapshot', (list) => {
       setPeers(Object.fromEntries(list.map((p) => [p.userId, p])));
     });
@@ -188,7 +186,8 @@ export default function MapView() {
       (pos) => {
         setGeoError('');
         setMyPos(pos);
-        socketRef.current?.emit('location:update', pos);
+        // Konum HTTP ile gonderilir — arka planda da calisir
+        api('/api/location', { method: 'POST', body: pos }).catch(() => {});
       },
       (err) => {
         setGeoError(

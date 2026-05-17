@@ -269,15 +269,16 @@ Web kodu her değiştiğinde: `npm run build && npm run cap:sync`.
 node scripts/patch-manifest.mjs
 ```
 
-Bu, `web/android/app/src/main/AndroidManifest.xml` dosyasına
-`ACCESS_COARSE_LOCATION` ve `ACCESS_FINE_LOCATION` izinlerini ekler.
+Bu, `web/android/app/src/main/AndroidManifest.xml` dosyasına konum
+(ön plan + arka plan) ve bildirim izinlerini ekler.
 
 Ayrıca backend `https` değil `http` ise (yerel geliştirme), `<application>`
 etiketine `android:usesCleartextTraffic="true"` ekleyin. Üretimde backend'i
 HTTPS arkasına almanız önerilir.
 
-> **Not (MVP sınırı):** Konum yalnızca uygulama açıkken (foreground) güncellenir.
-> Arka planda konum takibi bu sürümün kapsamı dışındadır.
+> **Arka plan konumu:** APK'da uygulama arka plandayken/kapalıyken de konum
+> güncellenir (`@capacitor-community/background-geolocation`); Android kalıcı
+> bir bildirim gösterir. Tarayıcıda konum yalnızca sayfa açıkken güncellenir.
 
 ## Ortam Değişkenleri
 

@@ -2,9 +2,16 @@ import { Router } from 'express';
 import { prisma } from '../prisma.js';
 import { requireAuth } from '../middleware/auth.js';
 import { publicUser } from '../auth.js';
-import { broadcastSharingChange } from '../socket.js';
+import { broadcastSharingChange, handleLocationUpdate } from '../socket.js';
 
 const router = Router();
+
+// Konum guncellemesi (arka plan / HTTP — Socket.IO alternatifi)
+router.post('/', requireAuth, async (req, res) => {
+  const { lat, lng, accuracy } = req.body || {};
+  await handleLocationUpdate(req.userId, lat, lng, accuracy);
+  res.json({ ok: true });
+});
 
 // Konum paylasimini ac/kapat
 router.patch('/sharing', requireAuth, async (req, res) => {

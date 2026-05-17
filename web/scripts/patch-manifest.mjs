@@ -12,6 +12,10 @@ let xml = readFileSync(manifestUrl, 'utf8');
 const permissions = [
   '<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />',
   '<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />',
+  '<uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />',
+  '<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />',
+  '<uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />',
+  '<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />',
 ];
 
 let added = 0;
@@ -23,4 +27,4 @@ for (const perm of permissions) {
 }
 
 writeFileSync(manifestUrl, xml);
-console.log(`AndroidManifest.xml güncellendi: ${added} konum izni eklendi.`);
+console.log(`AndroidManifest.xml güncellendi: ${added} izin eklendi.`);

@@ -1,8 +1,61 @@
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Geolocation } from '@capacitor/geolocation';
 
-// Konum izleme. Capacitor Geolocation eklentisi mobilde native konumu,
-// tarayicida ise navigator.geolocation'i kullanir.
+// Native (APK) arka plan konum eklentisi — uygulama arka plandayken/kapaliyken
+// de konum bildirir. Web'de bu eklenti yoktur; tarayici API'sine dusulur.
+const BackgroundGeolocation = registerPlugin('BackgroundGeolocation');
+
+// Konum izleme. onUpdate({lat,lng,accuracy}) cagrilir. Durdurma fonksiyonu doner.
 export function watchPosition(onUpdate, onError) {
+  if (Capacitor.isNativePlatform()) {
+    return watchNative(onUpdate, onError);
+  }
+  return watchWeb(onUpdate, onError);
+}
+
+// --- Native: arka planda da calisir (kalici bildirim gosterir) ---
+function watchNative(onUpdate, onError) {
+  let watcherId = null;
+  let stopped = false;
+
+  BackgroundGeolocation.addWatcher(
+    {
+      backgroundTitle: 'PaperMap',
+      backgroundMessage: 'Konumun arka planda paylaşılıyor',
+      requestPermissions: true,
+      stale: false,
+      distanceFilter: 15,
+    },
+    (location, error) => {
+      if (error) {
+        onError?.(error);
+        return;
+      }
+      if (!location) return;
+      onUpdate({
+        lat: location.latitude,
+        lng: location.longitude,
+        accuracy: location.accuracy ?? null,
+      });
+    },
+  )
+    .then((id) => {
+      if (stopped) BackgroundGeolocation.removeWatcher({ id });
+      else watcherId = id;
+    })
+    .catch((err) => onError?.(err));
+
+  return () => {
+    stopped = true;
+    if (watcherId) {
+      BackgroundGeolocation.removeWatcher({ id: watcherId });
+      watcherId = null;
+    }
+  };
+}
+
+// --- Web: yalnizca uygulama acikken ---
+function watchWeb(onUpdate, onError) {
   let watchId = null;
   let cancelled = false;
 
@@ -11,7 +64,7 @@ export function watchPosition(onUpdate, onError) {
       try {
         await Geolocation.requestPermissions();
       } catch {
-        // Web'de requestPermissions desteklenmeyebilir; izleme yine de denenir.
+        /* web'de desteklenmeyebilir */
       }
       const id = await Geolocation.watchPosition(
         { enableHighAccuracy: true, timeout: 20000 },
@@ -28,11 +81,8 @@ export function watchPosition(onUpdate, onError) {
           });
         },
       );
-      if (cancelled) {
-        Geolocation.clearWatch({ id });
-      } else {
-        watchId = id;
-      }
+      if (cancelled) Geolocation.clearWatch({ id });
+      else watchId = id;
     } catch (err) {
       onError?.(err);
     }
