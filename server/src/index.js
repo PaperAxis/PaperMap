@@ -30,6 +30,19 @@ if (config.allowedOrigins.length === 0) {
 app.use(cors({ origin: (origin, cb) => cb(null, isAllowedOrigin(origin)) }));
 app.use(express.json({ limit: '1mb' }));
 
+// İstek loglama (saglik kontrolu haric — gurultuyu onler)
+app.use((req, res, next) => {
+  if (req.path === '/health') return next();
+  const start = Date.now();
+  res.on('finish', () => {
+    console.log(
+      `${new Date().toISOString()} ${req.method} ${req.originalUrl} ` +
+        `${res.statusCode} ${Date.now() - start}ms`,
+    );
+  });
+  next();
+});
+
 app.use('/uploads', express.static(config.uploadsDir));
 
 app.get('/health', (req, res) => res.json({ ok: true }));

@@ -54,8 +54,10 @@ git checkout claude/papermap-location-app-4bIAf
 cp .env.example .env
 #  .env icinde mutlaka degistir:
 #   POSTGRES_PASSWORD = guclu bir parola
-#   JWT_SECRET        = uzun rastgele bir deger  (or: openssl rand -hex 32)
+#   JWT_SECRET        = en az 32 karakter rastgele deger (openssl rand -hex 32)
+#                       — bos/varsayilan birakilirsa server acilista durur
 #   VITE_API_URL      = https://maps.paperaxis.com
+#   ALLOWED_ORIGINS   = https://maps.paperaxis.com  (CORS; bos = tum origin'ler)
 #   BIND_HOST         = 127.0.0.1   (reverse proxy ayni VDS'te ise)
 
 # 4) Turkiye harita verisini uret (tek seferlik; harita varsa atlanir)
@@ -72,6 +74,34 @@ docker compose down
 # Guncelleme (yeni kod sonrasi)
 git pull && docker compose up -d --build
 ```
+
+`server` ve `web` konteynerlerinde **healthcheck** vardır; `docker compose ps`
+çıktısında durumları `healthy` görünmelidir. `web`, `server` sağlıklı olana
+kadar başlamayı bekler.
+
+### Veritabanı yedekleme
+
+Tüm kullanıcı verisi `papermap_db` adlı Docker volume'unda tutulur. Düzenli
+yedek alın:
+
+```bash
+# Elle yedek (./backups dizinine sıkıştırılmış SQL dump)
+./scripts/backup-db.sh
+
+# Bir yedekten geri yükle (mevcut veriyi değiştirir — onay ister)
+./scripts/restore-db.sh backups/papermap-20260517-030000.sql.gz
+```
+
+Otomatik günlük yedek için cron'a ekleyin (yedekler 30 günden sonra silinir):
+
+```bash
+crontab -e
+# Her gece 03:00:
+0 3 * * * cd /opt/papermap && scripts/backup-db.sh >> backups/backup.log 2>&1
+```
+
+> Yedekleri ayrı bir makinede/depolamada da saklamanız önerilir — VDS
+> tamamen kaybolursa yerel yedekler de gider.
 
 ### Harita verisi (self-hosted)
 

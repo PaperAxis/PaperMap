@@ -26,6 +26,9 @@ server/uploads/
 # Harita tile verisi (VDS'te uretilir, repoya konmaz)
 tiles/
 
+# Veritabani yedekleri (VDS'te uretilir)
+backups/
+
 # FCM service account (gizli — asla commit'lenmemeli)
 fcm/
 
