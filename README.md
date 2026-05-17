@@ -146,6 +146,29 @@ server {
 > ekleyin, sonra **Proxy Host** oluşturun → Forward Hostname `papermap-web`,
 > Forward Port `80`, **Websockets Support: AÇIK**. Custom location gerekmez.
 
+## Push Bildirimleri (FCM — uygulama kapalıyken)
+
+Alan giriş/çıkış bildirimleri, uygulama açık/arka plandayken Socket.IO ile gelir.
+Uygulama **tamamen kapalıyken** de bildirim gelmesi için Firebase Cloud Messaging
+(FCM) gerekir. FCM yapılandırılmazsa uygulama sorunsuz çalışır, yalnızca
+kapalı-uygulama push'u devre dışı kalır.
+
+**Sunucu tarafı kurulumu:**
+
+1. [Firebase Console](https://console.firebase.google.com) → yeni proje.
+2. **Proje ayarları → Servis hesapları → Yeni özel anahtar üret** → JSON iner.
+3. Bu JSON'u VDS'te `/opt/papermap/fcm/service-account.json` olarak kaydedin:
+   ```bash
+   mkdir -p /opt/papermap/fcm
+   # service-account.json dosyasini bu klasore koyun
+   docker compose restart server
+   ```
+   `server` logunda `FCM push etkin.` görünmelidir. (`fcm/` klasörü `.gitignore`'dadır.)
+
+**Mobil (APK) tarafı:** APK'nın push alabilmesi için Firebase'e bir Android
+uygulaması (`com.papermap.app`) ekleyip `google-services.json` indirmeniz ve
+APK'yı buna göre yeniden derlemeniz gerekir — bu adım ileride eklenecektir.
+
 ## Geliştirme (Docker'sız)
 
 ```bash

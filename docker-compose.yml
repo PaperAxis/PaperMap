@@ -26,8 +26,11 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       PORT: ${PORT:-4015}
       UPLOADS_DIR: /app/uploads
+      FCM_SERVICE_ACCOUNT: /app/fcm/service-account.json
     volumes:
       - papermap_uploads:/app/uploads
+      # FCM push icin: ./fcm/service-account.json koyun (yoksa push devre disi)
+      - ./fcm:/app/fcm:ro
     ports:
       - "${BIND_HOST:-127.0.0.1}:${SERVER_HOST_PORT:-4015}:4015"
 

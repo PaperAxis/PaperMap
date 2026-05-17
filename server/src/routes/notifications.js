@@ -24,4 +24,18 @@ router.post('/read', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
+// FCM cihaz token'i kaydet (push bildirimleri icin)
+router.post('/token', requireAuth, async (req, res) => {
+  const { token, platform } = req.body || {};
+  if (!token || typeof token !== 'string') {
+    return res.status(400).json({ error: 'token zorunlu' });
+  }
+  await prisma.deviceToken.upsert({
+    where: { token },
+    create: { token, platform: platform === 'web' ? 'web' : 'android', userId: req.userId },
+    update: { userId: req.userId },
+  });
+  res.json({ ok: true });
+});
+
 export default router;
