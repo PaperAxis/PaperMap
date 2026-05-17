@@ -36,6 +36,12 @@ services:
     restart: unless-stopped
     depends_on:
       - server
+    networks:
+      default:
+        # Benzersiz alias: reverse proxy bu adla yonlendirir (servis adi
+        # "web" yaygin oldugu icin baska projelerle cakismasin diye).
+        aliases:
+          - papermap-web
     ports:
       - "${BIND_HOST:-127.0.0.1}:${WEB_HOST_PORT:-8080}:80"
 

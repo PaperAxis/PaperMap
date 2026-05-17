@@ -76,12 +76,16 @@ git pull && docker compose up -d --build
 `web` konteyneri tek giriş noktasıdır: `/api/` ve `/socket.io/` isteklerini
 kendi içinde backend'e (`server:4015`) yönlendirir, geri kalanı React arayüzünü
 sunar. Dolayısıyla dış reverse proxy'nizin **tek yapması gereken**
-`maps.paperaxis.com` → `web` (port 80) yönlendirmesidir (WebSocket açık).
+`maps.paperaxis.com` → `papermap-web` (port 80) yönlendirmesidir (WebSocket açık).
+
+> Hedef adı olarak benzersiz alias **`papermap-web`** kullanılır (servis adı
+> `web` yaygın olduğundan başka projelerle karışmasın diye). Konteyner adı
+> `papermap-web-1` de çözülür ama proje adına bağlıdır; `papermap-web` sabittir.
 
 **Proxy doğrudan VDS host'unda ise:** `proxy_pass http://127.0.0.1:8080;`
 
 **Proxy bir Docker konteynerinde ise:** proxy'yi `papermap-net` ağına bağlayın
-ve `web` servis adına yönlendirin:
+ve `papermap-web` adına yönlendirin:
 
 ```yaml
 # Proxy'nin kendi compose dosyasina:
@@ -100,7 +104,7 @@ server {
     resolver 127.0.0.11 valid=30s;
 
     location / {
-        set $papermap_web web:80;
+        set $papermap_web papermap-web:80;
         proxy_pass http://$papermap_web;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
@@ -113,8 +117,8 @@ server {
 ```
 
 > **Nginx Proxy Manager** kullanıyorsanız: NPM konteynerini `papermap-net` ağına
-> ekleyin, sonra **Proxy Host** oluşturun → Forward Hostname `web`, Forward Port
-> `80`, **Websockets Support: AÇIK**. Custom location gerekmez.
+> ekleyin, sonra **Proxy Host** oluşturun → Forward Hostname `papermap-web`,
+> Forward Port `80`, **Websockets Support: AÇIK**. Custom location gerekmez.
 
 ## Geliştirme (Docker'sız)
 
