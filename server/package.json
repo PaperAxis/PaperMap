@@ -2,5 +2,26 @@
   "name": "papermap-server",
   "version": "0.1.0",
   "private": true,
-  "description": "PaperMap backend - placeholder, adim 2'de doldurulacak"
+  "type": "module",
+  "description": "PaperMap backend - Express + Socket.IO + Prisma",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js",
+    "migrate:deploy": "prisma migrate deploy",
+    "migrate:dev": "prisma migrate dev",
+    "prisma:generate": "prisma generate"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.2.1",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^5.0.1",
+    "jsonwebtoken": "^9.0.2",
+    "prisma": "^6.2.1",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
 }

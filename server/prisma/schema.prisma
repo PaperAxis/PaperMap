@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  displayName    String
+  passwordHash   String
+  sharingEnabled Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  sentRequests      Friendship[]   @relation("requester")
+  receivedRequests  Friendship[]   @relation("addressee")
+  ownedFamilies     Family[]       @relation("owner")
+  familyMemberships FamilyMember[]
+  location          Location?
+}
+
+model Friendship {
+  id          String   @id @default(cuid())
+  requesterId String
+  addresseeId String
+  status      String   @default("pending") // pending | accepted
+  createdAt   DateTime @default(now())
+
+  requester User @relation("requester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee User @relation("addressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, addresseeId])
+}
+
+model Family {
+  id         String   @id @default(cuid())
+  name       String
+  ownerId    String
+  inviteCode String   @unique
+  createdAt  DateTime @default(now())
+
+  owner   User           @relation("owner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members FamilyMember[]
+}
+
+model FamilyMember {
+  id       String   @id @default(cuid())
+  familyId String
+  userId   String
+  role     String   @default("member") // owner | member
+  joinedAt DateTime @default(now())
+
+  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([familyId, userId])
+}
+
+model Location {
+  userId    String   @id
+  lat       Float
+  lng       Float
+  accuracy  Float?
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
