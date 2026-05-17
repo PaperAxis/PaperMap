@@ -8,6 +8,7 @@ import ThemePicker from '../components/ThemePicker.jsx';
 export default function Profile() {
   const { user, setUser, logout } = useAuth();
   const fileRef = useRef(null);
+  const avatarFileRef = useRef(null);
 
   const [displayName, setDisplayName] = useState(user.displayName);
   const [avatarColor, setAvatarColor] = useState(user.avatarColor);
@@ -84,6 +85,37 @@ export default function Profile() {
     }
   }
 
+  async function onAvatarSelected(e) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setBusy(true);
+    try {
+      const fd = new FormData();
+      fd.append('avatar', file);
+      const d = await apiUpload('/api/auth/profile/avatar', fd);
+      setUser(d.user);
+      flash('Profil fotoğrafı güncellendi.');
+    } catch (err) {
+      fail(err);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removeAvatar() {
+    setBusy(true);
+    try {
+      const d = await api('/api/auth/profile/avatar', { method: 'DELETE' });
+      setUser(d.user);
+      flash('Profil fotoğrafı kaldırıldı.');
+    } catch (err) {
+      fail(err);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function changePassword(e) {
     e.preventDefault();
     setBusy(true);
@@ -119,7 +151,12 @@ export default function Profile() {
           style={bannerUrl ? { backgroundImage: `url(${bannerUrl})` } : undefined}
         >
           <div className="profile-avatar">
-            <Avatar name={user.displayName} color={user.avatarColor} size={72} />
+            <Avatar
+              name={user.displayName}
+              color={user.avatarColor}
+              avatarPath={user.avatarPath}
+              size={72}
+            />
           </div>
         </div>
         <div className="banner-actions">
@@ -156,6 +193,42 @@ export default function Profile() {
 
       <form className="card" onSubmit={saveInfo}>
         <h3>Profil bilgileri</h3>
+        <div className="field">
+          <label>Profil fotoğrafı</label>
+          <div className="color-row">
+            <Avatar
+              name={user.displayName}
+              color={user.avatarColor}
+              avatarPath={user.avatarPath}
+              size={56}
+            />
+            <button
+              type="button"
+              className="small secondary"
+              disabled={busy}
+              onClick={() => avatarFileRef.current?.click()}
+            >
+              Fotoğraf yükle
+            </button>
+            {user.avatarPath && (
+              <button
+                type="button"
+                className="small secondary"
+                disabled={busy}
+                onClick={removeAvatar}
+              >
+                Kaldır
+              </button>
+            )}
+            <input
+              ref={avatarFileRef}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={onAvatarSelected}
+            />
+          </div>
+        </div>
         <div className="field">
           <label>Görünen ad</label>
           <input

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { api, getToken } from '../lib/api.js';
+import { api, getToken, API_BASE } from '../lib/api.js';
 import { createSocket } from '../lib/socket.js';
 import { watchPosition } from '../lib/geo.js';
 import { timeAgo } from '../lib/time.js';
@@ -28,15 +28,24 @@ function escapeHtml(str) {
   })[c]);
 }
 
-function setAvatar(el, name, color) {
-  el.style.background = color || '#2563eb';
-  el.textContent = (name || '?').trim().charAt(0).toUpperCase() || '?';
+function setAvatar(el, name, color, avatarPath) {
+  if (avatarPath) {
+    el.style.backgroundColor = '';
+    el.style.backgroundImage = `url(${API_BASE}${avatarPath})`;
+    el.style.backgroundSize = 'cover';
+    el.style.backgroundPosition = 'center';
+    el.textContent = '';
+  } else {
+    el.style.backgroundImage = '';
+    el.style.backgroundColor = color || '#2563eb';
+    el.textContent = (name || '?').trim().charAt(0).toUpperCase() || '?';
+  }
 }
 
-function avatarElement(name, color) {
+function avatarElement(name, color, avatarPath) {
   const el = document.createElement('div');
   el.className = 'map-avatar';
-  setAvatar(el, name, color);
+  setAvatar(el, name, color, avatarPath);
   return el;
 }
 
@@ -206,7 +215,7 @@ export default function MapView() {
     if (!map || !myPos) return;
     if (!ownMarkerRef.current) {
       ownMarkerRef.current = new maplibregl.Marker({
-        element: avatarElement(user.displayName, user.avatarColor),
+        element: avatarElement(user.displayName, user.avatarColor, user.avatarPath),
       })
         .setLngLat([myPos.lng, myPos.lat])
         .setPopup(new maplibregl.Popup({ offset: 24 }).setHTML('<b>Sen</b>'))
@@ -214,9 +223,14 @@ export default function MapView() {
       map.flyTo({ center: [myPos.lng, myPos.lat], zoom: 15 });
     } else {
       ownMarkerRef.current.setLngLat([myPos.lng, myPos.lat]);
-      setAvatar(ownMarkerRef.current.getElement(), user.displayName, user.avatarColor);
+      setAvatar(
+        ownMarkerRef.current.getElement(),
+        user.displayName,
+        user.avatarColor,
+        user.avatarPath,
+      );
     }
-  }, [myPos, user.displayName, user.avatarColor]);
+  }, [myPos, user.displayName, user.avatarColor, user.avatarPath]);
 
   // Peer isaretcileri
   useEffect(() => {
@@ -233,11 +247,16 @@ export default function MapView() {
       const html = `<b>${escapeHtml(p.displayName)}</b><br>${timeAgo(p.updatedAt)}`;
       if (markers[p.userId]) {
         markers[p.userId].setLngLat([p.lng, p.lat]);
-        setAvatar(markers[p.userId].getElement(), p.displayName, p.avatarColor);
+        setAvatar(
+          markers[p.userId].getElement(),
+          p.displayName,
+          p.avatarColor,
+          p.avatarPath,
+        );
         markers[p.userId].getPopup().setHTML(html);
       } else {
         markers[p.userId] = new maplibregl.Marker({
-          element: avatarElement(p.displayName, p.avatarColor),
+          element: avatarElement(p.displayName, p.avatarColor, p.avatarPath),
         })
           .setLngLat([p.lng, p.lat])
           .setPopup(new maplibregl.Popup({ offset: 24 }).setHTML(html))

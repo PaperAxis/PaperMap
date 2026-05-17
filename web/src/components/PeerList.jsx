@@ -20,7 +20,12 @@ export default function PeerList({ peers, onSelect }) {
           onClick={() => onSelect(p)}
         >
           <div className="li-left">
-            <Avatar name={p.displayName} color={p.avatarColor} size={40} />
+            <Avatar
+              name={p.displayName}
+              color={p.avatarColor}
+              avatarPath={p.avatarPath}
+              size={40}
+            />
             <div className="info">
               <div className="name">{p.displayName}</div>
               <div className="sub">{timeAgo(p.updatedAt)}</div>

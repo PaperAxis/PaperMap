@@ -179,6 +179,7 @@ export default function Family() {
                           <Avatar
                             name={m.displayName}
                             color={m.avatarColor}
+                            avatarPath={m.avatarPath}
                             size={40}
                           />
                           <div className="info">

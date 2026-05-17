@@ -88,6 +88,7 @@ export default function Friends() {
                   <Avatar
                     name={f.user.displayName}
                     color={f.user.avatarColor}
+                    avatarPath={f.user.avatarPath}
                     size={40}
                   />
                   <div className="info">
@@ -122,6 +123,7 @@ export default function Friends() {
                   <Avatar
                     name={f.user.displayName}
                     color={f.user.avatarColor}
+                    avatarPath={f.user.avatarPath}
                     size={40}
                   />
                   <div className="info">
@@ -155,6 +157,7 @@ export default function Friends() {
                   <Avatar
                     name={f.user.displayName}
                     color={f.user.avatarColor}
+                    avatarPath={f.user.avatarPath}
                     size={40}
                   />
                   <div className="info">
