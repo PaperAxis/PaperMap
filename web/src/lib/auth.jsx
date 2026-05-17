@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { api, getToken, setToken } from './api.js';
+import { applyAppearance, watchSystemTheme } from './appearance.js';
 
 const AuthContext = createContext(null);
 
@@ -17,6 +18,14 @@ export function AuthProvider({ children }) {
       .catch(() => setToken(null))
       .finally(() => setLoading(false));
   }, []);
+
+  // Kullanicinin tema/font tercihini uygula (cikis yapinca varsayilana doner)
+  useEffect(() => {
+    applyAppearance(user?.theme, user?.fontPref);
+    return watchSystemTheme(user?.theme, () =>
+      applyAppearance(user?.theme, user?.fontPref),
+    );
+  }, [user?.theme, user?.fontPref]);
 
   async function login(email, password) {
     const d = await api('/api/auth/login', { method: 'POST', body: { email, password } });
