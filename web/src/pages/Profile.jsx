@@ -321,11 +321,11 @@ export default function Profile() {
           />
         </div>
         <div className="field">
-          <label>Yeni şifre (en az 6 karakter)</label>
+          <label>Yeni şifre (en az 8 karakter)</label>
           <input
             type="password"
             value={newPassword}
-            minLength={6}
+            minLength={8}
             onChange={(e) => setNewPassword(e.target.value)}
             required
           />

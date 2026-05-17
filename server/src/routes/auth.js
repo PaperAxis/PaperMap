@@ -20,8 +20,8 @@ router.post('/register', async (req, res) => {
   if (!email || !displayName || !password) {
     return res.status(400).json({ error: 'email, displayName ve password zorunlu' });
   }
-  if (password.length < 6) {
-    return res.status(400).json({ error: 'Şifre en az 6 karakter olmalı' });
+  if (String(password).length < 8) {
+    return res.status(400).json({ error: 'Şifre en az 8 karakter olmalı' });
   }
   const normalizedEmail = String(email).toLowerCase().trim();
   const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
@@ -117,8 +117,8 @@ router.post('/password', requireAuth, async (req, res) => {
   if (!currentPassword || !newPassword) {
     return res.status(400).json({ error: 'currentPassword ve newPassword zorunlu' });
   }
-  if (String(newPassword).length < 6) {
-    return res.status(400).json({ error: 'Yeni şifre en az 6 karakter olmalı' });
+  if (String(newPassword).length < 8) {
+    return res.status(400).json({ error: 'Yeni şifre en az 8 karakter olmalı' });
   }
   const user = await prisma.user.findUnique({ where: { id: req.userId } });
   if (!(await verifyPassword(currentPassword, user.passwordHash))) {

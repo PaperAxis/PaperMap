@@ -50,10 +50,10 @@ export default function Register() {
           />
           <input
             type="password"
-            placeholder="Şifre (en az 6 karakter)"
+            placeholder="Şifre (en az 8 karakter)"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            minLength={6}
+            minLength={8}
             required
           />
           {error && <div className="error">{error}</div>}

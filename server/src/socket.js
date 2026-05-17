@@ -1,5 +1,6 @@
 import { Server } from 'socket.io';
 import { verifyToken } from './auth.js';
+import { isAllowedOrigin } from './config.js';
 import { prisma } from './prisma.js';
 import { relatedUserIds } from './visibility.js';
 import { setIo } from './realtime.js';
@@ -101,7 +102,9 @@ export async function handleLocationUpdate(
 }
 
 export function initSocket(httpServer) {
-  io = new Server(httpServer, { cors: { origin: '*' } });
+  io = new Server(httpServer, {
+    cors: { origin: (origin, cb) => cb(null, isAllowedOrigin(origin)) },
+  });
   setIo(io);
 
   io.use((socket, next) => {

@@ -1,7 +1,8 @@
 import http from 'http';
 import express from 'express';
 import cors from 'cors';
-import { config } from './config.js';
+import rateLimit from 'express-rate-limit';
+import { config, isAllowedOrigin } from './config.js';
 import { prisma } from './prisma.js';
 import { initSocket } from './socket.js';
 import authRoutes from './routes/auth.js';
@@ -17,12 +18,33 @@ import adminRoutes from './routes/admin.js';
 
 const app = express();
 
-app.use(cors());
-app.use(express.json());
+// Reverse proxy arkasinda calisir — gercek istemci IP'si X-Forwarded-For'dan
+app.set('trust proxy', true);
+
+if (config.allowedOrigins.length === 0) {
+  console.warn(
+    '[uyarı] ALLOWED_ORIGINS ayarlı değil — tüm origin\'lere CORS izni veriliyor. ' +
+      'Üretimde .env içinde ALLOWED_ORIGINS belirleyin.',
+  );
+}
+app.use(cors({ origin: (origin, cb) => cb(null, isAllowedOrigin(origin)) }));
+app.use(express.json({ limit: '1mb' }));
 
 app.use('/uploads', express.static(config.uploadsDir));
 
 app.get('/health', (req, res) => res.json({ ok: true }));
+
+// Kimlik dogrulama uclarinda kaba kuvvet / e-posta sayimi sinirlamasi
+const authLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: 40,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Çok fazla deneme. Lütfen birkaç dakika sonra tekrar deneyin.' },
+  validate: { trustProxy: false },
+});
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);

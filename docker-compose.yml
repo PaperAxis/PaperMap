@@ -28,6 +28,7 @@ services:
       UPLOADS_DIR: /app/uploads
       FCM_SERVICE_ACCOUNT: /app/fcm/service-account.json
       ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
     volumes:
       - papermap_uploads:/app/uploads
       # FCM push icin: ./fcm/service-account.json koyun (yoksa push devre disi)
