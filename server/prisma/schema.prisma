@@ -14,6 +14,7 @@ model User {
   passwordHash   String
   sharingEnabled Boolean  @default(true)
   avatarColor    String   @default("#10b981")
+  avatarPath     String?
   bannerPath     String?
   theme          String   @default("light") // light | dark | system
   fontPref       String   @default("default") // default | atkinson | opendyslexic

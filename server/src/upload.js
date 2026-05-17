@@ -28,18 +28,20 @@ const multerUpload = multer({
   },
 });
 
-// Multer hatalarini 400 JSON olarak donduren sarmalayici
-export function uploadBanner(req, res, next) {
-  multerUpload.single('banner')(req, res, (err) => {
-    if (err) {
-      const msg =
-        err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE'
-          ? 'Dosya çok büyük (en fazla 5MB)'
-          : err.message || 'Yükleme hatası';
-      return res.status(400).json({ error: msg });
-    }
-    next();
-  });
+// Tek görsel yükleyen, multer hatalarini 400 JSON'a ceviren middleware uretir
+export function uploadSingle(field) {
+  return (req, res, next) => {
+    multerUpload.single(field)(req, res, (err) => {
+      if (err) {
+        const msg =
+          err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE'
+            ? 'Dosya çok büyük (en fazla 5MB)'
+            : err.message || 'Yükleme hatası';
+        return res.status(400).json({ error: msg });
+      }
+      next();
+    });
+  };
 }
 
 export function deleteUpload(bannerPath) {

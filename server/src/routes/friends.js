@@ -11,6 +11,7 @@ function friendView(u) {
     displayName: u.displayName,
     email: u.email,
     avatarColor: u.avatarColor,
+    avatarPath: u.avatarPath,
   };
 }
 

@@ -16,6 +16,7 @@ function peerPayload(user, loc) {
     userId: user.id,
     displayName: user.displayName,
     avatarColor: user.avatarColor,
+    avatarPath: user.avatarPath,
     lat: loc.lat,
     lng: loc.lng,
     accuracy: loc.accuracy ?? null,

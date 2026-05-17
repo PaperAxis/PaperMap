@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../prisma.js';
 import { hashPassword, verifyPassword, signToken, publicUser } from '../auth.js';
 import { requireAuth } from '../middleware/auth.js';
-import { uploadBanner, deleteUpload } from '../upload.js';
+import { uploadSingle, deleteUpload } from '../upload.js';
 
 const router = Router();
 
@@ -108,7 +108,7 @@ router.post('/password', requireAuth, async (req, res) => {
 });
 
 // Profil bannerı yükle
-router.post('/profile/banner', requireAuth, uploadBanner, async (req, res) => {
+router.post('/profile/banner', requireAuth, uploadSingle('banner'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'banner dosyası gerekli' });
   }
@@ -129,6 +129,31 @@ router.delete('/profile/banner', requireAuth, async (req, res) => {
     data: { bannerPath: null },
   });
   deleteUpload(current?.bannerPath);
+  res.json({ user: publicUser(user) });
+});
+
+// Profil fotoğrafı (avatar) yükle
+router.post('/profile/avatar', requireAuth, uploadSingle('avatar'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'avatar dosyası gerekli' });
+  }
+  const current = await prisma.user.findUnique({ where: { id: req.userId } });
+  const user = await prisma.user.update({
+    where: { id: req.userId },
+    data: { avatarPath: `/uploads/${req.file.filename}` },
+  });
+  deleteUpload(current?.avatarPath);
+  res.json({ user: publicUser(user) });
+});
+
+// Profil fotoğrafını kaldır
+router.delete('/profile/avatar', requireAuth, async (req, res) => {
+  const current = await prisma.user.findUnique({ where: { id: req.userId } });
+  const user = await prisma.user.update({
+    where: { id: req.userId },
+    data: { avatarPath: null },
+  });
+  deleteUpload(current?.avatarPath);
   res.json({ user: publicUser(user) });
 });
 

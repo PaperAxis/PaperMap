@@ -26,6 +26,7 @@ export function publicUser(u) {
     displayName: u.displayName,
     sharingEnabled: u.sharingEnabled,
     avatarColor: u.avatarColor,
+    avatarPath: u.avatarPath,
     bannerPath: u.bannerPath,
     theme: u.theme,
     fontPref: u.fontPref,
