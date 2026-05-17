@@ -61,6 +61,7 @@ export default function MapView() {
 
   const [peers, setPeers] = useState({});
   const [myPos, setMyPos] = useState(null);
+  const [myMeta, setMyMeta] = useState(null);
   const [geoError, setGeoError] = useState('');
   const [panelOpen, setPanelOpen] = useState(false);
   const [mapTheme, setMapTheme] = useState(currentMapTheme());
@@ -201,7 +202,15 @@ export default function MapView() {
         api('/api/location', {
           method: 'POST',
           body: { ...pos, battery: bat?.level, charging: bat?.charging },
-        }).catch(() => {});
+        })
+          .then(() => {
+            setMyMeta({
+              updatedAt: new Date().toISOString(),
+              battery: bat?.level ?? null,
+              charging: bat?.charging ?? null,
+            });
+          })
+          .catch(() => {});
       },
       (err) => {
         setGeoError(
@@ -218,12 +227,18 @@ export default function MapView() {
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !myPos) return;
+    let meta = '';
+    if (myMeta) {
+      const b = batteryLabel(myMeta.battery, myMeta.charging);
+      meta = `${b ? `${b} · ` : ''}${timeAgo(myMeta.updatedAt)}`;
+    }
+    const popupHtml = `<b>Sen</b>${meta ? `<br>${meta}` : ''}`;
     if (!ownMarkerRef.current) {
       ownMarkerRef.current = new maplibregl.Marker({
         element: avatarElement(user.displayName, user.avatarColor, user.avatarPath),
       })
         .setLngLat([myPos.lng, myPos.lat])
-        .setPopup(new maplibregl.Popup({ offset: 24 }).setHTML('<b>Sen</b>'))
+        .setPopup(new maplibregl.Popup({ offset: 24 }).setHTML(popupHtml))
         .addTo(map);
       map.flyTo({ center: [myPos.lng, myPos.lat], zoom: 15 });
     } else {
@@ -234,8 +249,9 @@ export default function MapView() {
         user.avatarColor,
         user.avatarPath,
       );
+      ownMarkerRef.current.getPopup().setHTML(popupHtml);
     }
-  }, [myPos, user.displayName, user.avatarColor, user.avatarPath]);
+  }, [myPos, myMeta, user.displayName, user.avatarColor, user.avatarPath]);
 
   // Peer isaretcileri
   useEffect(() => {
