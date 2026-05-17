@@ -57,7 +57,7 @@ cp .env.example .env
 #   VITE_API_URL      = https://maps.paperaxis.com
 #   BIND_HOST         = 127.0.0.1   (reverse proxy ayni VDS'te ise)
 
-# 4) Turkiye harita verisini uret (planetiler, birkac dakika surer)
+# 4) Turkiye harita verisini uret (tek seferlik; harita varsa atlanir)
 ./scripts/build-turkey-tiles.sh
 
 # 5) Baslat (arka planda) — migration'lar otomatik uygulanir
@@ -81,8 +81,15 @@ ile OpenStreetMap Türkiye verisinden vektör tile üretir (`tiles/turkey.mbtile
 üzerinden erişir. Harita stilleri (açık/koyu) `web/src/lib/mapStyle.js` içinde
 tanımlıdır — renkler tema ile birlikte değişir.
 
-Haritayı güncellemek için (yeni OSM verisi): betiği tekrar çalıştırıp
-`docker compose restart tiles` deyin.
+Betik **idempotenttir**: `tiles/turkey.mbtiles` zaten varsa hiçbir şey indirmez
+veya yeniden üretmez, anında çıkar. Yani `git pull` + yeniden dağıtımlarda tekrar
+çalıştırmak güvenlidir, ek yük getirmez. Haritayı güncel OSM verisiyle yenilemek
+istediğinizde açıkça zorlayın:
+
+```bash
+./scripts/build-turkey-tiles.sh --force
+docker compose restart tiles
+```
 
 Çalıştıktan sonra konteynerler (yalnızca `127.0.0.1` üzerinde):
 

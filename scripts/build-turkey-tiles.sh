@@ -3,13 +3,23 @@
 # VDS'te proje kokunde calistirin:  ./scripts/build-turkey-tiles.sh
 #
 # Cikti: tiles/turkey.mbtiles  (tileserver-gl bunu sunar)
-# Gereksinim: Docker. Ilk calistirma birkac dakika surer (~birkac yuz MB indirir).
+# Gereksinim: Docker.
+#
+# Harita zaten varsa yeniden URETILMEZ. Guncel OSM verisiyle yenilemek icin:
+#   ./scripts/build-turkey-tiles.sh --force
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 mkdir -p tiles
 
-echo "==> Turkiye haritasi uretiliyor (planetiler)..."
+FORCE="${1:-}"
+if [ -f tiles/turkey.mbtiles ] && [ "$FORCE" != "--force" ] && [ "$FORCE" != "-f" ]; then
+  echo "tiles/turkey.mbtiles zaten mevcut — yeniden uretilmedi."
+  echo "Guncel OSM verisiyle yenilemek icin:  ./scripts/build-turkey-tiles.sh --force"
+  exit 0
+fi
+
+echo "==> Turkiye haritasi uretiliyor (planetiler). Bu birkac dakika surebilir..."
 docker run --rm \
   -v "$(pwd)/tiles:/data" \
   ghcr.io/onthegomap/planetiler:latest \
@@ -18,5 +28,4 @@ docker run --rm \
 
 echo
 echo "==> Tamamlandi: tiles/turkey.mbtiles"
-echo "==> Tile sunucusunu baslatin/yenileyin:"
-echo "      docker compose up -d tiles"
+echo "==> Tile sunucusunu yenileyin:  docker compose restart tiles"
