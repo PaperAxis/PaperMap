@@ -1,13 +1,27 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api, API_BASE } from '../lib/api.js';
+import { useAuth } from '../lib/auth.jsx';
 import Avatar from '../components/Avatar.jsx';
 
 export default function UserProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user: me } = useAuth();
   const [user, setUser] = useState(null);
   const [error, setError] = useState('');
+
+  async function startChat() {
+    try {
+      const d = await api('/api/conversations/direct', {
+        method: 'POST',
+        body: { userId: id },
+      });
+      navigate(`/messages/${d.conversationId}`);
+    } catch (e) {
+      setError(e.message);
+    }
+  }
 
   useEffect(() => {
     setUser(null);
@@ -51,6 +65,12 @@ export default function UserProfile() {
             <div className="muted">{user.email}</div>
           </div>
         </div>
+      )}
+
+      {user && me?.id !== user.id && (
+        <button type="button" onClick={startChat}>
+          💬 Mesaj gönder
+        </button>
       )}
     </div>
   );

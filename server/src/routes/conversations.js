@@ -121,7 +121,27 @@ router.post('/group', requireAuth, async (req, res) => {
   res.status(201).json({ conversationId: conv.id });
 });
 
-// Sohbet mesajları
+function conversationHeader(conv, myId) {
+  if (conv.type === 'direct') {
+    const other = conv.members.find((cm) => cm.userId !== myId)?.user;
+    return {
+      id: conv.id,
+      type: conv.type,
+      title: other?.displayName || 'Sohbet',
+      otherUser: other ? { id: other.id } : null,
+      memberCount: conv.members.length,
+    };
+  }
+  return {
+    id: conv.id,
+    type: conv.type,
+    title: conv.name || (conv.type === 'family' ? 'Aile' : 'Grup'),
+    otherUser: null,
+    memberCount: conv.members.length,
+  };
+}
+
+// Sohbet başlığı + mesajları
 router.get('/:id/messages', requireAuth, async (req, res) => {
   const membership = await prisma.conversationMember.findUnique({
     where: { conversationId_userId: { conversationId: req.params.id, userId: req.userId } },
@@ -129,13 +149,20 @@ router.get('/:id/messages', requireAuth, async (req, res) => {
   if (!membership) {
     return res.status(404).json({ error: 'Sohbet bulunamadı' });
   }
+  const conv = await prisma.conversation.findUnique({
+    where: { id: req.params.id },
+    include: { members: { include: { user: true } } },
+  });
   const messages = await prisma.message.findMany({
     where: { conversationId: req.params.id },
     orderBy: { createdAt: 'desc' },
     take: 200,
     include: { sender: true },
   });
-  res.json({ messages: messages.reverse().map(messageView) });
+  res.json({
+    conversation: conversationHeader(conv, req.userId),
+    messages: messages.reverse().map(messageView),
+  });
 });
 
 // Mesaj gönder
