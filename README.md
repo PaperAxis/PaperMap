@@ -207,7 +207,7 @@ Derleme bitince **Releases** sayfasından `papermap.apk` indirilip cihaza kurulu
 Android projesi `web/android/` altında üretilir ve `.gitignore` ile hariç tutulur;
 aşağıdaki komutlarla yeniden üretilir.
 
-**Gereksinimler:** Android Studio + Android SDK + JDK 17.
+**Gereksinimler:** Android Studio + Android SDK + JDK 21 (Capacitor 7 gereği).
 
 ```bash
 cd web
