@@ -142,7 +142,7 @@ jobs:
             PaperMap Android uygulaması.
 
             - Backend adresi (gömülü): `${{ steps.cfg.outputs.api_url }}`
-            - Uygulama kimliği: `com.papermap.app`
+            - Uygulama kimliği: `com.paperaxis.papermap`
 
             `papermap.apk` dosyasını Android cihazınıza indirip kurun
             (Ayarlar > bilinmeyen kaynaklara izin verin).

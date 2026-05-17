@@ -167,7 +167,7 @@ kapalı-uygulama push'u devre dışı kalır.
 
 **Mobil (APK) tarafı kurulumu:**
 
-1. Firebase Console → projeye **Android uygulaması ekle**, paket adı: `com.papermap.app`.
+1. Firebase Console → projeye **Android uygulaması ekle**, paket adı: `com.paperaxis.papermap`.
 2. `google-services.json` dosyasını indirin.
 3. Dosyayı **base64**'e çevirin (kopyala-yapıştır bozulmasını önler):
    ```bash
