@@ -1,9 +1,12 @@
+import http from 'http';
 import express from 'express';
 import cors from 'cors';
 import { config } from './config.js';
+import { initSocket } from './socket.js';
 import authRoutes from './routes/auth.js';
 import friendsRoutes from './routes/friends.js';
 import familiesRoutes from './routes/families.js';
+import locationRoutes from './routes/location.js';
 
 const app = express();
 
@@ -15,6 +18,7 @@ app.get('/health', (req, res) => res.json({ ok: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/friends', friendsRoutes);
 app.use('/api/families', familiesRoutes);
+app.use('/api/location', locationRoutes);
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
@@ -22,6 +26,9 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Sunucu hatası' });
 });
 
-app.listen(config.port, () => {
+const server = http.createServer(app);
+initSocket(server);
+
+server.listen(config.port, () => {
   console.log(`PaperMap server http://localhost:${config.port}`);
 });

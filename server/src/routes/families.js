@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../prisma.js';
 import { requireAuth } from '../middleware/auth.js';
+import { notifyPeersChanged } from '../socket.js';
 
 const router = Router();
 
@@ -107,9 +108,14 @@ router.post('/join', requireAuth, async (req, res) => {
   if (existing) {
     return res.status(409).json({ error: 'Bu ailenin zaten üyesisiniz' });
   }
+  const before = await prisma.familyMember.findMany({
+    where: { familyId: family.id },
+    select: { userId: true },
+  });
   await prisma.familyMember.create({
     data: { familyId: family.id, userId: req.userId, role: 'member' },
   });
+  notifyPeersChanged([...before.map((m) => m.userId), req.userId]);
   res.status(201).json({ id: family.id, name: family.name });
 });
 
@@ -122,6 +128,12 @@ router.delete('/:id/leave', requireAuth, async (req, res) => {
     return res.status(404).json({ error: 'Aile bulunamadı' });
   }
   const family = await prisma.family.findUnique({ where: { id: req.params.id } });
+  const allMemberIds = (
+    await prisma.familyMember.findMany({
+      where: { familyId: family.id },
+      select: { userId: true },
+    })
+  ).map((m) => m.userId);
 
   if (family.ownerId === req.userId) {
     const others = await prisma.familyMember.findMany({
@@ -130,6 +142,7 @@ router.delete('/:id/leave', requireAuth, async (req, res) => {
     });
     if (others.length === 0) {
       await prisma.family.delete({ where: { id: family.id } });
+      notifyPeersChanged(allMemberIds);
       return res.json({ ok: true, familyDeleted: true });
     }
     await prisma.$transaction([
@@ -137,10 +150,12 @@ router.delete('/:id/leave', requireAuth, async (req, res) => {
       prisma.familyMember.update({ where: { id: others[0].id }, data: { role: 'owner' } }),
       prisma.familyMember.delete({ where: { id: membership.id } }),
     ]);
+    notifyPeersChanged(allMemberIds);
     return res.json({ ok: true, ownershipTransferred: true });
   }
 
   await prisma.familyMember.delete({ where: { id: membership.id } });
+  notifyPeersChanged(allMemberIds);
   res.json({ ok: true });
 });
 

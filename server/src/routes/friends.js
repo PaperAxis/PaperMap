@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../prisma.js';
 import { requireAuth } from '../middleware/auth.js';
+import { notifyPeersChanged } from '../socket.js';
 
 const router = Router();
 
@@ -88,6 +89,7 @@ router.post('/:id/accept', requireAuth, async (req, res) => {
     where: { id: friendship.id },
     data: { status: 'accepted' },
   });
+  notifyPeersChanged([friendship.requesterId, friendship.addresseeId]);
   res.json({ ok: true });
 });
 
@@ -101,6 +103,7 @@ router.delete('/:id', requireAuth, async (req, res) => {
     return res.status(404).json({ error: 'Arkadaşlık bulunamadı' });
   }
   await prisma.friendship.delete({ where: { id: friendship.id } });
+  notifyPeersChanged([friendship.requesterId, friendship.addresseeId]);
   res.json({ ok: true });
 });
 
