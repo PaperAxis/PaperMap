@@ -9,6 +9,8 @@ import {
   LocateFixed,
   Siren,
   Bookmark,
+  Play,
+  Pause,
 } from 'lucide-react';
 import { api, getToken, API_BASE } from '../lib/api.js';
 import { createSocket } from '../lib/socket.js';
@@ -70,6 +72,7 @@ export default function MapView() {
   const geofencesRef = useRef([]);
   const historyRef = useRef([]);
   const placeMarkersRef = useRef({});
+  const playbackMarkerRef = useRef(null);
 
   const [peers, setPeers] = useState({});
   const [myPos, setMyPos] = useState(null);
@@ -83,6 +86,8 @@ export default function MapView() {
   const [mapTheme, setMapTheme] = useState(currentMapTheme());
 
   const [history, setHistory] = useState(null); // { userId, name, points }
+  const [playIndex, setPlayIndex] = useState(0);
+  const [playing, setPlaying] = useState(false);
   const [sosConfirm, setSosConfirm] = useState(false);
   const [sosBusy, setSosBusy] = useState(false);
   const [sosAlert, setSosAlert] = useState(null); // gelen acil durum cagrisi
@@ -228,6 +233,54 @@ export default function MapView() {
     historyRef.current = history?.points || [];
     syncHistoryLayers();
   }, [history]);
+
+  // Yeni gecmis acilinca oynatmayi sifirla
+  useEffect(() => {
+    setPlayIndex(0);
+    setPlaying(false);
+  }, [history]);
+
+  // Oynatma isaretcisi — secili noktada
+  useEffect(() => {
+    const map = mapRef.current;
+    const points = history?.points || [];
+    if (!map || points.length === 0) {
+      if (playbackMarkerRef.current) {
+        playbackMarkerRef.current.remove();
+        playbackMarkerRef.current = null;
+      }
+      return;
+    }
+    const p = points[Math.min(playIndex, points.length - 1)];
+    if (!playbackMarkerRef.current) {
+      const el = document.createElement('div');
+      el.className = 'playback-dot';
+      playbackMarkerRef.current = new maplibregl.Marker({ element: el })
+        .setLngLat([p.lng, p.lat])
+        .addTo(map);
+    } else {
+      playbackMarkerRef.current.setLngLat([p.lng, p.lat]);
+    }
+  }, [history, playIndex]);
+
+  // Oynatma — noktalar arasinda ilerle
+  useEffect(() => {
+    if (!playing) return undefined;
+    const points = history?.points || [];
+    if (points.length < 2) return undefined;
+    const timer = setInterval(() => {
+      setPlayIndex((i) => Math.min(i + 1, points.length - 1));
+    }, 600);
+    return () => clearInterval(timer);
+  }, [playing, history]);
+
+  // İz sonuna gelince oynatmayi durdur
+  useEffect(() => {
+    const points = history?.points || [];
+    if (playing && points.length > 0 && playIndex >= points.length - 1) {
+      setPlaying(false);
+    }
+  }, [playIndex, playing, history]);
 
   // Alan yerlestirme modu — haritada tiklama
   useEffect(() => {
@@ -711,9 +764,56 @@ export default function MapView() {
 
       <div ref={containerRef} className="map-canvas" />
 
-      <button type="button" className="map-fab" onClick={recenter} title="Konumuma git">
+      <button
+        type="button"
+        className="map-fab"
+        onClick={recenter}
+        title="Konumuma git"
+        aria-label="Konumuma git"
+        style={history && history.points.length > 1 ? { bottom: 84 } : undefined}
+      >
         <LocateFixed size={22} />
       </button>
+
+      {history && history.points.length > 1 && (
+        <div className="playback-bar">
+          <button
+            type="button"
+            className="play-btn"
+            aria-label={playing ? 'Duraklat' : 'Oynat'}
+            onClick={() => {
+              if (!playing && playIndex >= history.points.length - 1) {
+                setPlayIndex(0);
+              }
+              setPlaying((p) => !p);
+            }}
+          >
+            {playing ? <Pause size={18} /> : <Play size={18} />}
+          </button>
+          <input
+            type="range"
+            min="0"
+            max={history.points.length - 1}
+            value={Math.min(playIndex, history.points.length - 1)}
+            onChange={(e) => {
+              setPlaying(false);
+              setPlayIndex(Number(e.target.value));
+            }}
+          />
+          <span className="playback-time">
+            {new Date(
+              history.points[
+                Math.min(playIndex, history.points.length - 1)
+              ].recordedAt,
+            ).toLocaleString('tr-TR', {
+              day: 'numeric',
+              month: 'short',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </span>
+        </div>
+      )}
 
       {panelOpen && (
         <div className="peer-panel">
