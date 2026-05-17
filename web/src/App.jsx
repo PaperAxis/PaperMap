@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { SettingsProvider } from './lib/settings.jsx';
 import { AuthProvider } from './lib/auth.jsx';
@@ -5,18 +6,21 @@ import { NotificationProvider } from './lib/notifications.jsx';
 import { MessagesProvider } from './lib/messages.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import Nav from './components/Nav.jsx';
-import Login from './pages/Login.jsx';
-import Register from './pages/Register.jsx';
-import MapView from './pages/MapView.jsx';
-import Friends from './pages/Friends.jsx';
-import Family from './pages/Family.jsx';
-import Profile from './pages/Profile.jsx';
-import Notifications from './pages/Notifications.jsx';
-import UserProfile from './pages/UserProfile.jsx';
-import Messages from './pages/Messages.jsx';
-import ChatView from './pages/ChatView.jsx';
-import NewGroup from './pages/NewGroup.jsx';
-import Admin from './pages/Admin.jsx';
+
+// Sayfalar tembel yuklenir — baslangic paketi kucuk kalir (ozellikle harita
+// kutuphanesi yalnizca harita acilinca indirilir).
+const Login = lazy(() => import('./pages/Login.jsx'));
+const Register = lazy(() => import('./pages/Register.jsx'));
+const MapView = lazy(() => import('./pages/MapView.jsx'));
+const Friends = lazy(() => import('./pages/Friends.jsx'));
+const Family = lazy(() => import('./pages/Family.jsx'));
+const Profile = lazy(() => import('./pages/Profile.jsx'));
+const Notifications = lazy(() => import('./pages/Notifications.jsx'));
+const UserProfile = lazy(() => import('./pages/UserProfile.jsx'));
+const Messages = lazy(() => import('./pages/Messages.jsx'));
+const ChatView = lazy(() => import('./pages/ChatView.jsx'));
+const NewGroup = lazy(() => import('./pages/NewGroup.jsx'));
+const Admin = lazy(() => import('./pages/Admin.jsx'));
 
 function Shell({ children }) {
   return (
@@ -41,6 +45,7 @@ export default function App() {
       <AuthProvider>
         <NotificationProvider>
           <MessagesProvider>
+            <Suspense fallback={<div className="center">Yükleniyor…</div>}>
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
@@ -68,6 +73,7 @@ export default function App() {
               <Route path="/admin" element={<Protected><Admin /></Protected>} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+            </Suspense>
           </MessagesProvider>
         </NotificationProvider>
       </AuthProvider>

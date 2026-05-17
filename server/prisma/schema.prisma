@@ -50,6 +50,8 @@ model Geofence {
 
   owner   User            @relation("geofenceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   watches GeofenceWatch[]
+
+  @@index([ownerId])
 }
 
 model GeofenceWatch {
@@ -63,6 +65,7 @@ model GeofenceWatch {
   user     User     @relation("watchedUser", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([geofenceId, userId])
+  @@index([userId])
 }
 
 model Notification {
@@ -74,6 +77,8 @@ model Notification {
   readAt    DateTime?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model DeviceToken {
@@ -97,6 +102,7 @@ model Friendship {
   addressee User @relation("addressee", fields: [addresseeId], references: [id], onDelete: Cascade)
 
   @@unique([requesterId, addresseeId])
+  @@index([addresseeId])
 }
 
 model Family {
@@ -134,6 +140,7 @@ model ConversationMember {
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([conversationId, userId])
+  @@index([userId])
 }
 
 model Message {

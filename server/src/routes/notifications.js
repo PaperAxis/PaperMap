@@ -6,12 +6,14 @@ const router = Router();
 
 // Bildirim gecmisi + okunmamis sayisi
 router.get('/', requireAuth, async (req, res) => {
-  const notifications = await prisma.notification.findMany({
-    where: { userId: req.userId },
-    orderBy: { createdAt: 'desc' },
-    take: 100,
-  });
-  const unread = notifications.filter((n) => !n.readAt).length;
+  const [notifications, unread] = await Promise.all([
+    prisma.notification.findMany({
+      where: { userId: req.userId },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    }),
+    prisma.notification.count({ where: { userId: req.userId, readAt: null } }),
+  ]);
   res.json({ notifications, unread });
 });
 

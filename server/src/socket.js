@@ -25,6 +25,14 @@ function shouldRecordHistory(userId, lat, lng) {
   return distanceMeters(prev.lat, prev.lng, lat, lng) >= HISTORY_MIN_DISTANCE_M;
 }
 
+// lastHistory Map'i sinirsiz buyumesin — 1 saatten eski girdileri temizle
+setInterval(() => {
+  const cutoff = Date.now() - 60 * 60 * 1000;
+  for (const [userId, entry] of lastHistory) {
+    if (entry.at < cutoff) lastHistory.delete(userId);
+  }
+}, 60 * 60 * 1000);
+
 function peerPayload(user, loc) {
   return {
     userId: user.id,

@@ -66,17 +66,19 @@ router.get('/', requireAuth, async (req, res) => {
     },
   });
 
-  const conversations = [];
-  for (const m of memberships) {
-    const unread = await prisma.message.count({
-      where: {
-        conversationId: m.conversationId,
-        createdAt: { gt: m.lastReadAt },
-        senderId: { not: req.userId },
-      },
-    });
-    conversations.push(conversationView(m.conversation, req.userId, m, unread));
-  }
+  // Okunmamis sayilari paralel hesaplanir (sirali await yerine)
+  const conversations = await Promise.all(
+    memberships.map(async (m) => {
+      const unread = await prisma.message.count({
+        where: {
+          conversationId: m.conversationId,
+          createdAt: { gt: m.lastReadAt },
+          senderId: { not: req.userId },
+        },
+      });
+      return conversationView(m.conversation, req.userId, m, unread);
+    }),
+  );
   conversations.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
   res.json({ conversations });
 });
