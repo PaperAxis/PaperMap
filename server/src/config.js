@@ -8,4 +8,9 @@ export const config = {
   jwtSecret: process.env.JWT_SECRET || 'dev_insecure_secret_change_me',
   databaseUrl: process.env.DATABASE_URL,
   uploadsDir: process.env.UPLOADS_DIR || path.resolve('uploads'),
+  // Bu e-postalarla giris yapan kullanicilar otomatik yonetici olur
+  adminEmails: (process.env.ADMIN_EMAILS || '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean),
 };

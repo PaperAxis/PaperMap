@@ -3,8 +3,17 @@ import { prisma } from '../prisma.js';
 import { hashPassword, verifyPassword, signToken, publicUser } from '../auth.js';
 import { requireAuth } from '../middleware/auth.js';
 import { uploadSingle, deleteUpload } from '../upload.js';
+import { config } from '../config.js';
 
 const router = Router();
+
+// ADMIN_EMAILS listesindeki kullanicilari otomatik yonetici yapar
+async function applyAdminEmail(user) {
+  if (config.adminEmails.includes(user.email) && !user.isAdmin) {
+    return prisma.user.update({ where: { id: user.id }, data: { isAdmin: true } });
+  }
+  return user;
+}
 
 router.post('/register', async (req, res) => {
   const { email, displayName, password } = req.body || {};
@@ -34,20 +43,28 @@ router.post('/login', async (req, res) => {
   if (!email || !password) {
     return res.status(400).json({ error: 'email ve password zorunlu' });
   }
-  const user = await prisma.user.findUnique({
+  let user = await prisma.user.findUnique({
     where: { email: String(email).toLowerCase().trim() },
   });
   if (!user || !(await verifyPassword(password, user.passwordHash))) {
     return res.status(401).json({ error: 'E-posta veya şifre hatalı' });
   }
+  user = await applyAdminEmail(user);
+  if (user.disabled) {
+    return res.status(403).json({ error: 'Hesabınız devre dışı bırakıldı.' });
+  }
   res.json({ token: signToken(user.id), user: publicUser(user) });
 });
 
 router.get('/me', requireAuth, async (req, res) => {
-  const user = await prisma.user.findUnique({ where: { id: req.userId } });
+  let user = await prisma.user.findUnique({ where: { id: req.userId } });
   if (!user) {
     return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
   }
+  if (user.disabled) {
+    return res.status(403).json({ error: 'Hesabınız devre dışı bırakıldı.' });
+  }
+  user = await applyAdminEmail(user);
   res.json({ user: publicUser(user) });
 });
 

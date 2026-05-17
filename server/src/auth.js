@@ -30,5 +30,6 @@ export function publicUser(u) {
     bannerPath: u.bannerPath,
     theme: u.theme,
     fontPref: u.fontPref,
+    isAdmin: u.isAdmin,
   };
 }
