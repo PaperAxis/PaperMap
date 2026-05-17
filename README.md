@@ -73,23 +73,30 @@ git pull && docker compose up -d --build
 
 ### Reverse proxy yönlendirmesi
 
-`maps.paperaxis.com` tek alan adından hem APK hem web çalışır. Kendi reverse
-proxy'niz şu yönlendirmeyi yapmalı (Socket.IO için **WebSocket upgrade** şart):
+`maps.paperaxis.com` tek alan adından hem APK hem web çalışır. Yönlendirme
+(Socket.IO için **WebSocket upgrade** şart):
+
+| Yol           | Hedef          |
+|---------------|----------------|
+| `/api/`       | backend (4015) |
+| `/socket.io/` | backend (4015) |
+| `/`           | web (80)       |
+
+#### Durum A — Proxy doğrudan VDS host'unda çalışıyor
+
+`proxy_pass` hedefi `127.0.0.1` (`BIND_HOST` varsayılanı):
 
 ```nginx
 server {
     server_name maps.paperaxis.com;
-    # ... TLS sertifika ayarlariniz ...
+    # ... TLS ayarlariniz ...
 
-    # API
     location /api/ {
         proxy_pass http://127.0.0.1:4015;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
-
-    # Socket.IO (gercek zamanli konum) — WebSocket
     location /socket.io/ {
         proxy_pass http://127.0.0.1:4015;
         proxy_http_version 1.1;
@@ -97,8 +104,6 @@ server {
         proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
     }
-
-    # Web arayuzu
     location / {
         proxy_pass http://127.0.0.1:8080;
         proxy_set_header Host $host;
@@ -106,9 +111,34 @@ server {
 }
 ```
 
-> Reverse proxy'niz Docker konteynerindeyse `127.0.0.1` yerine VDS'in ağ
-> adresini kullanın ve `.env` içinde `BIND_HOST=0.0.0.0` yapıp güvenlik
-> duvarıyla 4015/8080 portlarını dışarıya kapatın.
+#### Durum B — Proxy bir Docker konteynerinde çalışıyor
+
+Proxy konteynerinin içinde `127.0.0.1` proxy'nin kendisidir; PaperMap'e ulaşamaz
+ve **502** alırsınız. Çözüm: proxy'yi PaperMap'in ağına bağlayıp **servis
+adlarına** yönlendirin.
+
+1. Proxy'yi `papermap-net` ağına ekleyin. Proxy'nin compose dosyasına:
+
+   ```yaml
+   services:
+     <proxy-servisiniz>:
+       networks: [default, papermap-net]
+   networks:
+     papermap-net:
+       external: true
+   ```
+
+   Sonra `docker compose up -d`. (Hızlı/geçici yöntem:
+   `docker network connect papermap-net <proxy-konteyner-adi>`)
+
+2. `proxy_pass` hedeflerini servis adlarına çevirin (port host eşlemesi değil,
+   konteynerin iç portu — web için **80**):
+
+   ```nginx
+   location /api/        { proxy_pass http://server:4015; ... }
+   location /socket.io/  { proxy_pass http://server:4015; ... }  # + websocket header'lari
+   location /            { proxy_pass http://web:80;       ... }
+   ```
 
 ## Geliştirme (Docker'sız)
 

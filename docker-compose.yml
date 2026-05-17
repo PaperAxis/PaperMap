@@ -41,3 +41,9 @@ services:
 
 volumes:
   papermap_db:
+
+networks:
+  # Sabit ag adi: Docker'da calisan bir reverse proxy bu aga
+  # "external" olarak baglanip server:4015 / web:80 adreslerine erisebilir.
+  default:
+    name: papermap-net
