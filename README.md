@@ -15,7 +15,7 @@ Aile ve arkadaşlarla karşılıklı **konum paylaşımı** yapılan bir harita 
 
 | Katman      | Teknoloji                             |
 |-------------|---------------------------------------|
-| Frontend    | React + Vite, Leaflet (OpenStreetMap) |
+| Frontend    | React + Vite, MapLibre GL + OpenFreeMap |
 | Backend     | Node.js + Express + Socket.IO         |
 | Veritabanı  | PostgreSQL + Prisma ORM               |
 | Mobil       | Capacitor (Android)                   |

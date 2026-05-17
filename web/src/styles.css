@@ -380,37 +380,50 @@ button.small {
 .map-canvas {
   flex: 1;
   width: 100%;
-}
-
-.leaflet-container {
   background: #e8eef3;
-  font-family: var(--font-family);
 }
 
-[data-theme='dark'] .leaflet-container {
+[data-theme='dark'] .map-canvas {
   background: #0b1220;
 }
 
-/* Leaflet popup ve kontrolleri tema ile uyumlu */
-.leaflet-popup-content-wrapper,
-.leaflet-popup-tip {
+/* MapLibre popup ve kontrolleri tema ile uyumlu */
+.maplibregl-popup-content {
   background: var(--card);
   color: var(--text);
-}
-
-.leaflet-popup-content-wrapper {
   box-shadow: 0 2px 12px var(--shadow);
+  border-radius: 8px;
+  font-family: var(--font-family);
 }
 
-.leaflet-popup-close-button {
-  color: var(--muted) !important;
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip {
+  border-top-color: var(--card);
+}
+.maplibregl-popup-anchor-top .maplibregl-popup-tip {
+  border-bottom-color: var(--card);
+}
+.maplibregl-popup-anchor-left .maplibregl-popup-tip {
+  border-right-color: var(--card);
+}
+.maplibregl-popup-anchor-right .maplibregl-popup-tip {
+  border-left-color: var(--card);
 }
 
-.leaflet-bar a,
-.leaflet-bar a:hover {
+.maplibregl-popup-close-button {
+  color: var(--muted);
+  font-size: 18px;
+}
+
+.maplibregl-ctrl-group {
   background: var(--card);
-  color: var(--text);
-  border-bottom-color: var(--border);
+}
+
+.maplibregl-ctrl-group button + button {
+  border-top-color: var(--border);
+}
+
+[data-theme='dark'] .maplibregl-ctrl-icon {
+  filter: invert(1);
 }
 
 .map-avatar {
