@@ -7,6 +7,7 @@ import Register from './pages/Register.jsx';
 import MapView from './pages/MapView.jsx';
 import Friends from './pages/Friends.jsx';
 import Family from './pages/Family.jsx';
+import Profile from './pages/Profile.jsx';
 
 function Shell({ children }) {
   return (
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/" element={<Protected><MapView /></Protected>} />
         <Route path="/friends" element={<Protected><Friends /></Protected>} />
         <Route path="/family" element={<Protected><Family /></Protected>} />
+        <Route path="/profile" element={<Protected><Profile /></Protected>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AuthProvider>

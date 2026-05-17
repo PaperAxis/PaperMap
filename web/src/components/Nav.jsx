@@ -4,6 +4,7 @@ const items = [
   { to: '/', label: 'Harita', icon: '🗺️', end: true },
   { to: '/friends', label: 'Arkadaşlar', icon: '👥', end: false },
   { to: '/family', label: 'Aile', icon: '🏠', end: false },
+  { to: '/profile', label: 'Profil', icon: '👤', end: false },
 ];
 
 export default function Nav() {
