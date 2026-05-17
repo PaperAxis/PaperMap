@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { MapPin, MapPinOff, Users, Flag, LocateFixed } from 'lucide-react';
 import { api, getToken, API_BASE } from '../lib/api.js';
 import { createSocket } from '../lib/socket.js';
 import { watchPosition } from '../lib/geo.js';
@@ -351,7 +352,8 @@ export default function MapView() {
           className={`share-toggle ${user.sharingEnabled ? 'on' : 'off'}`}
           onClick={toggleSharing}
         >
-          {user.sharingEnabled ? '📍 Paylaşım açık' : '🚫 Paylaşım kapalı'}
+          {user.sharingEnabled ? <MapPin size={16} /> : <MapPinOff size={16} />}
+          {user.sharingEnabled ? 'Paylaşım açık' : 'Paylaşım kapalı'}
         </button>
         <button
           type="button"
@@ -361,7 +363,8 @@ export default function MapView() {
             setPanelOpen((v) => !v);
           }}
         >
-          👥 {peerList.length}
+          <Users size={16} />
+          {peerList.length}
         </button>
         <button
           type="button"
@@ -371,7 +374,8 @@ export default function MapView() {
             setGeofencePanelOpen((v) => !v);
           }}
         >
-          🚩 {geofences.length}
+          <Flag size={16} />
+          {geofences.length}
         </button>
       </div>
 
@@ -388,7 +392,7 @@ export default function MapView() {
       <div ref={containerRef} className="map-canvas" />
 
       <button type="button" className="map-fab" onClick={recenter} title="Konumuma git">
-        🎯
+        <LocateFixed size={22} />
       </button>
 
       {panelOpen && (

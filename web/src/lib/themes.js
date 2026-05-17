@@ -85,36 +85,12 @@ function darkAccess(a) {
 }
 
 const CATEGORIES = [
-  { key: 'light', name: 'Aydınlık', icon: '☀️', base: 'light', build: light },
-  { key: 'dark', name: 'Karanlık', icon: '🌙', base: 'dark', build: dark },
-  {
-    key: 'light-gradient',
-    name: 'Aydınlık Gradyan',
-    icon: '🌅',
-    base: 'light',
-    build: lightGradient,
-  },
-  {
-    key: 'dark-gradient',
-    name: 'Karanlık Gradyan',
-    icon: '🌌',
-    base: 'dark',
-    build: darkGradient,
-  },
-  {
-    key: 'light-access',
-    name: 'Aydınlık Erişilebilir',
-    icon: '🔆',
-    base: 'light',
-    build: lightAccess,
-  },
-  {
-    key: 'dark-access',
-    name: 'Karanlık Erişilebilir',
-    icon: '🌓',
-    base: 'dark',
-    build: darkAccess,
-  },
+  { key: 'light', name: 'Aydınlık', base: 'light', build: light },
+  { key: 'dark', name: 'Karanlık', base: 'dark', build: dark },
+  { key: 'light-gradient', name: 'Aydınlık Gradyan', base: 'light', build: lightGradient },
+  { key: 'dark-gradient', name: 'Karanlık Gradyan', base: 'dark', build: darkGradient },
+  { key: 'light-access', name: 'Aydınlık Erişilebilir', base: 'light', build: lightAccess },
+  { key: 'dark-access', name: 'Karanlık Erişilebilir', base: 'dark', build: darkAccess },
 ];
 
 export const THEMES = {};
@@ -135,7 +111,7 @@ export const THEME_CATEGORIES = CATEGORIES.map((cat) => {
     THEMES[theme.id] = theme;
     return theme;
   });
-  return { key: cat.key, name: cat.name, icon: cat.icon, themes };
+  return { key: cat.key, name: cat.name, themes };
 });
 
 export const DEFAULT_THEME_ID = 'light-emerald';

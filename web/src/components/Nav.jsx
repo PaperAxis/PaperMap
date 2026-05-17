@@ -1,14 +1,15 @@
 import { NavLink } from 'react-router-dom';
+import { Map, Users, Home, MessageCircle, Bell, User } from 'lucide-react';
 import { useNotifications } from '../lib/notifications.jsx';
 import { useMessages } from '../lib/messages.jsx';
 
 const items = [
-  { to: '/', label: 'Harita', icon: '🗺️', end: true },
-  { to: '/friends', label: 'Arkadaş', icon: '👥', end: false },
-  { to: '/family', label: 'Aile', icon: '🏠', end: false },
-  { to: '/messages', label: 'Sohbet', icon: '💬', end: false },
-  { to: '/notifications', label: 'Bildirim', icon: '🔔', end: false },
-  { to: '/profile', label: 'Profil', icon: '👤', end: false },
+  { to: '/', label: 'Harita', Icon: Map, end: true },
+  { to: '/friends', label: 'Arkadaş', Icon: Users, end: false },
+  { to: '/family', label: 'Aile', Icon: Home, end: false },
+  { to: '/messages', label: 'Sohbet', Icon: MessageCircle, end: false },
+  { to: '/notifications', label: 'Bildirim', Icon: Bell, end: false },
+  { to: '/profile', label: 'Profil', Icon: User, end: false },
 ];
 
 function badge(n) {
@@ -21,14 +22,14 @@ export default function Nav() {
   const { unreadTotal } = useMessages();
   return (
     <nav className="bottom-nav">
-      {items.map((it) => (
-        <NavLink key={it.to} to={it.to} end={it.end} className="nav-item">
+      {items.map(({ to, label, Icon, end }) => (
+        <NavLink key={to} to={to} end={end} className="nav-item">
           <span className="nav-icon">
-            {it.icon}
-            {it.to === '/notifications' && badge(unread)}
-            {it.to === '/messages' && badge(unreadTotal)}
+            <Icon size={22} strokeWidth={2} />
+            {to === '/notifications' && badge(unread)}
+            {to === '/messages' && badge(unreadTotal)}
           </span>
-          <span className="nav-label">{it.label}</span>
+          <span className="nav-label">{label}</span>
         </NavLink>
       ))}
     </nav>

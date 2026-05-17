@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Wrench } from 'lucide-react';
 import { api, apiUpload, API_BASE } from '../lib/api.js';
 import { useAuth } from '../lib/auth.jsx';
 import { FONTS } from '../lib/fonts.js';
@@ -148,7 +149,8 @@ export default function Profile() {
 
       {user.isAdmin && (
         <Link to="/admin" className="admin-link">
-          🛠️ Yönetim paneli →
+          <Wrench size={18} />
+          Yönetim paneli
         </Link>
       )}
 

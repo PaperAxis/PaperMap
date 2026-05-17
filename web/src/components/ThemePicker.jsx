@@ -1,5 +1,15 @@
 import { useState } from 'react';
+import { Sun, Moon, Sunrise, Sparkles, Accessibility } from 'lucide-react';
 import { THEME_CATEGORIES, resolveTheme } from '../lib/themes.js';
+
+const CATEGORY_ICONS = {
+  light: Sun,
+  dark: Moon,
+  'light-gradient': Sunrise,
+  'dark-gradient': Sparkles,
+  'light-access': Accessibility,
+  'dark-access': Accessibility,
+};
 
 // Klasorlu (kategori bazli) tema secici
 export default function ThemePicker({ value, onSelect }) {
@@ -10,6 +20,7 @@ export default function ThemePicker({ value, onSelect }) {
     <div className="theme-picker">
       {THEME_CATEGORIES.map((cat) => {
         const open = openCategory === cat.key;
+        const CatIcon = CATEGORY_ICONS[cat.key] || Sun;
         return (
           <div key={cat.key} className="theme-cat">
             <button
@@ -18,7 +29,7 @@ export default function ThemePicker({ value, onSelect }) {
               onClick={() => setOpenCategory(open ? null : cat.key)}
             >
               <span className="theme-cat-name">
-                <span className="theme-cat-icon">{cat.icon}</span>
+                <CatIcon size={18} />
                 {cat.name}
               </span>
               <span className="theme-cat-toggle">{open ? '▾' : '▸'}</span>

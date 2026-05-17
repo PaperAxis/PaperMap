@@ -22,8 +22,8 @@ export async function getBattery() {
   return null;
 }
 
-// Pil etiketi: "⚡%85" (sarjda) / "🔋%85" / "" (bilinmiyor)
+// Pil etiketi (metin — her cihazda ayni): "Pil %85" / "Pil %85 (şarjda)"
 export function batteryLabel(battery, charging) {
   if (battery == null) return '';
-  return `${charging ? '⚡' : '🔋'}%${battery}`;
+  return `Pil %${battery}${charging ? ' (şarjda)' : ''}`;
 }

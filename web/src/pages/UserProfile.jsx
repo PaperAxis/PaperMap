@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { MessageCircle } from 'lucide-react';
 import { api, API_BASE } from '../lib/api.js';
 import { useAuth } from '../lib/auth.jsx';
 import Avatar from '../components/Avatar.jsx';
@@ -69,7 +70,8 @@ export default function UserProfile() {
 
       {user && me?.id !== user.id && (
         <button type="button" onClick={startChat}>
-          💬 Mesaj gönder
+          <MessageCircle size={18} />
+          Mesaj gönder
         </button>
       )}
     </div>

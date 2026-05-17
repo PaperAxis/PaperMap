@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Home, Users } from 'lucide-react';
 import { useMessages } from '../lib/messages.jsx';
 import { timeAgo } from '../lib/time.js';
 import Avatar from '../components/Avatar.jsx';
@@ -32,7 +33,9 @@ export default function Messages() {
                     size={44}
                   />
                 ) : (
-                  <span className="conv-icon">{c.type === 'family' ? '🏠' : '👥'}</span>
+                  <span className="conv-icon">
+                    {c.type === 'family' ? <Home size={22} /> : <Users size={22} />}
+                  </span>
                 )}
                 <div className="info">
                   <div className="name">{c.title}</div>

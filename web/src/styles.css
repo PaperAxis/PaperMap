@@ -200,6 +200,10 @@ button {
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 button:disabled {
@@ -884,7 +888,9 @@ input[type='range'] {
 }
 
 .admin-link {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 14px;
