@@ -1,12 +1,19 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { api, getToken } from './api.js';
 import { createSocket } from './socket.js';
 import { registerPush } from './pushClient.js';
+import { requestLocalNotifications, showLocalNotification } from './localNotify.js';
 import { useAuth } from './auth.jsx';
 
 const NotificationContext = createContext(null);
 
-function showBrowserNotification(n) {
+// Native'de OS yerel bildirimi, web'de tarayici Notification API'si.
+function showOsNotification(n) {
+  if (Capacitor.isNativePlatform()) {
+    showLocalNotification(n.title, n.body);
+    return;
+  }
   if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
     try {
       new Notification(n.title, { body: n.body });
@@ -38,11 +45,13 @@ export function NotificationProvider({ children }) {
     socket.on('notification', (n) => {
       setNotifications((prev) => [n, ...prev]);
       setUnread((u) => u + 1);
-      showBrowserNotification(n);
+      showOsNotification(n);
     });
 
     // APK'da FCM push'a kaydol (uygulama kapaliyken bildirim icin)
     registerPush();
+    // Native'de yerel bildirim izni — iOS'ta push olmadan bildirim gostermek icin
+    requestLocalNotifications();
 
     return () => socket.close();
   }, [user?.id]);

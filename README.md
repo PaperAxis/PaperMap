@@ -355,10 +355,32 @@ Release'ten `papermap-unsigned.ipa`'yı indirip AltStore'da **My Apps → +**
 ile seçerek de kurabilirsiniz. Sideloadly kullanıyorsanız IPA'yı uygulamaya
 sürükleyip Apple ID'nizle imzalayın.
 
-Kalıcı kurulum / TestFlight için **Apple Developer Program** üyeliği (yılda
-99$) gerekir. Üyelik alındığında bu workflow'a imzalama (sertifika +
-provisioning profile, GitHub Secrets ile) eklenerek doğrudan kurulabilir IPA
-üretilebilir.
+### iOS'ta bildirimler
+
+iOS'ta **uzaktan push** (FCM/APNs) yalnızca **ücretli Apple Developer
+hesabıyla** çalışır — ücretsiz Apple ID ile AltServer'dan kurulan uygulamada
+push entitlement verilmediği için FCM push **çalışmaz**.
+
+Bunun yerine uygulama **yerel bildirim** (local notification) gösterir; bu,
+entitlement gerektirmez ve ücretsiz hesapla kurulan uygulamada da çalışır.
+Sunucudan gelen bildirim olayı (alan giriş/çıkış, mesaj vb.) uygulama
+**çalışırken** — ön planda ya da arka plan konum modu sayesinde canlıyken —
+iPhone'da OS bildirimi olarak gösterilir.
+
+> **Sınır:** iOS uygulamayı tamamen sonlandırırsa (uygulama bütünüyle
+> kapalıyken) bildirim gelmez. Uygulama tamamen kapalıyken bildirim için
+> ücretli Apple Developer hesabı + APNs yapılandırması zorunludur.
+
+Android'de bu sınır yoktur; `GOOGLE_SERVICES_JSON_BASE64` secret'i ile FCM
+push yapılandırıldığında APK uygulama kapalıyken de bildirim alır.
+
+### Apple Developer hesabıyla (kalıcı kurulum)
+
+Kalıcı kurulum / TestFlight ve tam push bildirimleri için **Apple Developer
+Program** üyeliği (yılda 99$) gerekir. Üyelik alındığında bu workflow'a
+imzalama (sertifika + provisioning profile, GitHub Secrets ile) ve iOS için
+Firebase APNs yapılandırması eklenerek doğrudan kurulabilir, push destekli
+IPA üretilebilir.
 
 iOS projesi `web/ios/` altında üretilir (`.gitignore`'da). Yerel derleme için
 Mac'te: `cd web && npm run build && npm run cap:add:ios && npm run cap:open:ios`.
