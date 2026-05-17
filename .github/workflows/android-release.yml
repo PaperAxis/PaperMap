@@ -1,0 +1,130 @@
+name: Android APK
+
+# Tetikleme:
+#  - Elle:  Actions sekmesinden "Run workflow" (istege bagli backend adresi girilir)
+#  - Etiket: "v*" formatinda bir tag push edildiginde (or. v1.0.0)
+on:
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: 'Backend adresi (bos: repo degiskeni VITE_API_URL ya da varsayilan)'
+        required: false
+        default: ''
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kodu al
+        uses: actions/checkout@v4
+
+      - name: Node.js kurulumu
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: JDK 17 kurulumu
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Android SDK kurulumu
+        uses: android-actions/setup-android@v3
+
+      - name: Gerekli SDK paketleri
+        run: sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Backend adresini belirle
+        id: cfg
+        env:
+          INPUT_URL: ${{ github.event.inputs.api_url }}
+          VAR_URL: ${{ vars.VITE_API_URL }}
+        run: |
+          URL="$INPUT_URL"
+          if [ -z "$URL" ]; then URL="$VAR_URL"; fi
+          if [ -z "$URL" ]; then URL='https://maps.paperaxis.com'; fi
+          echo "api_url=$URL" >> "$GITHUB_OUTPUT"
+          echo "APK'ya gömülecek backend adresi: $URL"
+
+      - name: Web bağımlılıkları
+        working-directory: web
+        run: npm ci
+
+      - name: Web build (VITE_API_URL gömülür)
+        working-directory: web
+        env:
+          VITE_API_URL: ${{ steps.cfg.outputs.api_url }}
+        run: npm run build
+
+      - name: Android projesini oluştur
+        working-directory: web
+        run: |
+          npx cap add android
+          node scripts/patch-manifest.mjs
+
+      - name: Keystore hazırla
+        working-directory: web/android
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          SECRET_KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          SECRET_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          SECRET_KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > release.jks
+            echo "KS_PASS=$SECRET_KS_PASS" >> "$GITHUB_ENV"
+            echo "KEY_ALIAS=$SECRET_KEY_ALIAS" >> "$GITHUB_ENV"
+            echo "KEY_PASS=$SECRET_KEY_PASS" >> "$GITHUB_ENV"
+            echo "Kalıcı keystore (GitHub Secrets) kullanılıyor."
+          else
+            GEN_PASS="papermap-$(date +%s)-$RANDOM"
+            echo "::add-mask::$GEN_PASS"
+            keytool -genkeypair -keystore release.jks -alias papermap \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass "$GEN_PASS" -keypass "$GEN_PASS" \
+              -dname "CN=PaperMap, O=PaperAxis, C=TR"
+            echo "KS_PASS=$GEN_PASS" >> "$GITHUB_ENV"
+            echo "KEY_ALIAS=papermap" >> "$GITHUB_ENV"
+            echo "KEY_PASS=$GEN_PASS" >> "$GITHUB_ENV"
+            echo "::warning::Keystore secrets bulunamadı; bu derleme için geçici keystore üretildi. Uygulamayı önceki kurulum üzerine güncelleyebilmek için kalıcı keystore secret'larını ekleyin (README'ye bakın)."
+          fi
+
+      - name: Release APK derle ve imzala
+        working-directory: web/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon --stacktrace
+          UNSIGNED=app/build/outputs/apk/release/app-release-unsigned.apk
+          BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)
+          "${BUILD_TOOLS}zipalign" -f -p 4 "$UNSIGNED" app-aligned.apk
+          "${BUILD_TOOLS}apksigner" sign \
+            --ks release.jks \
+            --ks-pass "pass:$KS_PASS" \
+            --ks-key-alias "$KEY_ALIAS" \
+            --key-pass "pass:$KEY_PASS" \
+            --out "$GITHUB_WORKSPACE/papermap.apk" \
+            app-aligned.apk
+          "${BUILD_TOOLS}apksigner" verify --verbose "$GITHUB_WORKSPACE/papermap.apk"
+
+      - name: GitHub Release oluştur
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('build-{0}', github.run_number) }}
+          name: PaperMap APK ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('#{0}', github.run_number) }}
+          files: papermap.apk
+          fail_on_unmatched_files: true
+          body: |
+            PaperMap Android uygulaması.
+
+            - Backend adresi (gömülü): `${{ steps.cfg.outputs.api_url }}`
+            - Uygulama kimliği: `com.papermap.app`
+
+            `papermap.apk` dosyasını Android cihazınıza indirip kurun
+            (Ayarlar > bilinmeyen kaynaklara izin verin).

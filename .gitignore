@@ -10,6 +10,12 @@ npm-debug.log*
 web/android/
 web/ios/
 
+# Build artefaktlari ve imzalama anahtarlari (asla commit'lenmemeli)
+*.apk
+*.aab
+*.jks
+*.keystore
+
 # Prisma local
 server/prisma/*.db
 

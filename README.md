@@ -88,7 +88,45 @@ papermap/
 4. **Harita** sekmesi konumunu paylaşır ve görünür kişileri canlı gösterir.
 5. Üstteki **Paylaşım açık/kapalı** düğmesiyle konum paylaşımını dilediğin an durdur.
 
-## Mobil (Capacitor / Android)
+## GitHub Actions ile APK (önerilen)
+
+`.github/workflows/android-release.yml` workflow'u imzalı bir release APK üretir,
+backend adresini ve gerekli izinleri APK'ya gömer ve sonucu bir **GitHub Release**'e
+yükler. Yerel Android Studio kurulumu gerekmez.
+
+**Tetikleme:**
+
+- **Etiket ile:** `git tag v1.0.0 && git push origin v1.0.0` → otomatik derlenir.
+- **Elle:** GitHub'da **Actions** sekmesi → *Android APK* → **Run workflow**.
+
+**Backend adresi:** Varsayılan olarak `https://maps.paperaxis.com` gömülür.
+Değiştirmek için repo **Settings → Secrets and variables → Actions → Variables**
+altına `VITE_API_URL` değişkenini ekleyin (ya da elle çalıştırırken girin).
+
+**İmzalama:** Workflow imzalı APK üretir. Secrets yoksa o derlemeye özel geçici bir
+keystore oluşturur (APK kurulur ama her derlemede anahtar değişir). Uygulamayı
+önceki kurulum üzerine **güncelleyebilmek** için kalıcı bir keystore oluşturup
+aşağıdaki 4 secret'ı ekleyin (**Settings → Secrets and variables → Actions → Secrets**):
+
+```bash
+# 1) Keystore olustur (bir kez)
+keytool -genkeypair -v -keystore papermap.jks -alias papermap \
+  -keyalg RSA -keysize 2048 -validity 10000
+
+# 2) base64'e cevir (secret'a bu degeri yapistirin)
+base64 -w0 papermap.jks        # macOS: base64 -i papermap.jks
+```
+
+| Secret adı                  | Değer                                  |
+|-----------------------------|----------------------------------------|
+| `ANDROID_KEYSTORE_BASE64`   | `papermap.jks` dosyasının base64 hali   |
+| `ANDROID_KEYSTORE_PASSWORD` | Keystore (store) parolası               |
+| `ANDROID_KEY_ALIAS`         | Anahtar alias'ı (örn. `papermap`)       |
+| `ANDROID_KEY_PASSWORD`      | Anahtar (key) parolası                  |
+
+Derleme bitince **Releases** sayfasından `papermap.apk` indirilip cihaza kurulur.
+
+## Mobil (Capacitor / Android) — yerel derleme
 
 Android projesi `web/android/` altında üretilir ve `.gitignore` ile hariç tutulur;
 aşağıdaki komutlarla yeniden üretilir.
@@ -110,26 +148,21 @@ npm run cap:open:android    # Android Studio'da acar -> Run ile cihaza yukle
 
 Web kodu her değiştiğinde: `npm run build && npm run cap:sync`.
 
-### Android'de gerekli iki düzenleme
+### Android manifest düzenlemeleri
 
-`npm run cap:add:android` ile üretilen `web/android/app/src/main/AndroidManifest.xml`
-dosyasına şunları ekleyin:
+`npm run cap:add:android` sonrası konum izinleri için şu betiği çalıştırın
+(GitHub Actions workflow'u bunu otomatik yapar):
 
-1. **Konum izinleri** — `<manifest>` etiketi içine:
+```bash
+node scripts/patch-manifest.mjs
+```
 
-   ```xml
-   <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-   ```
+Bu, `web/android/app/src/main/AndroidManifest.xml` dosyasına
+`ACCESS_COARSE_LOCATION` ve `ACCESS_FINE_LOCATION` izinlerini ekler.
 
-2. **Cleartext HTTP** (backend `https` değil `http` ise, geliştirme için) —
-   `<application>` etiketine:
-
-   ```xml
-   android:usesCleartextTraffic="true"
-   ```
-
-   Üretimde backend'i HTTPS arkasına almanız önerilir.
+Ayrıca backend `https` değil `http` ise (yerel geliştirme), `<application>`
+etiketine `android:usesCleartextTraffic="true"` ekleyin. Üretimde backend'i
+HTTPS arkasına almanız önerilir.
 
 > **Not (MVP sınırı):** Konum yalnızca uygulama açıkken (foreground) güncellenir.
 > Arka planda konum takibi bu sürümün kapsamı dışındadır.
