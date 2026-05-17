@@ -10,6 +10,16 @@ import PeerList from '../components/PeerList.jsx';
 
 const TURKEY_CENTER = [39.0, 35.0];
 
+// Temaya gore harita kutucuklari (CARTO basemaps)
+const TILES = {
+  light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+  dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+};
+
+function currentMapTheme() {
+  return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+}
+
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, (c) => ({
     '&': '&amp;',
@@ -35,6 +45,7 @@ export default function MapView() {
   const { user, setUser, logout } = useAuth();
   const containerRef = useRef(null);
   const mapRef = useRef(null);
+  const tileLayerRef = useRef(null);
   const socketRef = useRef(null);
   const peerMarkersRef = useRef({});
   const ownMarkerRef = useRef(null);
@@ -43,20 +54,43 @@ export default function MapView() {
   const [myPos, setMyPos] = useState(null);
   const [geoError, setGeoError] = useState('');
   const [panelOpen, setPanelOpen] = useState(false);
+  const [mapTheme, setMapTheme] = useState(currentMapTheme());
 
-  // Harita kurulumu
+  // Harita kurulumu (attribution yazisi gizli)
   useEffect(() => {
-    const map = L.map(containerRef.current).setView(TURKEY_CENTER, 6);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap katkıcıları',
-      maxZoom: 19,
-    }).addTo(map);
+    const map = L.map(containerRef.current, {
+      attributionControl: false,
+    }).setView(TURKEY_CENTER, 6);
     mapRef.current = map;
     return () => {
       map.remove();
       mapRef.current = null;
+      tileLayerRef.current = null;
     };
   }, []);
+
+  // Tema degisimini izle (acik/koyu/sistem)
+  useEffect(() => {
+    const observer = new MutationObserver(() => setMapTheme(currentMapTheme()));
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  // Harita kutucuklarini temaya gore degistir
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (tileLayerRef.current) {
+      map.removeLayer(tileLayerRef.current);
+    }
+    tileLayerRef.current = L.tileLayer(TILES[mapTheme], {
+      maxZoom: 20,
+      subdomains: 'abcd',
+    }).addTo(map);
+  }, [mapTheme]);
 
   // Socket baglantisi
   useEffect(() => {

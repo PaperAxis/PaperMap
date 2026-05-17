@@ -383,7 +383,34 @@ button.small {
 }
 
 .leaflet-container {
-  background: #aadaff;
+  background: #e8eef3;
+  font-family: var(--font-family);
+}
+
+[data-theme='dark'] .leaflet-container {
+  background: #0b1220;
+}
+
+/* Leaflet popup ve kontrolleri tema ile uyumlu */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: var(--card);
+  color: var(--text);
+}
+
+.leaflet-popup-content-wrapper {
+  box-shadow: 0 2px 12px var(--shadow);
+}
+
+.leaflet-popup-close-button {
+  color: var(--muted) !important;
+}
+
+.leaflet-bar a,
+.leaflet-bar a:hover {
+  background: var(--card);
+  color: var(--text);
+  border-bottom-color: var(--border);
 }
 
 .map-avatar {
