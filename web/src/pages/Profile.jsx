@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Wrench, Star } from 'lucide-react';
 import { api, apiUpload, API_BASE } from '../lib/api.js';
@@ -20,6 +20,30 @@ export default function Profile() {
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [busy, setBusy] = useState(false);
+  const [privacyPeople, setPrivacyPeople] = useState([]);
+
+  useEffect(() => {
+    api('/api/privacy/people')
+      .then((d) => setPrivacyPeople(d.people))
+      .catch(() => {});
+  }, []);
+
+  async function togglePrivacy(personId, hidden) {
+    setPrivacyPeople((prev) =>
+      prev.map((p) => (p.id === personId ? { ...p, hidden } : p)),
+    );
+    try {
+      await api(`/api/privacy/hidden/${personId}`, {
+        method: 'PUT',
+        body: { hidden },
+      });
+    } catch (err) {
+      setPrivacyPeople((prev) =>
+        prev.map((p) => (p.id === personId ? { ...p, hidden: !hidden } : p)),
+      );
+      fail(err);
+    }
+  }
 
   function flash(msg) {
     setInfo(msg);
@@ -307,6 +331,42 @@ export default function Profile() {
             ))}
           </div>
         </div>
+      </div>
+
+      <div className="card">
+        <h3>Konum gizliliği</h3>
+        <p className="muted" style={{ marginBottom: 10 }}>
+          İşareti kaldırdığın kişiler konumunu haritada göremez.
+        </p>
+        {privacyPeople.length === 0 ? (
+          <p className="empty">Henüz arkadaşın ya da aile üyen yok.</p>
+        ) : (
+          <div className="list">
+            {privacyPeople.map((p) => (
+              <label key={p.id} className="list-item">
+                <div className="li-left">
+                  <Avatar
+                    name={p.displayName}
+                    color={p.avatarColor}
+                    avatarPath={p.avatarPath}
+                    size={40}
+                  />
+                  <div className="info">
+                    <div className="name">{p.displayName}</div>
+                    <div className="sub">
+                      {p.hidden ? 'Konumunu göremez' : 'Konumunu görebilir'}
+                    </div>
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={!p.hidden}
+                  onChange={(e) => togglePrivacy(p.id, !e.target.checked)}
+                />
+              </label>
+            ))}
+          </div>
+        )}
       </div>
 
       <form className="card" onSubmit={changePassword}>

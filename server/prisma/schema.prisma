@@ -37,6 +37,24 @@ model User {
   deviceTokens      DeviceToken[]
   conversations     ConversationMember[]
   sentMessages      Message[]
+  hiddenPeers       HiddenPeer[]    @relation("hider")
+  hiddenByPeers     HiddenPeer[]    @relation("hiddenTarget")
+}
+
+// Kullanicinin konumunu belirli kisilerden gizlemesi.
+// userId: gizleyen kisi. hiddenId: bu kisi userId'yi goremez.
+model HiddenPeer {
+  id        String   @id @default(cuid())
+  userId    String
+  hiddenId  String
+  createdAt DateTime @default(now())
+
+  user   User @relation("hider", fields: [userId], references: [id], onDelete: Cascade)
+  hidden User @relation("hiddenTarget", fields: [hiddenId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, hiddenId])
+  @@index([userId])
+  @@index([hiddenId])
 }
 
 model Geofence {

@@ -2,7 +2,7 @@ import { Server } from 'socket.io';
 import { verifyToken } from './auth.js';
 import { isAllowedOrigin } from './config.js';
 import { prisma } from './prisma.js';
-import { relatedUserIds } from './visibility.js';
+import { relatedUserIds, hiddenByUser, peersWhoHidFrom } from './visibility.js';
 import { setIo } from './realtime.js';
 import { checkGeofences, distanceMeters } from './geofence.js';
 import { createNotification } from './notify.js';
@@ -81,9 +81,12 @@ function peerPayload(user, loc) {
 async function snapshotFor(userId) {
   const related = await relatedUserIds(userId);
   if (related.size === 0) return [];
+  const hiders = await peersWhoHidFrom(userId);
+  const visible = [...related].filter((id) => !hiders.has(id));
+  if (visible.length === 0) return [];
   const users = await prisma.user.findMany({
     where: {
-      id: { in: [...related] },
+      id: { in: visible },
       sharingEnabled: true,
       OR: [{ sharingUntil: null }, { sharingUntil: { gt: new Date() } }],
     },
@@ -142,11 +145,12 @@ export async function handleLocationUpdate(
 
   const payload = peerPayload(user, loc);
   const related = await relatedUserIds(userId);
+  const hidden = await hiddenByUser(userId);
   for (const peerId of related) {
-    io?.to(room(peerId)).emit('peer:location', payload);
+    if (!hidden.has(peerId)) io?.to(room(peerId)).emit('peer:location', payload);
   }
 
-  checkGeofences(userId, lat, lng).catch((err) =>
+  checkGeofences(userId, lat, lng, hidden).catch((err) =>
     console.error('geofence kontrolü:', err),
   );
 }
@@ -210,7 +214,10 @@ export async function broadcastSharingChange(userId, enabled) {
     });
     if (user?.location) {
       const payload = peerPayload(user, user.location);
-      for (const peerId of related) io.to(room(peerId)).emit('peer:location', payload);
+      const hidden = await hiddenByUser(userId);
+      for (const peerId of related) {
+        if (!hidden.has(peerId)) io.to(room(peerId)).emit('peer:location', payload);
+      }
     }
   } else {
     for (const peerId of related) {

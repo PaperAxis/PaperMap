@@ -33,3 +33,21 @@ export async function relatedUserIds(userId) {
   ids.delete(userId);
   return ids;
 }
+
+// userId'nin konumunu gizledigi kisilerin id'leri
+export async function hiddenByUser(userId) {
+  const rows = await prisma.hiddenPeer.findMany({
+    where: { userId },
+    select: { hiddenId: true },
+  });
+  return new Set(rows.map((r) => r.hiddenId));
+}
+
+// viewerId'den konumunu gizleyen kisilerin id'leri
+export async function peersWhoHidFrom(viewerId) {
+  const rows = await prisma.hiddenPeer.findMany({
+    where: { hiddenId: viewerId },
+    select: { userId: true },
+  });
+  return new Set(rows.map((r) => r.userId));
+}

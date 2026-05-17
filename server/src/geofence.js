@@ -15,7 +15,7 @@ export function distanceMeters(lat1, lng1, lat2, lng2) {
 
 // Bir kullanicinin konumu guncellenince, izlendigi geofence'lerde
 // giris/cikis gecisi olup olmadigini kontrol eder ve sahibine bildirim olusturur.
-export async function checkGeofences(userId, lat, lng) {
+export async function checkGeofences(userId, lat, lng, hiddenOwnerIds = new Set()) {
   const watches = await prisma.geofenceWatch.findMany({
     where: { userId },
     include: { geofence: true, user: true },
@@ -32,6 +32,8 @@ export async function checkGeofences(userId, lat, lng) {
       data: { inside },
     });
     if (firstObservation) continue; // ilk gozlemde bildirim gonderilmez
+    // Konum bu alanin sahibinden gizlenmisse durum guncellenir ama bildirim gitmez
+    if (hiddenOwnerIds.has(g.ownerId)) continue;
 
     if (inside && g.notifyOnEnter) {
       await createNotification(
