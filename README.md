@@ -238,16 +238,18 @@ papermap/
 4. **Harita** sekmesi konumunu paylaşır ve görünür kişileri canlı gösterir.
 5. Üstteki **Paylaşım açık/kapalı** düğmesiyle konum paylaşımını dilediğin an durdur.
 
-## GitHub Actions ile APK (önerilen)
+## GitHub Actions ile APK + IPA (önerilen)
 
-`.github/workflows/android-release.yml` workflow'u imzalı bir release APK üretir,
-backend adresini ve gerekli izinleri APK'ya gömer ve sonucu bir **GitHub Release**'e
-yükler. Yerel Android Studio kurulumu gerekmez.
+`.github/workflows/mobile-release.yml` **tek workflow'u** Android APK ve iOS IPA'yı
+**paralel** derler ve ikisini tek bir **GitHub Release**'e yükler. Yerel kurulum
+(Android Studio / Mac) gerekmez.
 
 **Tetikleme:**
 
-- **Etiket ile:** `git tag v1.0.0 && git push origin v1.0.0` → otomatik derlenir.
-- **Elle:** GitHub'da **Actions** sekmesi → *Android APK* → **Run workflow**.
+- **Etiket ile:** `git tag v1.0.0 && git push origin v1.0.0` → APK + IPA derlenir.
+- **Elle:** GitHub'da **Actions** sekmesi → *Mobil Sürüm (APK + IPA)* → **Run workflow**.
+
+iOS işi başarısız olsa bile (örn. henüz ayarlanmamışsa) Android APK yine yayınlanır.
 
 **Backend adresi:** Varsayılan olarak `https://maps.paperaxis.com` gömülür.
 Değiştirmek için repo **Settings → Secrets and variables → Actions → Variables**
@@ -320,10 +322,9 @@ HTTPS arkasına almanız önerilir.
 
 ## iOS (iPhone)
 
-`.github/workflows/ios-release.yml` workflow'u, GitHub'ın **macOS runner**'ında
-iOS uygulamasını derler ve **imzasız bir IPA** üretip Release'e yükler. (Mac
-sahibi olmanız gerekmez.) Tetikleme Android ile aynı: `v*` etiketi ya da
-Actions'tan "Run workflow".
+Yukarıdaki **Mobil Sürüm** workflow'unun `ios` işi, GitHub'ın **macOS
+runner**'ında iOS uygulamasını derler ve **imzasız bir IPA** üretip Release'e
+yükler. (Mac sahibi olmanız gerekmez.) APK ile aynı anda, tek tetiklemeyle.
 
 **Önemli — iOS imzalama:** Android'in aksine iOS'ta imzasız IPA doğrudan
 kurulamaz. İmzasız `papermap-unsigned.ipa`'yı bir iPhone'a yüklemek için:
