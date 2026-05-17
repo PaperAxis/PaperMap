@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { config } from './config.js';
 import authRoutes from './routes/auth.js';
+import friendsRoutes from './routes/friends.js';
 
 const app = express();
 
@@ -11,6 +12,7 @@ app.use(express.json());
 app.get('/health', (req, res) => res.json({ ok: true }));
 
 app.use('/api/auth', authRoutes);
+app.use('/api/friends', friendsRoutes);
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
