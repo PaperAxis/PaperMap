@@ -25,14 +25,90 @@ cp .env.example .env      # gerekirse degerleri duzenle
 docker compose up --build
 ```
 
-Servisler:
+Servisler (varsayılan `BIND_HOST=127.0.0.1`):
 
 - Web arayüz: http://localhost:8080
 - Backend API: http://localhost:4015
-- PostgreSQL: localhost:5432
+- PostgreSQL: yalnızca compose ağında (dışarı kapalı)
 
 `server` konteyneri açılışta veritabanı migration'larını otomatik uygular
 (`prisma migrate deploy`).
+
+## VDS'te Yayına Alma (Deployment)
+
+`maps.paperaxis.com` üzerinden yayın için:
+
+```bash
+# 1) Docker kurulu degilse:
+curl -fsSL https://get.docker.com | sh
+
+# 2) Projeyi al
+git clone <repo-url> papermap && cd papermap
+git checkout claude/papermap-location-app-4bIAf
+
+# 3) Ortam dosyasini olustur ve duzenle
+cp .env.example .env
+#  .env icinde mutlaka degistir:
+#   POSTGRES_PASSWORD = guclu bir parola
+#   JWT_SECRET        = uzun rastgele bir deger  (or: openssl rand -hex 32)
+#   VITE_API_URL      = https://maps.paperaxis.com
+#   BIND_HOST         = 127.0.0.1   (reverse proxy ayni VDS'te ise)
+
+# 4) Baslat (arka planda) — migration'lar otomatik uygulanir
+docker compose up -d --build
+
+# Durum / loglar / durdurma
+docker compose ps
+docker compose logs -f
+docker compose down
+
+# Guncelleme (yeni kod sonrasi)
+git pull && docker compose up -d --build
+```
+
+Çalıştıktan sonra konteynerler (yalnızca `127.0.0.1` üzerinde):
+
+- `127.0.0.1:4015` → backend (API + Socket.IO)
+- `127.0.0.1:8080` → web arayüzü
+
+### Reverse proxy yönlendirmesi
+
+`maps.paperaxis.com` tek alan adından hem APK hem web çalışır. Kendi reverse
+proxy'niz şu yönlendirmeyi yapmalı (Socket.IO için **WebSocket upgrade** şart):
+
+```nginx
+server {
+    server_name maps.paperaxis.com;
+    # ... TLS sertifika ayarlariniz ...
+
+    # API
+    location /api/ {
+        proxy_pass http://127.0.0.1:4015;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Socket.IO (gercek zamanli konum) — WebSocket
+    location /socket.io/ {
+        proxy_pass http://127.0.0.1:4015;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+    }
+
+    # Web arayuzu
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+    }
+}
+```
+
+> Reverse proxy'niz Docker konteynerindeyse `127.0.0.1` yerine VDS'in ağ
+> adresini kullanın ve `.env` içinde `BIND_HOST=0.0.0.0` yapıp güvenlik
+> duvarıyla 4015/8080 portlarını dışarıya kapatın.
 
 ## Geliştirme (Docker'sız)
 
