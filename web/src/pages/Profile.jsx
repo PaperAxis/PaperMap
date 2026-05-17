@@ -21,12 +21,48 @@ export default function Profile() {
   const [info, setInfo] = useState('');
   const [busy, setBusy] = useState(false);
   const [privacyPeople, setPrivacyPeople] = useState([]);
+  const [shareLinks, setShareLinks] = useState([]);
 
   useEffect(() => {
     api('/api/privacy/people')
       .then((d) => setPrivacyPeople(d.people))
       .catch(() => {});
+    api('/api/sharelinks')
+      .then((d) => setShareLinks(d.links))
+      .catch(() => {});
   }, []);
+
+  async function createShareLink(minutes) {
+    try {
+      const d = await api('/api/sharelinks', {
+        method: 'POST',
+        body: { durationMinutes: minutes },
+      });
+      setShareLinks((prev) => [d.link, ...prev]);
+      flash('Konum bağlantısı oluşturuldu.');
+    } catch (err) {
+      fail(err);
+    }
+  }
+
+  async function copyShareLink(token) {
+    const url = `${API_BASE}/s/${token}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      flash('Bağlantı panoya kopyalandı.');
+    } catch {
+      flash(url);
+    }
+  }
+
+  async function revokeShareLink(id) {
+    try {
+      await api(`/api/sharelinks/${id}`, { method: 'DELETE' });
+      setShareLinks((prev) => prev.filter((l) => l.id !== id));
+    } catch (err) {
+      fail(err);
+    }
+  }
 
   async function togglePrivacy(personId, hidden) {
     setPrivacyPeople((prev) =>
@@ -364,6 +400,73 @@ export default function Profile() {
                   onChange={(e) => togglePrivacy(p.id, !e.target.checked)}
                 />
               </label>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="card">
+        <h3>Geçici konum bağlantısı</h3>
+        <p className="muted" style={{ marginBottom: 10 }}>
+          Uygulaması olmayan birine, süreli bir bağlantıyla canlı konumunu
+          gösterebilirsin. Süre dolunca bağlantı kendiliğinden geçersizleşir.
+        </p>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            type="button"
+            style={{ flex: 1 }}
+            onClick={() => createShareLink(60)}
+          >
+            1 saat
+          </button>
+          <button
+            type="button"
+            style={{ flex: 1 }}
+            onClick={() => createShareLink(8 * 60)}
+          >
+            8 saat
+          </button>
+          <button
+            type="button"
+            style={{ flex: 1 }}
+            onClick={() => createShareLink(24 * 60)}
+          >
+            24 saat
+          </button>
+        </div>
+        {shareLinks.length > 0 && (
+          <div className="list" style={{ marginTop: 12 }}>
+            {shareLinks.map((l) => (
+              <div key={l.id} className="list-item">
+                <div className="info">
+                  <div className="name">Bağlantı</div>
+                  <div className="sub">
+                    Bitiş:{' '}
+                    {new Date(l.expiresAt).toLocaleString('tr-TR', {
+                      day: 'numeric',
+                      month: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </div>
+                </div>
+                <div className="actions">
+                  <button
+                    type="button"
+                    className="small secondary"
+                    onClick={() => copyShareLink(l.token)}
+                  >
+                    Kopyala
+                  </button>
+                  <button
+                    type="button"
+                    className="small danger"
+                    onClick={() => revokeShareLink(l.id)}
+                  >
+                    İptal
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
         )}

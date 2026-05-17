@@ -39,6 +39,21 @@ model User {
   sentMessages      Message[]
   hiddenPeers       HiddenPeer[]    @relation("hider")
   hiddenByPeers     HiddenPeer[]    @relation("hiddenTarget")
+  shareLinks        ShareLink[]
+}
+
+// Hesapsiz kisilere konumu gosteren, suresi dolan herkese acik baglanti
+model ShareLink {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  label     String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // Kullanicinin konumunu belirli kisilerden gizlemesi.

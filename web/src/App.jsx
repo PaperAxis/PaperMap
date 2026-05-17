@@ -22,6 +22,7 @@ const Messages = lazy(() => import('./pages/Messages.jsx'));
 const ChatView = lazy(() => import('./pages/ChatView.jsx'));
 const NewGroup = lazy(() => import('./pages/NewGroup.jsx'));
 const Admin = lazy(() => import('./pages/Admin.jsx'));
+const SharePage = lazy(() => import('./pages/SharePage.jsx'));
 
 function Shell({ children }) {
   return (
@@ -51,6 +52,7 @@ export default function App() {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/s/:token" element={<SharePage />} />
               <Route path="/" element={<Protected><MapView /></Protected>} />
               <Route path="/friends" element={<Protected><Friends /></Protected>} />
               <Route path="/family" element={<Protected><Family /></Protected>} />
