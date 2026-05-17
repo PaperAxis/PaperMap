@@ -1,4 +1,5 @@
 import { timeAgo } from '../lib/time.js';
+import Avatar from './Avatar.jsx';
 
 export default function PeerList({ peers, onSelect }) {
   if (peers.length === 0) {
@@ -18,9 +19,12 @@ export default function PeerList({ peers, onSelect }) {
           className="list-item peer-row"
           onClick={() => onSelect(p)}
         >
-          <div className="info">
-            <div className="name">{p.displayName}</div>
-            <div className="sub">{timeAgo(p.updatedAt)}</div>
+          <div className="li-left">
+            <Avatar name={p.displayName} color={p.avatarColor} size={40} />
+            <div className="info">
+              <div className="name">{p.displayName}</div>
+              <div className="sub">{timeAgo(p.updatedAt)}</div>
+            </div>
           </div>
           <span className="peer-go">→</span>
         </button>

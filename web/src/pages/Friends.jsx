@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api.js';
+import Avatar from '../components/Avatar.jsx';
 
 export default function Friends() {
   const [data, setData] = useState({ friends: [], incoming: [], outgoing: [] });
@@ -83,9 +84,16 @@ export default function Friends() {
           <div className="list">
             {data.incoming.map((f) => (
               <div key={f.friendshipId} className="list-item">
-                <div className="info">
-                  <div className="name">{f.user.displayName}</div>
-                  <div className="sub">{f.user.email}</div>
+                <div className="li-left">
+                  <Avatar
+                    name={f.user.displayName}
+                    color={f.user.avatarColor}
+                    size={40}
+                  />
+                  <div className="info">
+                    <div className="name">{f.user.displayName}</div>
+                    <div className="sub">{f.user.email}</div>
+                  </div>
                 </div>
                 <div className="actions">
                   <button className="small" onClick={() => accept(f.friendshipId)}>
@@ -110,9 +118,16 @@ export default function Friends() {
           <div className="list">
             {data.outgoing.map((f) => (
               <div key={f.friendshipId} className="list-item">
-                <div className="info">
-                  <div className="name">{f.user.displayName}</div>
-                  <div className="sub">{f.user.email}</div>
+                <div className="li-left">
+                  <Avatar
+                    name={f.user.displayName}
+                    color={f.user.avatarColor}
+                    size={40}
+                  />
+                  <div className="info">
+                    <div className="name">{f.user.displayName}</div>
+                    <div className="sub">{f.user.email}</div>
+                  </div>
                 </div>
                 <div className="actions">
                   <button
@@ -136,9 +151,16 @@ export default function Friends() {
           <div className="list">
             {data.friends.map((f) => (
               <div key={f.friendshipId} className="list-item">
-                <div className="info">
-                  <div className="name">{f.user.displayName}</div>
-                  <div className="sub">{f.user.email}</div>
+                <div className="li-left">
+                  <Avatar
+                    name={f.user.displayName}
+                    color={f.user.avatarColor}
+                    size={40}
+                  />
+                  <div className="info">
+                    <div className="name">{f.user.displayName}</div>
+                    <div className="sub">{f.user.email}</div>
+                  </div>
                 </div>
                 <div className="actions">
                   <button

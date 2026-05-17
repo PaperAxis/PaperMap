@@ -104,18 +104,19 @@ export default function MapView() {
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !myPos) return;
+    const icon = avatarIcon(user.displayName, user.avatarColor);
     if (!ownMarkerRef.current) {
       ownMarkerRef.current = L.marker([myPos.lat, myPos.lng], {
-        icon: avatarIcon(user.displayName, '#10b981'),
+        icon,
         zIndexOffset: 1000,
       })
         .addTo(map)
         .bindPopup('<b>Sen</b>');
       map.setView([myPos.lat, myPos.lng], 15);
     } else {
-      ownMarkerRef.current.setLatLng([myPos.lat, myPos.lng]);
+      ownMarkerRef.current.setLatLng([myPos.lat, myPos.lng]).setIcon(icon);
     }
-  }, [myPos, user.displayName]);
+  }, [myPos, user.displayName, user.avatarColor]);
 
   // Peer isaretcilerini state ile esitle
   useEffect(() => {
@@ -131,12 +132,11 @@ export default function MapView() {
     }
     for (const p of Object.values(peers)) {
       const popup = `<b>${escapeHtml(p.displayName)}</b><br>${timeAgo(p.updatedAt)}`;
+      const icon = avatarIcon(p.displayName, p.avatarColor || '#2563eb');
       if (markers[p.userId]) {
-        markers[p.userId].setLatLng([p.lat, p.lng]).setPopupContent(popup);
+        markers[p.userId].setLatLng([p.lat, p.lng]).setIcon(icon).setPopupContent(popup);
       } else {
-        markers[p.userId] = L.marker([p.lat, p.lng], {
-          icon: avatarIcon(p.displayName, '#2563eb'),
-        })
+        markers[p.userId] = L.marker([p.lat, p.lng], { icon })
           .addTo(map)
           .bindPopup(popup);
       }

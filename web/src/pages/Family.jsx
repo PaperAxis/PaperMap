@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api.js';
+import Avatar from '../components/Avatar.jsx';
 
 export default function Family() {
   const [families, setFamilies] = useState([]);
@@ -174,14 +175,21 @@ export default function Family() {
                   <div className="list" style={{ marginTop: 8 }}>
                     {details[fam.id].members.map((m) => (
                       <div key={m.id} className="list-item">
-                        <div className="info">
-                          <div className="name">
-                            {m.displayName}{' '}
-                            {m.role === 'owner' && (
-                              <span className="badge">Sahip</span>
-                            )}
+                        <div className="li-left">
+                          <Avatar
+                            name={m.displayName}
+                            color={m.avatarColor}
+                            size={40}
+                          />
+                          <div className="info">
+                            <div className="name">
+                              {m.displayName}{' '}
+                              {m.role === 'owner' && (
+                                <span className="badge">Sahip</span>
+                              )}
+                            </div>
+                            <div className="sub">{m.email}</div>
                           </div>
-                          <div className="sub">{m.email}</div>
                         </div>
                       </div>
                     ))}

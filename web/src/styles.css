@@ -271,6 +271,13 @@ button.small {
   background: var(--card);
 }
 
+.li-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
 .list-item .info {
   min-width: 0;
 }
