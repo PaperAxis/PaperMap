@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { api, getToken } from './api.js';
 import { createSocket } from './socket.js';
+import { registerPush } from './pushClient.js';
 import { useAuth } from './auth.jsx';
 
 const NotificationContext = createContext(null);
@@ -39,6 +40,10 @@ export function NotificationProvider({ children }) {
       setUnread((u) => u + 1);
       showBrowserNotification(n);
     });
+
+    // APK'da FCM push'a kaydol (uygulama kapaliyken bildirim icin)
+    registerPush();
+
     return () => socket.close();
   }, [user?.id]);
 

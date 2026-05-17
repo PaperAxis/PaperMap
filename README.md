@@ -165,9 +165,18 @@ kapalı-uygulama push'u devre dışı kalır.
    ```
    `server` logunda `FCM push etkin.` görünmelidir. (`fcm/` klasörü `.gitignore`'dadır.)
 
-**Mobil (APK) tarafı:** APK'nın push alabilmesi için Firebase'e bir Android
-uygulaması (`com.papermap.app`) ekleyip `google-services.json` indirmeniz ve
-APK'yı buna göre yeniden derlemeniz gerekir — bu adım ileride eklenecektir.
+**Mobil (APK) tarafı kurulumu:**
+
+1. Firebase Console → projeye **Android uygulaması ekle**, paket adı: `com.papermap.app`.
+2. `google-services.json` dosyasını indirin.
+3. İçeriğini GitHub repo **Settings → Secrets → Actions** altına `GOOGLE_SERVICES_JSON`
+   adıyla ekleyin (dosyanın tüm içeriğini yapıştırın).
+4. APK'yı yeniden derleyin (yeni etiket veya "Run workflow").
+
+Workflow `GOOGLE_SERVICES_JSON` secret'ını bulursa Firebase'i otomatik bağlar;
+bulamazsa APK yine derlenir, yalnızca push devre dışı kalır. Yerel derlemede
+`google-services.json` dosyasını `web/android/app/` içine koyup
+`node scripts/patch-google-services.mjs` çalıştırın.
 
 ## Geliştirme (Docker'sız)
 

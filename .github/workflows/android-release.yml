@@ -69,6 +69,18 @@ jobs:
           npx cap add android
           node scripts/patch-manifest.mjs
 
+      - name: Firebase push yapılandır (varsa)
+        working-directory: web
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+            node scripts/patch-google-services.mjs
+          else
+            echo "::warning::GOOGLE_SERVICES_JSON secret yok — APK push bildirimleri devre dışı (uygulama yine derlenir)."
+          fi
+
       - name: Keystore hazırla
         working-directory: web/android
         env:
