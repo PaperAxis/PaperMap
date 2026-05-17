@@ -3,12 +3,7 @@ import { api, apiUpload, API_BASE } from '../lib/api.js';
 import { useAuth } from '../lib/auth.jsx';
 import { FONTS } from '../lib/fonts.js';
 import Avatar from '../components/Avatar.jsx';
-
-const THEMES = [
-  { value: 'light', label: 'Açık' },
-  { value: 'dark', label: 'Koyu' },
-  { value: 'system', label: 'Sistem' },
-];
+import ThemePicker from '../components/ThemePicker.jsx';
 
 export default function Profile() {
   const { user, setUser, logout } = useAuth();
@@ -190,16 +185,10 @@ export default function Profile() {
         <h3>Görünüm</h3>
         <div className="field">
           <label>Tema</label>
-          <select
+          <ThemePicker
             value={user.theme}
-            onChange={(e) => changeAppearance({ theme: e.target.value })}
-          >
-            {THEMES.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </select>
+            onSelect={(id) => changeAppearance({ theme: id })}
+          />
         </div>
         <div className="field">
           <label>Yazı tipi</label>

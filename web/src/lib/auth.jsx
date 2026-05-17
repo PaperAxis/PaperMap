@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { api, getToken, setToken } from './api.js';
-import { applyAppearance, watchSystemTheme } from './appearance.js';
+import { applyAppearance } from './appearance.js';
 
 const AuthContext = createContext(null);
 
@@ -22,9 +22,6 @@ export function AuthProvider({ children }) {
   // Kullanicinin tema/font tercihini uygula (cikis yapinca varsayilana doner)
   useEffect(() => {
     applyAppearance(user?.theme, user?.fontPref);
-    return watchSystemTheme(user?.theme, () =>
-      applyAppearance(user?.theme, user?.fontPref),
-    );
   }, [user?.theme, user?.fontPref]);
 
   async function login(email, password) {

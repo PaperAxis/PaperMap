@@ -1,32 +1,21 @@
+/* Varsayilan degerler — tema secimi JS ile (appearance.js) uzerine yazilir */
 :root {
   --accent: #10b981;
   --accent-dark: #059669;
-  --bg: #f1f5f9;
+  --bg: #eef1f5;
   --card: #ffffff;
   --input-bg: #ffffff;
   --text: #0f172a;
   --muted: #64748b;
   --border: #e2e8f0;
   --danger: #ef4444;
-  --error-bg: #fef2f2;
-  --error-border: #fecaca;
-  --badge-bg: #ecfdf5;
   --shadow: rgba(15, 23, 42, 0.08);
   --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --nav-h: 64px;
+  color-scheme: light;
 }
 
 [data-theme='dark'] {
-  --bg: #0b1220;
-  --card: #1e293b;
-  --input-bg: #0f172a;
-  --text: #e2e8f0;
-  --muted: #94a3b8;
-  --border: #334155;
-  --error-bg: #3f1d2e;
-  --error-border: #7f1d1d;
-  --badge-bg: #064e3b;
-  --shadow: rgba(0, 0, 0, 0.5);
   color-scheme: dark;
 }
 
@@ -67,9 +56,9 @@ a {
 }
 
 .error {
-  background: var(--error-bg);
+  background: color-mix(in srgb, var(--danger) 14%, var(--card));
   color: var(--danger);
-  border: 1px solid var(--error-border);
+  border: 1px solid color-mix(in srgb, var(--danger) 40%, var(--card));
   padding: 8px 12px;
   border-radius: 8px;
   font-size: 14px;
@@ -304,7 +293,7 @@ button.small {
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 999px;
-  background: var(--badge-bg);
+  background: color-mix(in srgb, var(--accent) 18%, var(--card));
   color: var(--accent-dark);
 }
 
@@ -349,11 +338,11 @@ button.small {
 .share-toggle.off {
   background: var(--card);
   color: var(--danger);
-  border: 1px solid var(--error-border);
+  border: 1px solid color-mix(in srgb, var(--danger) 45%, var(--card));
 }
 
 .peer-count {
-  background: var(--badge-bg);
+  background: color-mix(in srgb, var(--accent) 18%, var(--card));
   color: var(--accent-dark);
   font-size: 14px;
   padding: 8px 12px;
@@ -592,4 +581,84 @@ form.card {
 .font-option.selected {
   border-color: var(--accent);
   box-shadow: 0 0 0 1px var(--accent) inset;
+}
+
+/* --- Tema secici (klasorlu) --- */
+.theme-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.theme-cat {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.theme-cat-head {
+  width: 100%;
+  background: var(--card);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.theme-cat-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.theme-cat-icon {
+  font-size: 18px;
+}
+
+.theme-cat-toggle {
+  color: var(--muted);
+}
+
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  padding: 10px 14px 14px;
+}
+
+.theme-swatch {
+  position: relative;
+  height: 46px;
+  border-radius: 8px;
+  padding: 0;
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.theme-swatch.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.theme-swatch-dot {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+}
+
+.theme-swatch-check {
+  position: absolute;
+  right: 4px;
+  top: 1px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
 }

@@ -1,40 +1,33 @@
 import { fontStack } from './fonts.js';
+import { resolveTheme } from './themes.js';
 
 const THEME_KEY = 'papermap_theme';
 const FONT_KEY = 'papermap_font';
 
-function resolveTheme(theme) {
-  if (theme === 'system') {
-    return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  }
-  return theme === 'dark' ? 'dark' : 'light';
-}
-
-// Tema ve fontu <html> uzerine uygular, secimi onbellege alir
-export function applyAppearance(theme = 'light', fontPref = 'default') {
+// Tema (CSS degiskenleri) ve fontu <html> uzerine uygular, secimi onbellege alir
+export function applyAppearance(themeId, fontId) {
+  const theme = resolveTheme(themeId);
   const root = document.documentElement;
-  root.setAttribute('data-theme', resolveTheme(theme));
-  root.style.setProperty('--font-family', fontStack(fontPref));
+
+  for (const [key, value] of Object.entries(theme.vars)) {
+    root.style.setProperty(key, value);
+  }
+  root.style.setProperty('--font-family', fontStack(fontId));
+  // Harita ve color-scheme icin acik/koyu taban
+  root.setAttribute('data-theme', theme.base);
+
   try {
-    localStorage.setItem(THEME_KEY, theme);
-    localStorage.setItem(FONT_KEY, fontPref);
+    localStorage.setItem(THEME_KEY, themeId || '');
+    localStorage.setItem(FONT_KEY, fontId || '');
   } catch {
     /* localStorage erisilemezse onbellek atlanir */
   }
 }
 
-// Acilista (kullanici verisi gelmeden) onbellekten uygular — temadaki flash'i onler
+// Acilista (kullanici verisi gelmeden) onbellekten uygular — flash'i onler
 export function applyCachedAppearance() {
   applyAppearance(
-    localStorage.getItem(THEME_KEY) || 'light',
-    localStorage.getItem(FONT_KEY) || 'default',
+    localStorage.getItem(THEME_KEY) || '',
+    localStorage.getItem(FONT_KEY) || '',
   );
-}
-
-// "system" temasi secildiyse isletim sistemi temasi degisimini dinler
-export function watchSystemTheme(theme, onChange) {
-  if (theme !== 'system' || !window.matchMedia) return () => {};
-  const mq = window.matchMedia('(prefers-color-scheme: dark)');
-  mq.addEventListener('change', onChange);
-  return () => mq.removeEventListener('change', onChange);
 }
