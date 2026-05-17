@@ -28,7 +28,7 @@ docker compose up --build
 Servisler:
 
 - Web arayüz: http://localhost:8080
-- Backend API: http://localhost:4000
+- Backend API: http://localhost:4015
 - PostgreSQL: localhost:5432
 
 `server` konteyneri açılışta veritabanı migration'larını otomatik uygular
@@ -48,7 +48,7 @@ npm install
 export DATABASE_URL="postgresql://papermap:papermap_dev_password@localhost:5432/papermap?schema=public"
 export JWT_SECRET="dev_secret"
 npx prisma migrate deploy
-npm run dev            # http://localhost:4000
+npm run dev            # http://localhost:4015
 
 # 3) Frontend (ayri terminal)
 cd web
@@ -59,7 +59,7 @@ npm run dev            # http://localhost:5173
 Frontend geliştirmede backend adresini `web/.env` içine yazabilirsin:
 
 ```
-VITE_API_URL=http://localhost:4000
+VITE_API_URL=http://localhost:4015
 ```
 
 ## Proje Yapısı
@@ -137,7 +137,7 @@ aşağıdaki komutlarla yeniden üretilir.
 cd web
 
 # Backend adresini LAN IP'sine gore ayarla (mobil cihazda localhost CALISMAZ)
-export VITE_API_URL=http://192.168.1.20:4000
+export VITE_API_URL=http://192.168.1.20:4015
 
 npm install
 npm run build

@@ -25,9 +25,9 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
-      PORT: ${PORT:-4000}
+      PORT: ${PORT:-4015}
     ports:
-      - "4000:4000"
+      - "4015:4015"
 
   web:
     build:

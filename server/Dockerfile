@@ -10,6 +10,6 @@ RUN npx prisma generate
 
 COPY src ./src
 
-EXPOSE 4000
+EXPOSE 4015
 
 CMD ["sh", "-c", "npx prisma migrate deploy && node src/index.js"]
