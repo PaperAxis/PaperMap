@@ -278,3 +278,135 @@ button.small {
   background: #ecfdf5;
   color: var(--accent-dark);
 }
+
+.link-btn {
+  background: none;
+  color: var(--muted);
+  border: none;
+  padding: 6px 8px;
+  font-size: 14px;
+  font-weight: 500;
+  width: auto;
+}
+
+/* --- Map page --- */
+.map-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+}
+
+.map-topbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  z-index: 600;
+}
+
+.share-toggle {
+  flex: 1;
+  font-size: 14px;
+  padding: 8px 10px;
+}
+
+.share-toggle.on {
+  background: var(--accent);
+}
+
+.share-toggle.off {
+  background: #fff;
+  color: var(--danger);
+  border: 1px solid #fecaca;
+}
+
+.peer-count {
+  background: #eef2ff;
+  color: #3730a3;
+  font-size: 14px;
+  padding: 8px 12px;
+  width: auto;
+}
+
+.geo-banner {
+  background: #fffbeb;
+  color: #92400e;
+  border-bottom: 1px solid #fde68a;
+  font-size: 13px;
+  padding: 8px 12px;
+  z-index: 600;
+}
+
+.map-canvas {
+  flex: 1;
+  width: 100%;
+}
+
+.leaflet-container {
+  background: #aadaff;
+}
+
+.map-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.map-fab {
+  position: absolute;
+  right: 16px;
+  bottom: 84px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #fff;
+  font-size: 20px;
+  padding: 0;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+  z-index: 600;
+}
+
+.peer-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 60%;
+  overflow-y: auto;
+  background: var(--card);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  box-shadow: 0 -6px 24px rgba(15, 23, 42, 0.18);
+  padding: 16px;
+  z-index: 700;
+}
+
+.peer-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.peer-row {
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  background: #fff;
+  color: var(--text);
+}
+
+.peer-go {
+  color: var(--accent-dark);
+  font-weight: 700;
+}
