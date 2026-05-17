@@ -504,11 +504,26 @@ button.small {
 }
 
 .peer-row {
-  cursor: pointer;
-  text-align: left;
-  width: 100%;
   background: var(--card);
   color: var(--text);
+}
+
+.peer-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .peer-go {

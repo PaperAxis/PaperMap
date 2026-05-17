@@ -3,12 +3,25 @@ import { verifyToken } from './auth.js';
 import { prisma } from './prisma.js';
 import { relatedUserIds } from './visibility.js';
 import { setIo } from './realtime.js';
-import { checkGeofences } from './geofence.js';
+import { checkGeofences, distanceMeters } from './geofence.js';
 
 let io = null;
 
 function room(userId) {
   return `user:${userId}`;
+}
+
+// Konum gecmisi kayit kisitlamasi — her konum guncellemesi degil,
+// en az 2 dk gecince ya da 120 m hareket olunca yeni nokta yazilir.
+const HISTORY_MIN_INTERVAL_MS = 2 * 60 * 1000;
+const HISTORY_MIN_DISTANCE_M = 120;
+const lastHistory = new Map();
+
+function shouldRecordHistory(userId, lat, lng) {
+  const prev = lastHistory.get(userId);
+  if (!prev) return true;
+  if (Date.now() - prev.at >= HISTORY_MIN_INTERVAL_MS) return true;
+  return distanceMeters(prev.lat, prev.lng, lat, lng) >= HISTORY_MIN_DISTANCE_M;
 }
 
 function peerPayload(user, loc) {
@@ -67,6 +80,14 @@ export async function handleLocationUpdate(
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user?.sharingEnabled) return;
+
+  // Konum gecmisine kisitlamali kaydet (yalnizca paylasim acikken)
+  if (shouldRecordHistory(userId, lat, lng)) {
+    lastHistory.set(userId, { at: Date.now(), lat, lng });
+    prisma.locationHistory
+      .create({ data: { userId, lat, lng, accuracy } })
+      .catch((err) => console.error('konum geçmişi kaydı:', err));
+  }
 
   const payload = peerPayload(user, loc);
   const related = await relatedUserIds(userId);

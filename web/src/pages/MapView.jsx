@@ -9,7 +9,7 @@ import { getBattery, batteryLabel } from '../lib/battery.js';
 import { timeAgo } from '../lib/time.js';
 import { useAuth } from '../lib/auth.jsx';
 import { buildMapStyle } from '../lib/mapStyle.js';
-import { geofencesToGeoJSON } from '../lib/geojson.js';
+import { geofencesToGeoJSON, historyToGeoJSON } from '../lib/geojson.js';
 import PeerList from '../components/PeerList.jsx';
 import GeofencePanel from '../components/GeofencePanel.jsx';
 
@@ -59,6 +59,7 @@ export default function MapView() {
   const peerMarkersRef = useRef({});
   const ownMarkerRef = useRef(null);
   const geofencesRef = useRef([]);
+  const historyRef = useRef([]);
 
   const [peers, setPeers] = useState({});
   const [myPos, setMyPos] = useState(null);
@@ -67,6 +68,7 @@ export default function MapView() {
   const [panelOpen, setPanelOpen] = useState(false);
   const [mapTheme, setMapTheme] = useState(currentMapTheme());
 
+  const [history, setHistory] = useState(null); // { userId, name, points }
   const [geofences, setGeofences] = useState([]);
   const [geofencePanelOpen, setGeofencePanelOpen] = useState(false);
   const [placingMode, setPlacingMode] = useState(false);
@@ -99,6 +101,38 @@ export default function MapView() {
     });
   }
 
+  // Konum gecmisi izini stile ekler veya verisini gunceller
+  function syncHistoryLayers() {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+    const data = historyToGeoJSON(historyRef.current);
+    if (map.getSource('history')) {
+      map.getSource('history').setData(data);
+      return;
+    }
+    map.addSource('history', { type: 'geojson', data });
+    map.addLayer({
+      id: 'history-line',
+      type: 'line',
+      source: 'history',
+      filter: ['==', '$type', 'LineString'],
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': '#f97316', 'line-width': 3, 'line-opacity': 0.85 },
+    });
+    map.addLayer({
+      id: 'history-points',
+      type: 'circle',
+      source: 'history',
+      filter: ['==', '$type', 'Point'],
+      paint: {
+        'circle-radius': 4,
+        'circle-color': '#f97316',
+        'circle-stroke-color': '#ffffff',
+        'circle-stroke-width': 1.5,
+      },
+    });
+  }
+
   // Harita kurulumu
   useEffect(() => {
     const theme = currentMapTheme();
@@ -112,6 +146,7 @@ export default function MapView() {
     });
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
     map.on('style.load', syncGeofenceLayers);
+    map.on('style.load', syncHistoryLayers);
     mapRef.current = map;
     return () => {
       map.remove();
@@ -152,6 +187,12 @@ export default function MapView() {
     geofencesRef.current = geofences;
     syncGeofenceLayers();
   }, [geofences]);
+
+  // Konum gecmisi degisince haritayi guncelle
+  useEffect(() => {
+    historyRef.current = history?.points || [];
+    syncHistoryLayers();
+  }, [history]);
 
   // Alan yerlestirme modu — haritada tiklama
   useEffect(() => {
@@ -305,6 +346,27 @@ export default function MapView() {
     if (marker && !marker.getPopup().isOpen()) marker.togglePopup();
   }
 
+  // Bir kisinin (ya da kendinin) son 30 gunluk konum gecmisini haritada goster
+  async function showHistory(target) {
+    setPanelOpen(false);
+    setGeoError('');
+    try {
+      const d = await api(`/api/location/history/${target.userId}`);
+      setHistory({ userId: target.userId, name: target.displayName, points: d.points });
+      const map = mapRef.current;
+      if (map && d.points.length > 0) {
+        const bounds = new maplibregl.LngLatBounds(
+          [d.points[0].lng, d.points[0].lat],
+          [d.points[0].lng, d.points[0].lat],
+        );
+        for (const p of d.points) bounds.extend([p.lng, p.lat]);
+        map.fitBounds(bounds, { padding: 60, maxZoom: 16 });
+      }
+    } catch (err) {
+      setGeoError(err.message);
+    }
+  }
+
   async function toggleSharing() {
     try {
       const d = await api('/api/location/sharing', {
@@ -380,6 +442,17 @@ export default function MapView() {
       </div>
 
       {geoError && <div className="geo-banner">{geoError}</div>}
+      {history && (
+        <div className="geo-banner">
+          {history.name} · son 30 günlük konum geçmişi
+          {history.points.length > 0
+            ? ` (${history.points.length} nokta)`
+            : ' — kayıt yok'}{' '}
+          <button type="button" className="link-btn" onClick={() => setHistory(null)}>
+            Kapat
+          </button>
+        </div>
+      )}
       {placingMode && (
         <div className="geo-banner">
           Alanın merkezi için haritada bir noktaya dokunun…{' '}
@@ -403,7 +476,17 @@ export default function MapView() {
               Kapat
             </button>
           </div>
-          <PeerList peers={peerList} onSelect={focusPeer} />
+          <button
+            type="button"
+            className="small secondary"
+            style={{ marginBottom: 10 }}
+            onClick={() =>
+              showHistory({ userId: user.id, displayName: 'Senin' })
+            }
+          >
+            Konum geçmişim
+          </button>
+          <PeerList peers={peerList} onSelect={focusPeer} onHistory={showHistory} />
         </div>
       )}
 

@@ -28,6 +28,7 @@ model User {
   ownedFamilies     Family[]        @relation("owner")
   familyMemberships FamilyMember[]
   location          Location?
+  locationHistory   LocationHistory[]
   geofences         Geofence[]      @relation("geofenceOwner")
   watchedIn         GeofenceWatch[] @relation("watchedUser")
   notifications     Notification[]
@@ -178,4 +179,18 @@ model Location {
   updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Konum gecmisi — kisitlamali kaydedilir, ~1 ay (30 gun) saklanir
+model LocationHistory {
+  id         String   @id @default(cuid())
+  userId     String
+  lat        Float
+  lng        Float
+  accuracy   Float?
+  recordedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, recordedAt])
 }

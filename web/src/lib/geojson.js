@@ -21,3 +21,27 @@ export function geofencesToGeoJSON(geofences) {
     })),
   };
 }
+
+// Konum gecmisi noktalarini iz (LineString) + nokta (Point) ozelliklerine cevirir
+export function historyToGeoJSON(points) {
+  const list = points || [];
+  const features = [];
+  if (list.length > 1) {
+    features.push({
+      type: 'Feature',
+      properties: { kind: 'track' },
+      geometry: {
+        type: 'LineString',
+        coordinates: list.map((p) => [p.lng, p.lat]),
+      },
+    });
+  }
+  for (const p of list) {
+    features.push({
+      type: 'Feature',
+      properties: { recordedAt: p.recordedAt },
+      geometry: { type: 'Point', coordinates: [p.lng, p.lat] },
+    });
+  }
+  return { type: 'FeatureCollection', features };
+}

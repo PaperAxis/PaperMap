@@ -2,7 +2,7 @@ import { timeAgo } from '../lib/time.js';
 import { batteryLabel } from '../lib/battery.js';
 import Avatar from './Avatar.jsx';
 
-export default function PeerList({ peers, onSelect }) {
+export default function PeerList({ peers, onSelect, onHistory }) {
   if (peers.length === 0) {
     return (
       <p className="empty">
@@ -14,13 +14,12 @@ export default function PeerList({ peers, onSelect }) {
   return (
     <div className="list">
       {peers.map((p) => (
-        <button
-          key={p.userId}
-          type="button"
-          className="list-item peer-row"
-          onClick={() => onSelect(p)}
-        >
-          <div className="li-left">
+        <div key={p.userId} className="list-item peer-row">
+          <button
+            type="button"
+            className="li-left peer-main"
+            onClick={() => onSelect(p)}
+          >
             <Avatar
               name={p.displayName}
               color={p.avatarColor}
@@ -36,9 +35,15 @@ export default function PeerList({ peers, onSelect }) {
                 {timeAgo(p.updatedAt)}
               </div>
             </div>
-          </div>
-          <span className="peer-go">→</span>
-        </button>
+          </button>
+          <button
+            type="button"
+            className="small secondary"
+            onClick={() => onHistory(p)}
+          >
+            Geçmiş
+          </button>
+        </div>
       ))}
     </div>
   );

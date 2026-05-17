@@ -2,6 +2,7 @@ import http from 'http';
 import express from 'express';
 import cors from 'cors';
 import { config } from './config.js';
+import { prisma } from './prisma.js';
 import { initSocket } from './socket.js';
 import authRoutes from './routes/auth.js';
 import usersRoutes from './routes/users.js';
@@ -42,6 +43,22 @@ app.use((err, req, res, next) => {
 
 const server = http.createServer(app);
 initSocket(server);
+
+// 30 gunden eski konum gecmisini periyodik temizle
+const HISTORY_RETENTION_DAYS = 30;
+async function pruneLocationHistory() {
+  const cutoff = new Date(Date.now() - HISTORY_RETENTION_DAYS * 24 * 60 * 60 * 1000);
+  try {
+    const { count } = await prisma.locationHistory.deleteMany({
+      where: { recordedAt: { lt: cutoff } },
+    });
+    if (count > 0) console.log(`Eski konum geçmişi temizlendi: ${count} kayıt`);
+  } catch (err) {
+    console.error('konum geçmişi temizleme:', err);
+  }
+}
+pruneLocationHistory();
+setInterval(pruneLocationHistory, 6 * 60 * 60 * 1000);
 
 server.listen(config.port, () => {
   console.log(`PaperMap server http://localhost:${config.port}`);
