@@ -68,13 +68,13 @@ router.patch('/profile', requireAuth, async (req, res) => {
     data.avatarColor = String(avatarColor).toLowerCase();
   }
   if (theme !== undefined) {
-    if (!['light', 'dark', 'system'].includes(theme)) {
+    if (typeof theme !== 'string' || !/^[a-z0-9-]{1,48}$/.test(theme)) {
       return res.status(400).json({ error: 'Geçersiz tema' });
     }
     data.theme = theme;
   }
   if (fontPref !== undefined) {
-    if (!['default', 'atkinson', 'opendyslexic'].includes(fontPref)) {
+    if (typeof fontPref !== 'string' || !/^[a-z0-9-]{1,32}$/.test(fontPref)) {
       return res.status(400).json({ error: 'Geçersiz font' });
     }
     data.fontPref = fontPref;
