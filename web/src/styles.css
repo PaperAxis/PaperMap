@@ -108,6 +108,37 @@ a {
 
 .nav-icon {
   font-size: 20px;
+  position: relative;
+}
+
+.nav-label {
+  white-space: nowrap;
+}
+
+.nav-badge {
+  position: absolute;
+  top: -4px;
+  right: -11px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notif-item.unread {
+  border-left: 3px solid var(--accent);
+}
+
+.notif-body {
+  font-size: 14px;
+  margin: 2px 0;
 }
 
 /* --- Auth screens --- */
