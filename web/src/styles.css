@@ -410,3 +410,27 @@ button.small {
   color: var(--accent-dark);
   font-weight: 700;
 }
+
+/* --- Family --- */
+.family-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  background: #fff;
+}
+
+.invite-code {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  background: #f8fafc;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+.invite-code strong {
+  color: var(--text);
+  letter-spacing: 0.12em;
+  font-size: 15px;
+}
