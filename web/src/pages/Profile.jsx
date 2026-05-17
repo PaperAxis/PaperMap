@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api, apiUpload, API_BASE } from '../lib/api.js';
 import { useAuth } from '../lib/auth.jsx';
 import { FONTS } from '../lib/fonts.js';
@@ -144,6 +145,12 @@ export default function Profile() {
           Çıkış yap
         </button>
       </div>
+
+      {user.isAdmin && (
+        <Link to="/admin" className="admin-link">
+          🛠️ Yönetim paneli →
+        </Link>
+      )}
 
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <div

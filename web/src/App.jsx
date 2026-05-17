@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { SettingsProvider } from './lib/settings.jsx';
 import { AuthProvider } from './lib/auth.jsx';
 import { NotificationProvider } from './lib/notifications.jsx';
 import { MessagesProvider } from './lib/messages.jsx';
@@ -15,6 +16,7 @@ import UserProfile from './pages/UserProfile.jsx';
 import Messages from './pages/Messages.jsx';
 import ChatView from './pages/ChatView.jsx';
 import NewGroup from './pages/NewGroup.jsx';
+import Admin from './pages/Admin.jsx';
 
 function Shell({ children }) {
   return (
@@ -35,31 +37,40 @@ function Protected({ children }) {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <NotificationProvider>
-        <MessagesProvider>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/" element={<Protected><MapView /></Protected>} />
-          <Route path="/friends" element={<Protected><Friends /></Protected>} />
-          <Route path="/family" element={<Protected><Family /></Protected>} />
-          <Route
-            path="/notifications"
-            element={<Protected><Notifications /></Protected>}
-          />
-          <Route path="/profile" element={<Protected><Profile /></Protected>} />
-          <Route path="/users/:id" element={<Protected><UserProfile /></Protected>} />
-          <Route path="/messages" element={<Protected><Messages /></Protected>} />
-          <Route
-            path="/messages/new-group"
-            element={<Protected><NewGroup /></Protected>}
-          />
-          <Route path="/messages/:id" element={<Protected><ChatView /></Protected>} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-        </MessagesProvider>
-      </NotificationProvider>
-    </AuthProvider>
+    <SettingsProvider>
+      <AuthProvider>
+        <NotificationProvider>
+          <MessagesProvider>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/" element={<Protected><MapView /></Protected>} />
+              <Route path="/friends" element={<Protected><Friends /></Protected>} />
+              <Route path="/family" element={<Protected><Family /></Protected>} />
+              <Route
+                path="/notifications"
+                element={<Protected><Notifications /></Protected>}
+              />
+              <Route path="/profile" element={<Protected><Profile /></Protected>} />
+              <Route
+                path="/users/:id"
+                element={<Protected><UserProfile /></Protected>}
+              />
+              <Route path="/messages" element={<Protected><Messages /></Protected>} />
+              <Route
+                path="/messages/new-group"
+                element={<Protected><NewGroup /></Protected>}
+              />
+              <Route
+                path="/messages/:id"
+                element={<Protected><ChatView /></Protected>}
+              />
+              <Route path="/admin" element={<Protected><Admin /></Protected>} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </MessagesProvider>
+        </NotificationProvider>
+      </AuthProvider>
+    </SettingsProvider>
   );
 }

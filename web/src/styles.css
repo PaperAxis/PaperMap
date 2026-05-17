@@ -873,3 +873,49 @@ input[type='range'] {
 .chat-input button {
   width: auto;
 }
+
+/* --- Marka / yönetim --- */
+.brand-logo {
+  display: block;
+  max-height: 64px;
+  max-width: 80%;
+  margin: 0 auto 4px;
+  object-fit: contain;
+}
+
+.admin-link {
+  display: block;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+  box-shadow: 0 2px 12px var(--shadow);
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.stat {
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.stat b {
+  font-size: 20px;
+  color: var(--text);
+  margin-right: 4px;
+}
+
+.badge-danger {
+  background: color-mix(in srgb, var(--danger) 18%, var(--card));
+  color: var(--danger);
+}

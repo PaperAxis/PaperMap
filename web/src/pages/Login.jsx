@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth.jsx';
+import Brand from '../components/Brand.jsx';
 
 export default function Login() {
   const { user, login } = useAuth();
@@ -29,7 +30,7 @@ export default function Login() {
   return (
     <div className="auth-screen">
       <div className="auth-card">
-        <h1 className="brand">PaperMap</h1>
+        <Brand />
         <p className="muted">Hesabına giriş yap</p>
         <form onSubmit={onSubmit}>
           <input
