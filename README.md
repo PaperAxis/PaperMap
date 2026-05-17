@@ -318,6 +318,26 @@ HTTPS arkasına almanız önerilir.
 > güncellenir (`@capacitor-community/background-geolocation`); Android kalıcı
 > bir bildirim gösterir. Tarayıcıda konum yalnızca sayfa açıkken güncellenir.
 
+## iOS (iPhone)
+
+`.github/workflows/ios-release.yml` workflow'u, GitHub'ın **macOS runner**'ında
+iOS uygulamasını derler ve **imzasız bir IPA** üretip Release'e yükler. (Mac
+sahibi olmanız gerekmez.) Tetikleme Android ile aynı: `v*` etiketi ya da
+Actions'tan "Run workflow".
+
+**Önemli — iOS imzalama:** Android'in aksine iOS'ta imzasız IPA doğrudan
+kurulamaz. İmzasız `papermap-unsigned.ipa`'yı bir iPhone'a yüklemek için:
+
+- **AltStore** veya **Sideloadly** ile kendi (ücretsiz) Apple ID'nizle imzalayın.
+  Uygulama 7 günde bir yenilenmelidir (ücretsiz Apple ID sınırı).
+- Kalıcı kurulum / TestFlight için **Apple Developer Program** üyeliği (yılda
+  99$) gerekir. Üyelik alındığında bu workflow'a imzalama (sertifika +
+  provisioning profile, GitHub Secrets ile) eklenerek doğrudan kurulabilir IPA
+  üretilebilir.
+
+iOS projesi `web/ios/` altında üretilir (`.gitignore`'da). Yerel derleme için
+Mac'te: `cd web && npm run build && npm run cap:add:ios && npm run cap:open:ios`.
+
 ## Ortam Değişkenleri
 
 `.env.example` dosyasına bakın. Başlıca değişkenler:
