@@ -38,6 +38,74 @@ async function notifyLowBattery(userId, name, battery) {
   }
 }
 
+// Yolculuk ETA'si icin hiz takibi (m/s) — son konumlardan yumusatilmis
+const DEFAULT_SPEED = 8.3; // ~30 km/s
+const lastFix = new Map();
+
+function trackSpeed(userId, lat, lng) {
+  const prev = lastFix.get(userId);
+  const now = Date.now();
+  let speed = prev?.speed ?? DEFAULT_SPEED;
+  if (prev) {
+    const dt = (now - prev.at) / 1000;
+    if (dt >= 5) {
+      const inst = distanceMeters(prev.lat, prev.lng, lat, lng) / dt;
+      const clamped = Math.min(Math.max(inst, 1), 33);
+      speed = prev.speed != null ? prev.speed * 0.5 + clamped * 0.5 : clamped;
+    }
+  }
+  lastFix.set(userId, { lat, lng, at: now, speed });
+  return speed;
+}
+
+// Etkin yolculugu iliskili (gizlenmemis) kisilere ve kullanicinin kendisine
+// yayinlar; hedefe varilmissa yolculugu sonlandirir.
+export async function broadcastTrip(userId) {
+  if (!io) return;
+  const trip = await prisma.trip.findUnique({ where: { userId } });
+  if (!trip) return;
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { location: true },
+  });
+  if (!user?.location) return;
+
+  const related = await relatedUserIds(userId);
+  const hidden = await hiddenByUser(userId);
+  const recipients = [userId, ...[...related].filter((id) => !hidden.has(id))];
+  const dist = distanceMeters(
+    user.location.lat,
+    user.location.lng,
+    trip.destLat,
+    trip.destLng,
+  );
+
+  if (dist <= 150) {
+    await prisma.trip.delete({ where: { userId } }).catch(() => {});
+    for (const id of recipients) io.to(room(id)).emit('trip:ended', { userId });
+    return;
+  }
+  const speed = lastFix.get(userId)?.speed ?? DEFAULT_SPEED;
+  const payload = {
+    userId,
+    displayName: user.displayName,
+    destLat: trip.destLat,
+    destLng: trip.destLng,
+    destLabel: trip.destLabel,
+    distanceMeters: Math.round(dist),
+    etaMinutes: Math.max(1, Math.round(dist / speed / 60)),
+  };
+  for (const id of recipients) io.to(room(id)).emit('trip:update', payload);
+}
+
+export async function emitTripEnded(userId) {
+  if (!io) return;
+  const related = await relatedUserIds(userId);
+  const hidden = await hiddenByUser(userId);
+  const recipients = [userId, ...[...related].filter((id) => !hidden.has(id))];
+  for (const id of recipients) io.to(room(id)).emit('trip:ended', { userId });
+}
+
 // Paylasim etkin mi — sureli paylasimda suresi gecmisse kapali sayilir
 function sharingActive(user) {
   if (!user?.sharingEnabled) return false;
@@ -149,6 +217,9 @@ export async function handleLocationUpdate(
   for (const peerId of related) {
     if (!hidden.has(peerId)) io?.to(room(peerId)).emit('peer:location', payload);
   }
+
+  trackSpeed(userId, lat, lng);
+  broadcastTrip(userId).catch((err) => console.error('yolculuk yayını:', err));
 
   checkGeofences(userId, lat, lng, hidden).catch((err) =>
     console.error('geofence kontrolü:', err),

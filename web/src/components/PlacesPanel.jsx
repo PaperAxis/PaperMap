@@ -10,7 +10,14 @@ export const PLACE_COLORS = [
   '#0891b2',
 ];
 
-export default function PlacesPanel({ places, onClose, onStartPlacing, onChanged, onFocus }) {
+export default function PlacesPanel({
+  places,
+  onClose,
+  onStartPlacing,
+  onChanged,
+  onFocus,
+  onNavigate,
+}) {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(null);
   const [error, setError] = useState('');
@@ -89,6 +96,13 @@ export default function PlacesPanel({ places, onClose, onStartPlacing, onChanged
                   </div>
                 </button>
                 <div className="actions">
+                  <button
+                    type="button"
+                    className="small"
+                    onClick={() => onNavigate(p)}
+                  >
+                    Yola çık
+                  </button>
                   <button
                     type="button"
                     className="small secondary"

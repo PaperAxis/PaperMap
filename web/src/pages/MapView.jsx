@@ -91,6 +91,8 @@ export default function MapView() {
   const [sosConfirm, setSosConfirm] = useState(false);
   const [sosBusy, setSosBusy] = useState(false);
   const [sosAlert, setSosAlert] = useState(null); // gelen acil durum cagrisi
+  const [myTrip, setMyTrip] = useState(null); // { destLabel, etaMinutes }
+  const [peerTrips, setPeerTrips] = useState({}); // userId -> trip
   const [geofences, setGeofences] = useState([]);
   const [geofencePanelOpen, setGeofencePanelOpen] = useState(false);
   const [placingMode, setPlacingMode] = useState(false);
@@ -326,7 +328,34 @@ export default function MapView() {
     });
     socket.on('peers:changed', () => socket.emit('refresh'));
     socket.on('sos', (payload) => setSosAlert(payload));
+    socket.on('trip:update', (t) => {
+      if (t.userId === user.id) {
+        setMyTrip({ destLabel: t.destLabel, etaMinutes: t.etaMinutes });
+      } else {
+        setPeerTrips((prev) => ({ ...prev, [t.userId]: t }));
+      }
+    });
+    socket.on('trip:ended', ({ userId: uid }) => {
+      if (uid === user.id) {
+        setMyTrip(null);
+      } else {
+        setPeerTrips((prev) => {
+          const next = { ...prev };
+          delete next[uid];
+          return next;
+        });
+      }
+    });
     return () => socket.close();
+  }, []);
+
+  // Etkin yolculugumu yukle
+  useEffect(() => {
+    api('/api/trips/mine')
+      .then((d) => {
+        if (d.trip) setMyTrip({ destLabel: d.trip.destLabel, etaMinutes: null });
+      })
+      .catch(() => {});
   }, []);
 
   // Konum izleme
@@ -492,6 +521,28 @@ export default function MapView() {
   function startPlacingPlace() {
     setPlacesPanelOpen(false);
     setPlacingPlace(true);
+  }
+
+  async function startTrip(place) {
+    setPlacesPanelOpen(false);
+    try {
+      await api('/api/trips', {
+        method: 'POST',
+        body: { destLat: place.lat, destLng: place.lng, destLabel: place.name },
+      });
+      setMyTrip({ destLabel: place.name, etaMinutes: null });
+    } catch (err) {
+      setGeoError(err.message);
+    }
+  }
+
+  async function cancelTrip() {
+    try {
+      await api('/api/trips', { method: 'DELETE' });
+      setMyTrip(null);
+    } catch (err) {
+      setGeoError(err.message);
+    }
   }
 
   function focusPlace(p) {
@@ -713,6 +764,15 @@ export default function MapView() {
           </button>
         </div>
       )}
+      {myTrip && (
+        <div className="geo-banner">
+          {myTrip.destLabel} hedefine gidiyorsun
+          {myTrip.etaMinutes != null ? ` · ~${myTrip.etaMinutes} dk` : ''}{' '}
+          <button type="button" className="link-btn" onClick={cancelTrip}>
+            İptal
+          </button>
+        </div>
+      )}
       {sosAlert && (
         <div className="sos-banner">
           <Siren size={16} />
@@ -833,7 +893,12 @@ export default function MapView() {
           >
             Konum geçmişim
           </button>
-          <PeerList peers={peerList} onSelect={focusPeer} onHistory={showHistory} />
+          <PeerList
+            peers={peerList}
+            trips={peerTrips}
+            onSelect={focusPeer}
+            onHistory={showHistory}
+          />
         </div>
       )}
 
@@ -853,6 +918,7 @@ export default function MapView() {
           onStartPlacing={startPlacingPlace}
           onChanged={loadPlaces}
           onFocus={focusPlace}
+          onNavigate={startTrip}
         />
       )}
 

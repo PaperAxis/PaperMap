@@ -673,6 +673,11 @@ button.small {
   font-weight: 700;
 }
 
+.trip-sub {
+  color: var(--accent-dark);
+  font-weight: 600;
+}
+
 /* --- Family --- */
 .family-card {
   border: 1px solid var(--border);

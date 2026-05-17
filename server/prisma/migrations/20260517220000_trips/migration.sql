@@ -1,0 +1,13 @@
+-- CreateTable
+CREATE TABLE "Trip" (
+    "userId" TEXT NOT NULL,
+    "destLat" DOUBLE PRECISION NOT NULL,
+    "destLng" DOUBLE PRECISION NOT NULL,
+    "destLabel" TEXT NOT NULL,
+    "startedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Trip_pkey" PRIMARY KEY ("userId")
+);
+
+-- AddForeignKey
+ALTER TABLE "Trip" ADD CONSTRAINT "Trip_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

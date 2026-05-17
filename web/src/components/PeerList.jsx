@@ -2,7 +2,7 @@ import { timeAgo } from '../lib/time.js';
 import { batteryLabel } from '../lib/battery.js';
 import Avatar from './Avatar.jsx';
 
-export default function PeerList({ peers, onSelect, onHistory }) {
+export default function PeerList({ peers, trips = {}, onSelect, onHistory }) {
   if (peers.length === 0) {
     return (
       <p className="empty">
@@ -34,6 +34,11 @@ export default function PeerList({ peers, onSelect, onHistory }) {
                   : ''}
                 {timeAgo(p.updatedAt)}
               </div>
+              {trips[p.userId] && (
+                <div className="sub trip-sub">
+                  → {trips[p.userId].destLabel} · ~{trips[p.userId].etaMinutes} dk
+                </div>
+              )}
             </div>
           </button>
           <button

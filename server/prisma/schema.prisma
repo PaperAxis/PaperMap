@@ -40,6 +40,18 @@ model User {
   hiddenPeers       HiddenPeer[]    @relation("hider")
   hiddenByPeers     HiddenPeer[]    @relation("hiddenTarget")
   shareLinks        ShareLink[]
+  trip              Trip?
+}
+
+// Kullanicinin etkin yolculugu — bir hedefe varis tahmini (ETA) icin
+model Trip {
+  userId    String   @id
+  destLat   Float
+  destLng   Float
+  destLabel String
+  startedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // Hesapsiz kisilere konumu gosteren, suresi dolan herkese acik baglanti

@@ -20,6 +20,7 @@ import placesRoutes from './routes/places.js';
 import privacyRoutes from './routes/privacy.js';
 import shareLinksRoutes from './routes/sharelinks.js';
 import publicRoutes from './routes/public.js';
+import tripsRoutes from './routes/trips.js';
 
 const app = express();
 
@@ -79,6 +80,7 @@ app.use('/api/places', placesRoutes);
 app.use('/api/privacy', privacyRoutes);
 app.use('/api/sharelinks', shareLinksRoutes);
 app.use('/api/public', publicRoutes);
+app.use('/api/trips', tripsRoutes);
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
