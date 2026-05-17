@@ -1,18 +1,13 @@
 import { useRef, useState } from 'react';
 import { api, apiUpload, API_BASE } from '../lib/api.js';
 import { useAuth } from '../lib/auth.jsx';
+import { FONTS } from '../lib/fonts.js';
 import Avatar from '../components/Avatar.jsx';
 
 const THEMES = [
   { value: 'light', label: 'Açık' },
   { value: 'dark', label: 'Koyu' },
   { value: 'system', label: 'Sistem' },
-];
-
-const FONTS = [
-  { value: 'default', label: 'Varsayılan' },
-  { value: 'atkinson', label: 'Atkinson Hyperlegible (yüksek okunabilirlik)' },
-  { value: 'opendyslexic', label: 'OpenDyslexic (disleksi dostu)' },
 ];
 
 export default function Profile() {
@@ -208,16 +203,19 @@ export default function Profile() {
         </div>
         <div className="field">
           <label>Yazı tipi</label>
-          <select
-            value={user.fontPref}
-            onChange={(e) => changeAppearance({ fontPref: e.target.value })}
-          >
+          <div className="font-list">
             {FONTS.map((f) => (
-              <option key={f.value} value={f.value}>
-                {f.label}
-              </option>
+              <button
+                key={f.id}
+                type="button"
+                className={`font-option ${user.fontPref === f.id ? 'selected' : ''}`}
+                style={{ fontFamily: f.stack }}
+                onClick={() => changeAppearance({ fontPref: f.id })}
+              >
+                {f.name}
+              </button>
             ))}
-          </select>
+          </div>
         </div>
       </div>
 

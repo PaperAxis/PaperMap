@@ -30,14 +30,6 @@
   color-scheme: dark;
 }
 
-[data-font='atkinson'] {
-  --font-family: 'Atkinson Hyperlegible', sans-serif;
-}
-
-[data-font='opendyslexic'] {
-  --font-family: 'OpenDyslexic', sans-serif;
-}
-
 * {
   box-sizing: border-box;
   margin: 0;
@@ -579,4 +571,25 @@ form.card {
   display: flex;
   gap: 8px;
   padding: 38px 16px 16px;
+}
+
+/* --- Font secici --- */
+.font-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.font-option {
+  text-align: left;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-size: 16px;
+  padding: 11px 14px;
+}
+
+.font-option.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent) inset;
 }

@@ -1,3 +1,5 @@
+import { fontStack } from './fonts.js';
+
 const THEME_KEY = 'papermap_theme';
 const FONT_KEY = 'papermap_font';
 
@@ -12,7 +14,7 @@ function resolveTheme(theme) {
 export function applyAppearance(theme = 'light', fontPref = 'default') {
   const root = document.documentElement;
   root.setAttribute('data-theme', resolveTheme(theme));
-  root.setAttribute('data-font', fontPref);
+  root.style.setProperty('--font-family', fontStack(fontPref));
   try {
     localStorage.setItem(THEME_KEY, theme);
     localStorage.setItem(FONT_KEY, fontPref);
