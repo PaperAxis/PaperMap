@@ -22,6 +22,9 @@ server/prisma/*.db
 # Yuklenen dosyalar (yerel)
 server/uploads/
 
+# Harita tile verisi (VDS'te uretilir, repoya konmaz)
+tiles/
+
 # Editor / OS
 .DS_Store
 .idea/

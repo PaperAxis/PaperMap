@@ -48,6 +48,19 @@ services:
     ports:
       - "${BIND_HOST:-127.0.0.1}:${WEB_HOST_PORT:-8080}:80"
 
+  # Self-hosted vektor harita tile sunucusu (Turkiye).
+  # turkey.mbtiles "scripts/build-turkey-tiles.sh" ile uretilir.
+  tiles:
+    image: maptiler/tileserver-gl-light:latest
+    restart: unless-stopped
+    command: ["--file", "/data/turkey.mbtiles", "--port", "8080"]
+    volumes:
+      - ./tiles:/data
+    networks:
+      default:
+        aliases:
+          - papermap-tiles
+
 volumes:
   papermap_db:
   papermap_uploads:
