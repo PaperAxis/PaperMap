@@ -6,6 +6,9 @@ Aile ve arkadaşlarla karşılıklı **konum paylaşımı** yapılan bir harita 
 - **Arkadaş**: E-posta ile birebir arkadaş ekle, kabul edildikten sonra birbirinizi haritada görün.
 - **Gerçek zamanlı**: Konumlar Socket.IO (WebSocket) ile anlık güncellenir.
 - **Gizlilik**: Konum paylaşımını istediğin an aç/kapat. Kapalıyken kimse seni göremez.
+- **Profil**: Banner, görünen ad, avatar rengi ve şifre düzenleme.
+- **Görünüm**: Açık/koyu/sistem teması ve yazı tipi seçimi — disleksi dostu
+  OpenDyslexic dahil. Tercihler hesaba kayıtlıdır, tüm cihazlarda senkron.
 - **Mobil**: Capacitor ile Android uygulamasına paketlenir.
 
 ## Teknolojiler
