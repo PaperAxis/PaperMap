@@ -68,77 +68,53 @@ git pull && docker compose up -d --build
 
 Çalıştıktan sonra konteynerler (yalnızca `127.0.0.1` üzerinde):
 
-- `127.0.0.1:4015` → backend (API + Socket.IO)
-- `127.0.0.1:8080` → web arayüzü
+- `127.0.0.1:8080` → web arayüzü (**tek giriş noktası**)
+- `127.0.0.1:4015` → backend (yalnızca hata ayıklama için)
 
 ### Reverse proxy yönlendirmesi
 
-`maps.paperaxis.com` tek alan adından hem APK hem web çalışır. Yönlendirme
-(Socket.IO için **WebSocket upgrade** şart):
+`web` konteyneri tek giriş noktasıdır: `/api/` ve `/socket.io/` isteklerini
+kendi içinde backend'e (`server:4015`) yönlendirir, geri kalanı React arayüzünü
+sunar. Dolayısıyla dış reverse proxy'nizin **tek yapması gereken**
+`maps.paperaxis.com` → `web` (port 80) yönlendirmesidir (WebSocket açık).
 
-| Yol           | Hedef          |
-|---------------|----------------|
-| `/api/`       | backend (4015) |
-| `/socket.io/` | backend (4015) |
-| `/`           | web (80)       |
+**Proxy doğrudan VDS host'unda ise:** `proxy_pass http://127.0.0.1:8080;`
 
-#### Durum A — Proxy doğrudan VDS host'unda çalışıyor
+**Proxy bir Docker konteynerinde ise:** proxy'yi `papermap-net` ağına bağlayın
+ve `web` servis adına yönlendirin:
 
-`proxy_pass` hedefi `127.0.0.1` (`BIND_HOST` varsayılanı):
+```yaml
+# Proxy'nin kendi compose dosyasina:
+services:
+  <proxy-servisiniz>:
+    networks: [default, papermap-net]
+networks:
+  papermap-net:
+    external: true
+```
 
 ```nginx
 server {
     server_name maps.paperaxis.com;
     # ... TLS ayarlariniz ...
+    resolver 127.0.0.11 valid=30s;
 
-    location /api/ {
-        proxy_pass http://127.0.0.1:4015;
-        proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-    location /socket.io/ {
-        proxy_pass http://127.0.0.1:4015;
+    location / {
+        set $papermap_web web:80;
+        proxy_pass http://$papermap_web;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
-    }
-    location / {
-        proxy_pass http://127.0.0.1:8080;
-        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
 ```
 
-#### Durum B — Proxy bir Docker konteynerinde çalışıyor
-
-Proxy konteynerinin içinde `127.0.0.1` proxy'nin kendisidir; PaperMap'e ulaşamaz
-ve **502** alırsınız. Çözüm: proxy'yi PaperMap'in ağına bağlayıp **servis
-adlarına** yönlendirin.
-
-1. Proxy'yi `papermap-net` ağına ekleyin. Proxy'nin compose dosyasına:
-
-   ```yaml
-   services:
-     <proxy-servisiniz>:
-       networks: [default, papermap-net]
-   networks:
-     papermap-net:
-       external: true
-   ```
-
-   Sonra `docker compose up -d`. (Hızlı/geçici yöntem:
-   `docker network connect papermap-net <proxy-konteyner-adi>`)
-
-2. `proxy_pass` hedeflerini servis adlarına çevirin (port host eşlemesi değil,
-   konteynerin iç portu — web için **80**):
-
-   ```nginx
-   location /api/        { proxy_pass http://server:4015; ... }
-   location /socket.io/  { proxy_pass http://server:4015; ... }  # + websocket header'lari
-   location /            { proxy_pass http://web:80;       ... }
-   ```
+> **Nginx Proxy Manager** kullanıyorsanız: NPM konteynerini `papermap-net` ağına
+> ekleyin, sonra **Proxy Host** oluşturun → Forward Hostname `web`, Forward Port
+> `80`, **Websockets Support: AÇIK**. Custom location gerekmez.
 
 ## Geliştirme (Docker'sız)
 
