@@ -237,18 +237,20 @@ export default function Profile() {
             required
           />
         </div>
-        <div className="field">
-          <label>Avatar rengi</label>
-          <div className="color-row">
-            <input
-              type="color"
-              value={avatarColor}
-              onChange={(e) => setAvatarColor(e.target.value)}
-            />
-            <span className="muted">{avatarColor}</span>
-            <Avatar name={displayName} color={avatarColor} size={36} />
+        {!user.avatarPath && (
+          <div className="field">
+            <label>Avatar rengi</label>
+            <div className="color-row">
+              <input
+                type="color"
+                value={avatarColor}
+                onChange={(e) => setAvatarColor(e.target.value)}
+              />
+              <span className="muted">{avatarColor}</span>
+              <Avatar name={displayName} color={avatarColor} size={36} />
+            </div>
           </div>
-        </div>
+        )}
         <button type="submit" disabled={busy}>
           Kaydet
         </button>
