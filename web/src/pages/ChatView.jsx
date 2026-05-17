@@ -14,15 +14,18 @@ export default function ChatView() {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
   const endRef = useRef(null);
 
   useEffect(() => {
+    setLoading(true);
     api(`/api/conversations/${id}/messages`)
       .then((d) => {
         setConversation(d.conversation);
         setMessages(d.messages);
       })
-      .catch((e) => setError(e.message));
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
     markRead(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
@@ -61,14 +64,24 @@ export default function ChatView() {
   return (
     <div className="chat-page">
       <div className="chat-header">
-        <button type="button" className="link-btn" onClick={() => navigate('/messages')}>
+        <button
+          type="button"
+          className="link-btn"
+          aria-label="Geri"
+          onClick={() => navigate('/messages')}
+        >
           ←
         </button>
         <span className="chat-title">{conversation?.title || 'Sohbet'}</span>
       </div>
 
       <div className="chat-messages">
-        {messages.length === 0 && (
+        {loading && (
+          <p className="empty" style={{ textAlign: 'center' }}>
+            Yükleniyor…
+          </p>
+        )}
+        {!loading && messages.length === 0 && (
           <p className="empty" style={{ textAlign: 'center' }}>
             Henüz mesaj yok. İlk mesajı sen gönder.
           </p>

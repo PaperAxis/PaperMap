@@ -6,6 +6,7 @@ import { NotificationProvider } from './lib/notifications.jsx';
 import { MessagesProvider } from './lib/messages.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import Nav from './components/Nav.jsx';
+import OfflineBanner from './components/OfflineBanner.jsx';
 
 // Sayfalar tembel yuklenir — baslangic paketi kucuk kalir (ozellikle harita
 // kutuphanesi yalnizca harita acilinca indirilir).
@@ -45,6 +46,7 @@ export default function App() {
       <AuthProvider>
         <NotificationProvider>
           <MessagesProvider>
+            <OfflineBanner />
             <Suspense fallback={<div className="center">Yükleniyor…</div>}>
             <Routes>
               <Route path="/login" element={<Login />} />

@@ -5,7 +5,7 @@ import { timeAgo } from '../lib/time.js';
 import Avatar from '../components/Avatar.jsx';
 
 export default function Messages() {
-  const { conversations } = useMessages();
+  const { conversations, loading, loadError, reload } = useMessages();
 
   return (
     <div className="page">
@@ -16,7 +16,16 @@ export default function Messages() {
         </Link>
       </div>
 
-      {conversations.length === 0 ? (
+      {loading ? (
+        <p className="empty">Yükleniyor…</p>
+      ) : loadError ? (
+        <div className="error">
+          Sohbetler yüklenemedi.{' '}
+          <button type="button" className="link-btn" onClick={reload}>
+            Yeniden dene
+          </button>
+        </div>
+      ) : conversations.length === 0 ? (
         <p className="empty">
           Henüz sohbet yok. Bir arkadaşının profilinden mesaj gönder ya da grup kur.
         </p>

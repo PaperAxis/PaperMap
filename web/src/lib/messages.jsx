@@ -8,19 +8,25 @@ const MessagesContext = createContext(null);
 export function MessagesProvider({ children }) {
   const { user } = useAuth();
   const [conversations, setConversations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const listenersRef = useRef(new Set());
 
   function reload() {
+    setLoadError(false);
     api('/api/conversations')
       .then((d) => setConversations(d.conversations))
-      .catch(() => {});
+      .catch(() => setLoadError(true))
+      .finally(() => setLoading(false));
   }
 
   useEffect(() => {
     if (!user) {
       setConversations([]);
+      setLoading(false);
       return undefined;
     }
+    setLoading(true);
     reload();
     const socket = createSocket(getToken());
     socket.on('message', (payload) => {
@@ -70,7 +76,7 @@ export function MessagesProvider({ children }) {
 
   return (
     <MessagesContext.Provider
-      value={{ conversations, unreadTotal, reload, subscribe, markRead }}
+      value={{ conversations, loading, loadError, unreadTotal, reload, subscribe, markRead }}
     >
       {children}
     </MessagesContext.Provider>

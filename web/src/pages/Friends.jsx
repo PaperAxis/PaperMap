@@ -9,12 +9,15 @@ export default function Friends() {
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   async function load() {
     try {
       setData(await api('/api/friends'));
     } catch (err) {
       setError(err.message);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -148,7 +151,9 @@ export default function Friends() {
 
       <div className="card">
         <h3>Arkadaşların ({data.friends.length})</h3>
-        {data.friends.length === 0 ? (
+        {loading ? (
+          <p className="empty">Yükleniyor…</p>
+        ) : data.friends.length === 0 ? (
           <p className="empty">Henüz arkadaşın yok. Yukarıdan e-posta ile ekle.</p>
         ) : (
           <div className="list">

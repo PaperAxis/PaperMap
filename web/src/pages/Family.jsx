@@ -12,6 +12,7 @@ export default function Family() {
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   async function load() {
     try {
@@ -19,6 +20,8 @@ export default function Family() {
       setFamilies(d.families);
     } catch (err) {
       setError(err.message);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -105,7 +108,9 @@ export default function Family() {
       {error && <div className="error">{error}</div>}
       {info && <div className="badge">{info}</div>}
 
-      {family ? (
+      {loading ? (
+        <p className="empty">Yükleniyor…</p>
+      ) : family ? (
         <div className="card">
           <h3>Aileniz</h3>
           <div className="family-card">
