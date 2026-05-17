@@ -81,6 +81,12 @@ router.post('/', requireAuth, async (req, res) => {
   if (!name || !String(name).trim()) {
     return res.status(400).json({ error: 'Aile adı zorunlu' });
   }
+  const inFamily = await prisma.familyMember.count({ where: { userId: req.userId } });
+  if (inFamily > 0) {
+    return res.status(409).json({
+      error: 'Zaten bir ailedesiniz. Yeni aile için önce mevcut ailenizden ayrılın.',
+    });
+  }
   const inviteCode = await uniqueInviteCode();
   const family = await prisma.family.create({
     data: {
@@ -106,11 +112,11 @@ router.post('/join', requireAuth, async (req, res) => {
   if (!family) {
     return res.status(404).json({ error: 'Geçersiz davet kodu' });
   }
-  const existing = await prisma.familyMember.findUnique({
-    where: { familyId_userId: { familyId: family.id, userId: req.userId } },
-  });
-  if (existing) {
-    return res.status(409).json({ error: 'Bu ailenin zaten üyesisiniz' });
+  const inFamily = await prisma.familyMember.count({ where: { userId: req.userId } });
+  if (inFamily > 0) {
+    return res.status(409).json({
+      error: 'Zaten bir ailedesiniz. Yeni bir aileye katılmak için önce mevcut ailenizden ayrılın.',
+    });
   }
   const before = await prisma.familyMember.findMany({
     where: { familyId: family.id },
