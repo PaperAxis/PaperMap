@@ -29,6 +29,7 @@ function memberView(m) {
     id: m.user.id,
     displayName: m.user.displayName,
     email: m.user.email,
+    avatarColor: m.user.avatarColor,
     role: m.role,
     joinedAt: m.joinedAt,
   };

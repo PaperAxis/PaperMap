@@ -50,4 +50,60 @@ router.get('/me', requireAuth, async (req, res) => {
   res.json({ user: publicUser(user) });
 });
 
+// Profil güncelleme (ad, avatar rengi, tema, font)
+router.patch('/profile', requireAuth, async (req, res) => {
+  const { displayName, avatarColor, theme, fontPref } = req.body || {};
+  const data = {};
+
+  if (displayName !== undefined) {
+    const name = String(displayName).trim();
+    if (!name) return res.status(400).json({ error: 'Görünen ad boş olamaz' });
+    data.displayName = name;
+  }
+  if (avatarColor !== undefined) {
+    if (!/^#[0-9a-fA-F]{6}$/.test(String(avatarColor))) {
+      return res.status(400).json({ error: 'Geçersiz renk kodu' });
+    }
+    data.avatarColor = String(avatarColor).toLowerCase();
+  }
+  if (theme !== undefined) {
+    if (!['light', 'dark', 'system'].includes(theme)) {
+      return res.status(400).json({ error: 'Geçersiz tema' });
+    }
+    data.theme = theme;
+  }
+  if (fontPref !== undefined) {
+    if (!['default', 'atkinson', 'opendyslexic'].includes(fontPref)) {
+      return res.status(400).json({ error: 'Geçersiz font' });
+    }
+    data.fontPref = fontPref;
+  }
+  if (Object.keys(data).length === 0) {
+    return res.status(400).json({ error: 'Güncellenecek alan yok' });
+  }
+
+  const user = await prisma.user.update({ where: { id: req.userId }, data });
+  res.json({ user: publicUser(user) });
+});
+
+// Şifre değiştirme
+router.post('/password', requireAuth, async (req, res) => {
+  const { currentPassword, newPassword } = req.body || {};
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'currentPassword ve newPassword zorunlu' });
+  }
+  if (String(newPassword).length < 6) {
+    return res.status(400).json({ error: 'Yeni şifre en az 6 karakter olmalı' });
+  }
+  const user = await prisma.user.findUnique({ where: { id: req.userId } });
+  if (!(await verifyPassword(currentPassword, user.passwordHash))) {
+    return res.status(401).json({ error: 'Mevcut şifre hatalı' });
+  }
+  await prisma.user.update({
+    where: { id: req.userId },
+    data: { passwordHash: await hashPassword(newPassword) },
+  });
+  res.json({ ok: true });
+});
+
 export default router;

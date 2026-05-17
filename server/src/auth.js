@@ -18,11 +18,16 @@ export function verifyToken(token) {
   return jwt.verify(token, config.jwtSecret);
 }
 
+// Oturum sahibinin kendi profili (tum alanlar dahil)
 export function publicUser(u) {
   return {
     id: u.id,
     email: u.email,
     displayName: u.displayName,
     sharingEnabled: u.sharingEnabled,
+    avatarColor: u.avatarColor,
+    bannerPath: u.bannerPath,
+    theme: u.theme,
+    fontPref: u.fontPref,
   };
 }

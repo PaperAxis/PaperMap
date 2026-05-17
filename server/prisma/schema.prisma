@@ -13,6 +13,10 @@ model User {
   displayName    String
   passwordHash   String
   sharingEnabled Boolean  @default(true)
+  avatarColor    String   @default("#10b981")
+  bannerPath     String?
+  theme          String   @default("light") // light | dark | system
+  fontPref       String   @default("default") // default | atkinson | opendyslexic
   createdAt      DateTime @default(now())
 
   sentRequests      Friendship[]   @relation("requester")

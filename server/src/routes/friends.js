@@ -6,7 +6,12 @@ import { notifyPeersChanged } from '../socket.js';
 const router = Router();
 
 function friendView(u) {
-  return { id: u.id, displayName: u.displayName, email: u.email };
+  return {
+    id: u.id,
+    displayName: u.displayName,
+    email: u.email,
+    avatarColor: u.avatarColor,
+  };
 }
 
 // Arkadaslar + gelen/giden bekleyen istekler
