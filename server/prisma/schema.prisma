@@ -18,6 +18,7 @@ model User {
   bannerPath     String?
   theme          String   @default("light") // light | dark | system
   fontPref       String   @default("default") // default | atkinson | opendyslexic
+  iconStyle      String   @default("normal") // normal | thin | bold | sharp
   isAdmin        Boolean  @default(false)
   disabled       Boolean  @default(false)
   createdAt      DateTime @default(now())

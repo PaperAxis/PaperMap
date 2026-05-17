@@ -1,9 +1,10 @@
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Wrench } from 'lucide-react';
+import { Wrench, Star } from 'lucide-react';
 import { api, apiUpload, API_BASE } from '../lib/api.js';
 import { useAuth } from '../lib/auth.jsx';
 import { FONTS } from '../lib/fonts.js';
+import { ICON_STYLES } from '../lib/iconStyles.js';
 import Avatar from '../components/Avatar.jsx';
 import ThemePicker from '../components/ThemePicker.jsx';
 
@@ -286,6 +287,22 @@ export default function Profile() {
                 onClick={() => changeAppearance({ fontPref: f.id })}
               >
                 {f.name}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="field">
+          <label>İkon stili</label>
+          <div className="font-list">
+            {ICON_STYLES.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                className={`font-option ${user.iconStyle === s.id ? 'selected' : ''}`}
+                onClick={() => changeAppearance({ iconStyle: s.id })}
+              >
+                <Star size={20} style={s.preview} />
+                {s.name}
               </button>
             ))}
           </div>

@@ -19,10 +19,10 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false));
   }, []);
 
-  // Kullanicinin tema/font tercihini uygula (cikis yapinca varsayilana doner)
+  // Kullanicinin tema/font/ikon tercihini uygula (cikis yapinca varsayilana doner)
   useEffect(() => {
-    applyAppearance(user?.theme, user?.fontPref);
-  }, [user?.theme, user?.fontPref]);
+    applyAppearance(user?.theme, user?.fontPref, user?.iconStyle);
+  }, [user?.theme, user?.fontPref, user?.iconStyle]);
 
   async function login(email, password) {
     const d = await api('/api/auth/login', { method: 'POST', body: { email, password } });

@@ -96,6 +96,13 @@ router.patch('/profile', requireAuth, async (req, res) => {
     }
     data.fontPref = fontPref;
   }
+  if (req.body?.iconStyle !== undefined) {
+    const iconStyle = req.body.iconStyle;
+    if (typeof iconStyle !== 'string' || !/^[a-z]{1,16}$/.test(iconStyle)) {
+      return res.status(400).json({ error: 'Geçersiz ikon stili' });
+    }
+    data.iconStyle = iconStyle;
+  }
   if (Object.keys(data).length === 0) {
     return res.status(400).json({ error: 'Güncellenecek alan yok' });
   }

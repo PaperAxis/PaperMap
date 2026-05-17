@@ -925,3 +925,18 @@ input[type='range'] {
   background: color-mix(in srgb, var(--danger) 18%, var(--card));
   color: var(--danger);
 }
+
+/* --- İkon stilleri (SVG stroke) — her cihazda aynı --- */
+[data-icons='thin'] svg {
+  stroke-width: 1.3;
+}
+
+[data-icons='bold'] svg {
+  stroke-width: 2.75;
+}
+
+[data-icons='sharp'] svg {
+  stroke-width: 2;
+  stroke-linejoin: miter;
+  stroke-linecap: square;
+}
