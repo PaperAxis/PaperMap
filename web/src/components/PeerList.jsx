@@ -1,4 +1,5 @@
 import { timeAgo } from '../lib/time.js';
+import { batteryLabel } from '../lib/battery.js';
 import Avatar from './Avatar.jsx';
 
 export default function PeerList({ peers, onSelect }) {
@@ -28,7 +29,12 @@ export default function PeerList({ peers, onSelect }) {
             />
             <div className="info">
               <div className="name">{p.displayName}</div>
-              <div className="sub">{timeAgo(p.updatedAt)}</div>
+              <div className="sub">
+                {batteryLabel(p.battery, p.charging)
+                  ? `${batteryLabel(p.battery, p.charging)} · `
+                  : ''}
+                {timeAgo(p.updatedAt)}
+              </div>
             </div>
           </div>
           <span className="peer-go">→</span>

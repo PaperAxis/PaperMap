@@ -4,6 +4,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { api, getToken, API_BASE } from '../lib/api.js';
 import { createSocket } from '../lib/socket.js';
 import { watchPosition } from '../lib/geo.js';
+import { getBattery, batteryLabel } from '../lib/battery.js';
 import { timeAgo } from '../lib/time.js';
 import { useAuth } from '../lib/auth.jsx';
 import { buildMapStyle } from '../lib/mapStyle.js';
@@ -192,11 +193,15 @@ export default function MapView() {
   // Konum izleme
   useEffect(() => {
     const stop = watchPosition(
-      (pos) => {
+      async (pos) => {
         setGeoError('');
         setMyPos(pos);
+        const bat = await getBattery();
         // Konum HTTP ile gonderilir — arka planda da calisir
-        api('/api/location', { method: 'POST', body: pos }).catch(() => {});
+        api('/api/location', {
+          method: 'POST',
+          body: { ...pos, battery: bat?.level, charging: bat?.charging },
+        }).catch(() => {});
       },
       (err) => {
         setGeoError(
@@ -244,7 +249,10 @@ export default function MapView() {
       }
     }
     for (const p of Object.values(peers)) {
-      const html = `<b>${escapeHtml(p.displayName)}</b><br>${timeAgo(p.updatedAt)}`;
+      const meta = batteryLabel(p.battery, p.charging);
+      const html = `<b>${escapeHtml(p.displayName)}</b><br>${
+        meta ? `${meta} · ` : ''
+      }${timeAgo(p.updatedAt)}`;
       if (markers[p.userId]) {
         markers[p.userId].setLngLat([p.lng, p.lat]);
         setAvatar(
