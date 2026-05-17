@@ -8,8 +8,8 @@ const router = Router();
 
 // Konum guncellemesi (arka plan / HTTP — Socket.IO alternatifi)
 router.post('/', requireAuth, async (req, res) => {
-  const { lat, lng, accuracy } = req.body || {};
-  await handleLocationUpdate(req.userId, lat, lng, accuracy);
+  const { lat, lng, accuracy, battery, charging } = req.body || {};
+  await handleLocationUpdate(req.userId, lat, lng, accuracy, battery, charging);
   res.json({ ok: true });
 });
 

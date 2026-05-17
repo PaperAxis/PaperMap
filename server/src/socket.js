@@ -20,6 +20,8 @@ function peerPayload(user, loc) {
     lat: loc.lat,
     lng: loc.lng,
     accuracy: loc.accuracy ?? null,
+    battery: loc.battery ?? null,
+    charging: loc.charging ?? null,
     updatedAt: loc.updatedAt,
   };
 }
@@ -36,17 +38,31 @@ async function snapshotFor(userId) {
 }
 
 // Konum guncellemesini isler — hem Socket.IO hem HTTP (arka plan) icin.
-export async function handleLocationUpdate(userId, rawLat, rawLng, rawAccuracy) {
+export async function handleLocationUpdate(
+  userId,
+  rawLat,
+  rawLng,
+  rawAccuracy,
+  rawBattery,
+  rawCharging,
+) {
   const lat = Number(rawLat);
   const lng = Number(rawLng);
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
   if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return;
   const accuracy = Number.isFinite(Number(rawAccuracy)) ? Number(rawAccuracy) : null;
 
+  let battery = null;
+  if (rawBattery != null) {
+    const b = Math.round(Number(rawBattery));
+    if (Number.isFinite(b) && b >= 0 && b <= 100) battery = b;
+  }
+  const charging = typeof rawCharging === 'boolean' ? rawCharging : null;
+
   const loc = await prisma.location.upsert({
     where: { userId },
-    create: { userId, lat, lng, accuracy },
-    update: { lat, lng, accuracy },
+    create: { userId, lat, lng, accuracy, battery, charging },
+    update: { lat, lng, accuracy, battery, charging },
   });
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -85,9 +101,14 @@ export function initSocket(httpServer) {
     // Dinleyiciler senkron kaydedilir — baglanti sonrasi gelen ilk
     // location:update olayinin kaybolmamasi icin (await'ten once).
     socket.on('location:update', (data) => {
-      handleLocationUpdate(userId, data?.lat, data?.lng, data?.accuracy).catch(
-        (err) => console.error('location:update:', err),
-      );
+      handleLocationUpdate(
+        userId,
+        data?.lat,
+        data?.lng,
+        data?.accuracy,
+        data?.battery,
+        data?.charging,
+      ).catch((err) => console.error('location:update:', err));
     });
 
     socket.on('refresh', () => {
