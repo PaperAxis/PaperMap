@@ -57,7 +57,10 @@ cp .env.example .env
 #   VITE_API_URL      = https://maps.paperaxis.com
 #   BIND_HOST         = 127.0.0.1   (reverse proxy ayni VDS'te ise)
 
-# 4) Baslat (arka planda) — migration'lar otomatik uygulanir
+# 4) Turkiye harita verisini uret (planetiler, birkac dakika surer)
+./scripts/build-turkey-tiles.sh
+
+# 5) Baslat (arka planda) — migration'lar otomatik uygulanir
 docker compose up -d --build
 
 # Durum / loglar / durdurma
@@ -68,6 +71,18 @@ docker compose down
 # Guncelleme (yeni kod sonrasi)
 git pull && docker compose up -d --build
 ```
+
+### Harita verisi (self-hosted)
+
+Harita kutucukları kendi sunucunda barındırılır — dış harita servisine bağımlılık
+yoktur. `scripts/build-turkey-tiles.sh` betiği [planetiler](https://github.com/onthegomap/planetiler)
+ile OpenStreetMap Türkiye verisinden vektör tile üretir (`tiles/turkey.mbtiles`,
+~1-3 GB). `tiles` servisi (`tileserver-gl`) bunu sunar; web arayüzü `/tiles/`
+üzerinden erişir. Harita stilleri (açık/koyu) `web/src/lib/mapStyle.js` içinde
+tanımlıdır — renkler tema ile birlikte değişir.
+
+Haritayı güncellemek için (yeni OSM verisi): betiği tekrar çalıştırıp
+`docker compose restart tiles` deyin.
 
 Çalıştıktan sonra konteynerler (yalnızca `127.0.0.1` üzerinde):
 

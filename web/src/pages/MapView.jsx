@@ -6,16 +6,11 @@ import { createSocket } from '../lib/socket.js';
 import { watchPosition } from '../lib/geo.js';
 import { timeAgo } from '../lib/time.js';
 import { useAuth } from '../lib/auth.jsx';
+import { buildMapStyle } from '../lib/mapStyle.js';
 import PeerList from '../components/PeerList.jsx';
 
 // [lng, lat] — MapLibre koordinat sirasi
 const TURKEY_CENTER = [35.0, 39.0];
-
-// Temaya gore OpenFreeMap vektor stilleri (acik kaynak, API anahtarsiz)
-const STYLES = {
-  light: 'https://tiles.openfreemap.org/styles/positron',
-  dark: 'https://tiles.openfreemap.org/styles/dark',
-};
 
 function currentMapTheme() {
   return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
@@ -64,7 +59,7 @@ export default function MapView() {
     appliedThemeRef.current = theme;
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: STYLES[theme],
+      style: buildMapStyle(theme),
       center: TURKEY_CENTER,
       zoom: 5,
       attributionControl: false,
@@ -92,7 +87,7 @@ export default function MapView() {
     const map = mapRef.current;
     if (!map || appliedThemeRef.current === mapTheme) return;
     appliedThemeRef.current = mapTheme;
-    map.setStyle(STYLES[mapTheme]);
+    map.setStyle(buildMapStyle(mapTheme));
   }, [mapTheme]);
 
   // Socket baglantisi
