@@ -51,7 +51,8 @@ export function buildMapStyle(theme) {
     sources: {
       openmaptiles: {
         type: 'vector',
-        tiles: [`${TILES}/data/turkey/{z}/{x}/{y}.pbf`],
+        // tileserver-gl, planetiler mbtiles'ina otomatik config'de "v3" adini verir
+        tiles: [`${TILES}/data/v3/{z}/{x}/{y}.pbf`],
         minzoom: 0,
         maxzoom: 14,
       },
