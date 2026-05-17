@@ -16,6 +16,7 @@ import conversationsRoutes from './routes/conversations.js';
 import settingsRoutes from './routes/settings.js';
 import adminRoutes from './routes/admin.js';
 import sosRoutes from './routes/sos.js';
+import placesRoutes from './routes/places.js';
 
 const app = express();
 
@@ -71,6 +72,7 @@ app.use('/api/conversations', conversationsRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/sos', sosRoutes);
+app.use('/api/places', placesRoutes);
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {

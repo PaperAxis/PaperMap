@@ -1,7 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { MapPin, MapPinOff, Users, Flag, LocateFixed, Siren } from 'lucide-react';
+import {
+  MapPin,
+  MapPinOff,
+  Users,
+  Flag,
+  LocateFixed,
+  Siren,
+  Bookmark,
+} from 'lucide-react';
 import { api, getToken, API_BASE } from '../lib/api.js';
 import { createSocket } from '../lib/socket.js';
 import { watchPosition, openLocationSettings } from '../lib/geo.js';
@@ -12,6 +20,7 @@ import { buildMapStyle } from '../lib/mapStyle.js';
 import { geofencesToGeoJSON, historyToGeoJSON } from '../lib/geojson.js';
 import PeerList from '../components/PeerList.jsx';
 import GeofencePanel from '../components/GeofencePanel.jsx';
+import PlacesPanel, { PLACE_COLORS } from '../components/PlacesPanel.jsx';
 
 // [lng, lat] — MapLibre koordinat sirasi
 const TURKEY_CENTER = [35.0, 39.0];
@@ -60,6 +69,7 @@ export default function MapView() {
   const ownMarkerRef = useRef(null);
   const geofencesRef = useRef([]);
   const historyRef = useRef([]);
+  const placeMarkersRef = useRef({});
 
   const [peers, setPeers] = useState({});
   const [myPos, setMyPos] = useState(null);
@@ -83,6 +93,14 @@ export default function MapView() {
   const [gfName, setGfName] = useState('');
   const [gfRadius, setGfRadius] = useState(300);
   const [gfError, setGfError] = useState('');
+
+  const [places, setPlaces] = useState([]);
+  const [placesPanelOpen, setPlacesPanelOpen] = useState(false);
+  const [placingPlace, setPlacingPlace] = useState(false);
+  const [pendingPlace, setPendingPlace] = useState(null);
+  const [plName, setPlName] = useState('');
+  const [plColor, setPlColor] = useState(PLACE_COLORS[0]);
+  const [plError, setPlError] = useState('');
 
   // Geofence katman/kaynaklarini stile ekler veya verisini gunceller
   function syncGeofenceLayers() {
@@ -187,6 +205,16 @@ export default function MapView() {
   }
   useEffect(() => {
     loadGeofences();
+  }, []);
+
+  // Kayitli yerleri yukle
+  function loadPlaces() {
+    api('/api/places')
+      .then((d) => setPlaces(d.places))
+      .catch(() => {});
+  }
+  useEffect(() => {
+    loadPlaces();
   }, []);
 
   // Geofence verisi degisince haritayi guncelle
@@ -354,9 +382,91 @@ export default function MapView() {
     }
   }, [peers]);
 
+  // Kayitli yer isaretcileri
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const markers = placeMarkersRef.current;
+    for (const id of Object.keys(markers)) {
+      if (!places.find((p) => p.id === id)) {
+        markers[id].remove();
+        delete markers[id];
+      }
+    }
+    for (const p of places) {
+      const html = `<b>${escapeHtml(p.name)}</b>`;
+      if (markers[p.id]) {
+        markers[p.id].setLngLat([p.lng, p.lat]);
+        markers[p.id].getElement().style.background = p.color;
+        markers[p.id].getPopup().setHTML(html);
+      } else {
+        const el = document.createElement('div');
+        el.className = 'map-place';
+        el.style.background = p.color;
+        markers[p.id] = new maplibregl.Marker({ element: el })
+          .setLngLat([p.lng, p.lat])
+          .setPopup(new maplibregl.Popup({ offset: 16 }).setHTML(html))
+          .addTo(map);
+      }
+    }
+  }, [places]);
+
+  // Yer yerlestirme modu — haritada tiklama
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !placingPlace) return undefined;
+    function onClick(e) {
+      setPendingPlace({ lat: e.lngLat.lat, lng: e.lngLat.lng });
+      setPlName('');
+      setPlColor(PLACE_COLORS[0]);
+      setPlError('');
+      setPlacingPlace(false);
+    }
+    map.on('click', onClick);
+    map.getCanvas().style.cursor = 'crosshair';
+    return () => {
+      map.off('click', onClick);
+      if (mapRef.current) map.getCanvas().style.cursor = '';
+    };
+  }, [placingPlace]);
+
   function recenter() {
     if (mapRef.current && myPos) {
       mapRef.current.flyTo({ center: [myPos.lng, myPos.lat], zoom: 15 });
+    }
+  }
+
+  function startPlacingPlace() {
+    setPlacesPanelOpen(false);
+    setPlacingPlace(true);
+  }
+
+  function focusPlace(p) {
+    setPlacesPanelOpen(false);
+    const map = mapRef.current;
+    if (!map) return;
+    map.flyTo({ center: [p.lng, p.lat], zoom: 16 });
+    const marker = placeMarkersRef.current[p.id];
+    if (marker && !marker.getPopup().isOpen()) marker.togglePopup();
+  }
+
+  async function createPlace(e) {
+    e.preventDefault();
+    setPlError('');
+    try {
+      const d = await api('/api/places', {
+        method: 'POST',
+        body: {
+          name: plName,
+          lat: pendingPlace.lat,
+          lng: pendingPlace.lng,
+          color: plColor,
+        },
+      });
+      setPlaces((prev) => [d.place, ...prev]);
+      setPendingPlace(null);
+    } catch (err) {
+      setPlError(err.message);
     }
   }
 
@@ -482,8 +592,10 @@ export default function MapView() {
         <button
           type="button"
           className="peer-count"
+          aria-label="Haritadaki kişiler"
           onClick={() => {
             setGeofencePanelOpen(false);
+            setPlacesPanelOpen(false);
             setPanelOpen((v) => !v);
           }}
         >
@@ -493,13 +605,28 @@ export default function MapView() {
         <button
           type="button"
           className="peer-count"
+          aria-label="Alanlar"
           onClick={() => {
             setPanelOpen(false);
+            setPlacesPanelOpen(false);
             setGeofencePanelOpen((v) => !v);
           }}
         >
           <Flag size={16} />
           {geofences.length}
+        </button>
+        <button
+          type="button"
+          className="peer-count"
+          aria-label="Kayıtlı yerler"
+          onClick={() => {
+            setPanelOpen(false);
+            setGeofencePanelOpen(false);
+            setPlacesPanelOpen((v) => !v);
+          }}
+        >
+          <Bookmark size={16} />
+          {places.length}
         </button>
         <button
           type="button"
@@ -569,6 +696,18 @@ export default function MapView() {
           </button>
         </div>
       )}
+      {placingPlace && (
+        <div className="geo-banner">
+          Yeni yer için haritada bir noktaya dokunun…{' '}
+          <button
+            type="button"
+            className="link-btn"
+            onClick={() => setPlacingPlace(false)}
+          >
+            İptal
+          </button>
+        </div>
+      )}
 
       <div ref={containerRef} className="map-canvas" />
 
@@ -604,6 +743,16 @@ export default function MapView() {
           onClose={() => setGeofencePanelOpen(false)}
           onStartPlacing={startPlacing}
           onChanged={loadGeofences}
+        />
+      )}
+
+      {placesPanelOpen && (
+        <PlacesPanel
+          places={places}
+          onClose={() => setPlacesPanelOpen(false)}
+          onStartPlacing={startPlacingPlace}
+          onChanged={loadPlaces}
+          onFocus={focusPlace}
         />
       )}
 
@@ -670,6 +819,49 @@ export default function MapView() {
               Vazgeç
             </button>
           </div>
+        </div>
+      )}
+
+      {pendingPlace && (
+        <div className="modal-overlay">
+          <form className="modal-card" onSubmit={createPlace}>
+            <h3>Yeni yer</h3>
+            <div className="field">
+              <label>Yer adı</label>
+              <input
+                value={plName}
+                onChange={(e) => setPlName(e.target.value)}
+                placeholder="Örn. Ev, İş, Spor salonu"
+                required
+              />
+            </div>
+            <div className="field">
+              <label>Renk</label>
+              <div className="color-choices">
+                {PLACE_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    aria-label={`Renk ${c}`}
+                    className={`color-choice ${plColor === c ? 'selected' : ''}`}
+                    style={{ background: c }}
+                    onClick={() => setPlColor(c)}
+                  />
+                ))}
+              </div>
+            </div>
+            {plError && <div className="error">{plError}</div>}
+            <div className="row">
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => setPendingPlace(null)}
+              >
+                Vazgeç
+              </button>
+              <button type="submit">Kaydet</button>
+            </div>
+          </form>
         </div>
       )}
 
