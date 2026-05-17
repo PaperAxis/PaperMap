@@ -25,6 +25,9 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
       PORT: ${PORT:-4015}
+      UPLOADS_DIR: /app/uploads
+    volumes:
+      - papermap_uploads:/app/uploads
     ports:
       - "${BIND_HOST:-127.0.0.1}:${SERVER_HOST_PORT:-4015}:4015"
 
@@ -47,6 +50,7 @@ services:
 
 volumes:
   papermap_db:
+  papermap_uploads:
 
 networks:
   # Sabit ag adi: Docker'da calisan bir reverse proxy bu aga

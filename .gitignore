@@ -19,6 +19,9 @@ web/ios/
 # Prisma local
 server/prisma/*.db
 
+# Yuklenen dosyalar (yerel)
+server/uploads/
+
 # Editor / OS
 .DS_Store
 .idea/

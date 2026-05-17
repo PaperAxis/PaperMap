@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../prisma.js';
 import { hashPassword, verifyPassword, signToken, publicUser } from '../auth.js';
 import { requireAuth } from '../middleware/auth.js';
+import { uploadBanner, deleteUpload } from '../upload.js';
 
 const router = Router();
 
@@ -104,6 +105,31 @@ router.post('/password', requireAuth, async (req, res) => {
     data: { passwordHash: await hashPassword(newPassword) },
   });
   res.json({ ok: true });
+});
+
+// Profil bannerı yükle
+router.post('/profile/banner', requireAuth, uploadBanner, async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'banner dosyası gerekli' });
+  }
+  const current = await prisma.user.findUnique({ where: { id: req.userId } });
+  const user = await prisma.user.update({
+    where: { id: req.userId },
+    data: { bannerPath: `/uploads/${req.file.filename}` },
+  });
+  deleteUpload(current?.bannerPath);
+  res.json({ user: publicUser(user) });
+});
+
+// Profil bannerını kaldır
+router.delete('/profile/banner', requireAuth, async (req, res) => {
+  const current = await prisma.user.findUnique({ where: { id: req.userId } });
+  const user = await prisma.user.update({
+    where: { id: req.userId },
+    data: { bannerPath: null },
+  });
+  deleteUpload(current?.bannerPath);
+  res.json({ user: publicUser(user) });
 });
 
 export default router;
