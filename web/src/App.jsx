@@ -10,6 +10,7 @@ import Friends from './pages/Friends.jsx';
 import Family from './pages/Family.jsx';
 import Profile from './pages/Profile.jsx';
 import Notifications from './pages/Notifications.jsx';
+import UserProfile from './pages/UserProfile.jsx';
 
 function Shell({ children }) {
   return (
@@ -43,6 +44,7 @@ export default function App() {
             element={<Protected><Notifications /></Protected>}
           />
           <Route path="/profile" element={<Protected><Profile /></Protected>} />
+          <Route path="/users/:id" element={<Protected><UserProfile /></Protected>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </NotificationProvider>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../lib/api.js';
 import Avatar from '../components/Avatar.jsx';
 
@@ -84,7 +85,7 @@ export default function Friends() {
           <div className="list">
             {data.incoming.map((f) => (
               <div key={f.friendshipId} className="list-item">
-                <div className="li-left">
+                <Link to={`/users/${f.user.id}`} className="li-left">
                   <Avatar
                     name={f.user.displayName}
                     color={f.user.avatarColor}
@@ -95,7 +96,7 @@ export default function Friends() {
                     <div className="name">{f.user.displayName}</div>
                     <div className="sub">{f.user.email}</div>
                   </div>
-                </div>
+                </Link>
                 <div className="actions">
                   <button className="small" onClick={() => accept(f.friendshipId)}>
                     Kabul
@@ -119,7 +120,7 @@ export default function Friends() {
           <div className="list">
             {data.outgoing.map((f) => (
               <div key={f.friendshipId} className="list-item">
-                <div className="li-left">
+                <Link to={`/users/${f.user.id}`} className="li-left">
                   <Avatar
                     name={f.user.displayName}
                     color={f.user.avatarColor}
@@ -130,7 +131,7 @@ export default function Friends() {
                     <div className="name">{f.user.displayName}</div>
                     <div className="sub">{f.user.email}</div>
                   </div>
-                </div>
+                </Link>
                 <div className="actions">
                   <button
                     className="small secondary"
@@ -153,7 +154,7 @@ export default function Friends() {
           <div className="list">
             {data.friends.map((f) => (
               <div key={f.friendshipId} className="list-item">
-                <div className="li-left">
+                <Link to={`/users/${f.user.id}`} className="li-left">
                   <Avatar
                     name={f.user.displayName}
                     color={f.user.avatarColor}
@@ -164,7 +165,7 @@ export default function Friends() {
                     <div className="name">{f.user.displayName}</div>
                     <div className="sub">{f.user.email}</div>
                   </div>
-                </div>
+                </Link>
                 <div className="actions">
                   <button
                     className="small secondary"

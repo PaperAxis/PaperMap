@@ -4,6 +4,7 @@ import cors from 'cors';
 import { config } from './config.js';
 import { initSocket } from './socket.js';
 import authRoutes from './routes/auth.js';
+import usersRoutes from './routes/users.js';
 import friendsRoutes from './routes/friends.js';
 import familiesRoutes from './routes/families.js';
 import locationRoutes from './routes/location.js';
@@ -20,6 +21,7 @@ app.use('/uploads', express.static(config.uploadsDir));
 app.get('/health', (req, res) => res.json({ ok: true }));
 
 app.use('/api/auth', authRoutes);
+app.use('/api/users', usersRoutes);
 app.use('/api/friends', friendsRoutes);
 app.use('/api/families', familiesRoutes);
 app.use('/api/location', locationRoutes);

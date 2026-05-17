@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../lib/api.js';
 import Avatar from '../components/Avatar.jsx';
 
@@ -175,7 +176,7 @@ export default function Family() {
                   <div className="list" style={{ marginTop: 8 }}>
                     {details[fam.id].members.map((m) => (
                       <div key={m.id} className="list-item">
-                        <div className="li-left">
+                        <Link to={`/users/${m.id}`} className="li-left">
                           <Avatar
                             name={m.displayName}
                             color={m.avatarColor}
@@ -191,7 +192,7 @@ export default function Family() {
                             </div>
                             <div className="sub">{m.email}</div>
                           </div>
-                        </div>
+                        </Link>
                       </div>
                     ))}
                   </div>
