@@ -169,14 +169,20 @@ kapalı-uygulama push'u devre dışı kalır.
 
 1. Firebase Console → projeye **Android uygulaması ekle**, paket adı: `com.papermap.app`.
 2. `google-services.json` dosyasını indirin.
-3. İçeriğini GitHub repo **Settings → Secrets → Actions** altına `GOOGLE_SERVICES_JSON`
-   adıyla ekleyin (dosyanın tüm içeriğini yapıştırın).
-4. APK'yı yeniden derleyin (yeni etiket veya "Run workflow").
+3. Dosyayı **base64**'e çevirin (kopyala-yapıştır bozulmasını önler):
+   ```bash
+   base64 -w0 google-services.json      # macOS: base64 -i google-services.json
+   ```
+4. Çıkan tek satırı GitHub repo **Settings → Secrets → Actions** altına
+   `GOOGLE_SERVICES_JSON_BASE64` adıyla ekleyin. (Alternatif, en güvenlisi:
+   `gh secret set GOOGLE_SERVICES_JSON_BASE64 < <(base64 -w0 google-services.json)`)
+5. APK'yı yeniden derleyin (yeni etiket veya "Run workflow").
 
-Workflow `GOOGLE_SERVICES_JSON` secret'ını bulursa Firebase'i otomatik bağlar;
-bulamazsa APK yine derlenir, yalnızca push devre dışı kalır. Yerel derlemede
-`google-services.json` dosyasını `web/android/app/` içine koyup
-`node scripts/patch-google-services.mjs` çalıştırın.
+Workflow bu secret'ı bulup geçerli bir JSON'a çözebilirse Firebase'i otomatik
+bağlar; secret yoksa veya bozuksa APK **yine derlenir**, yalnızca push devre
+dışı kalır (Actions logunda uyarı görünür). Yerel derlemede `google-services.json`
+dosyasını `web/android/app/` içine koyup `node scripts/patch-google-services.mjs`
+çalıştırın.
 
 ## Geliştirme (Docker'sız)
 
