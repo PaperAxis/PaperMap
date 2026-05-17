@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { MapPin, MapPinOff, Users, Flag, LocateFixed } from 'lucide-react';
+import { MapPin, MapPinOff, Users, Flag, LocateFixed, Siren } from 'lucide-react';
 import { api, getToken, API_BASE } from '../lib/api.js';
 import { createSocket } from '../lib/socket.js';
 import { watchPosition, openLocationSettings } from '../lib/geo.js';
@@ -66,10 +66,14 @@ export default function MapView() {
   const [myMeta, setMyMeta] = useState(null);
   const [geoError, setGeoError] = useState('');
   const [locationSettingsNeeded, setLocationSettingsNeeded] = useState(false);
+  const [notice, setNotice] = useState('');
   const [panelOpen, setPanelOpen] = useState(false);
   const [mapTheme, setMapTheme] = useState(currentMapTheme());
 
   const [history, setHistory] = useState(null); // { userId, name, points }
+  const [sosConfirm, setSosConfirm] = useState(false);
+  const [sosBusy, setSosBusy] = useState(false);
+  const [sosAlert, setSosAlert] = useState(null); // gelen acil durum cagrisi
   const [geofences, setGeofences] = useState([]);
   const [geofencePanelOpen, setGeofencePanelOpen] = useState(false);
   const [placingMode, setPlacingMode] = useState(false);
@@ -231,6 +235,7 @@ export default function MapView() {
       });
     });
     socket.on('peers:changed', () => socket.emit('refresh'));
+    socket.on('sos', (payload) => setSosAlert(payload));
     return () => socket.close();
   }, []);
 
@@ -388,6 +393,27 @@ export default function MapView() {
     }
   }
 
+  async function sendSos() {
+    setSosBusy(true);
+    try {
+      const d = await api('/api/sos', { method: 'POST' });
+      setSosConfirm(false);
+      setNotice(`Acil durum çağrısı ${d.notified} kişiye gönderildi.`);
+    } catch (err) {
+      setSosConfirm(false);
+      setGeoError(err.message);
+    } finally {
+      setSosBusy(false);
+    }
+  }
+
+  function focusSos() {
+    const map = mapRef.current;
+    if (map && sosAlert?.lat != null && sosAlert?.lng != null) {
+      map.flyTo({ center: [sosAlert.lng, sosAlert.lat], zoom: 16 });
+    }
+  }
+
   function startPlacing() {
     setGeofencePanelOpen(false);
     setPlacingMode(true);
@@ -448,6 +474,15 @@ export default function MapView() {
           <Flag size={16} />
           {geofences.length}
         </button>
+        <button
+          type="button"
+          className="sos-btn"
+          onClick={() => setSosConfirm(true)}
+          aria-label="Acil durum çağrısı"
+        >
+          <Siren size={16} />
+          SOS
+        </button>
       </div>
 
       {geoError && (
@@ -461,6 +496,31 @@ export default function MapView() {
               </button>
             </>
           )}
+        </div>
+      )}
+      {notice && (
+        <div className="geo-banner">
+          {notice}{' '}
+          <button type="button" className="link-btn" onClick={() => setNotice('')}>
+            Kapat
+          </button>
+        </div>
+      )}
+      {sosAlert && (
+        <div className="sos-banner">
+          <Siren size={16} />
+          <span>
+            {sosAlert.displayName} acil durum bildirdi
+            {sosAlert.message ? `: ${sosAlert.message}` : '.'}
+          </span>
+          {sosAlert.lat != null && (
+            <button type="button" className="link-btn" onClick={focusSos}>
+              Haritada gör
+            </button>
+          )}
+          <button type="button" className="link-btn" onClick={() => setSosAlert(null)}>
+            Kapat
+          </button>
         </div>
       )}
       {history && (
@@ -556,6 +616,36 @@ export default function MapView() {
               <button type="submit">Oluştur</button>
             </div>
           </form>
+        </div>
+      )}
+
+      {sosConfirm && (
+        <div className="modal-overlay">
+          <div className="modal-card">
+            <h3>Acil durum çağrısı</h3>
+            <p className="muted">
+              Tüm arkadaşlarına ve aile üyelerine acil durum bildirimi ve son
+              konumun gönderilecek. Onaylıyor musun?
+            </p>
+            <div className="row">
+              <button
+                type="button"
+                className="secondary"
+                disabled={sosBusy}
+                onClick={() => setSosConfirm(false)}
+              >
+                Vazgeç
+              </button>
+              <button
+                type="button"
+                className="danger"
+                disabled={sosBusy}
+                onClick={sendSos}
+              >
+                {sosBusy ? 'Gönderiliyor…' : 'Acil durum gönder'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
