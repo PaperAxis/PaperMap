@@ -4,7 +4,7 @@ import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import { config, isAllowedOrigin } from './config.js';
 import { prisma } from './prisma.js';
-import { initSocket } from './socket.js';
+import { initSocket, broadcastSharingChange } from './socket.js';
 import authRoutes from './routes/auth.js';
 import usersRoutes from './routes/users.js';
 import friendsRoutes from './routes/friends.js';
@@ -96,6 +96,26 @@ async function pruneLocationHistory() {
 }
 pruneLocationHistory();
 setInterval(pruneLocationHistory, 6 * 60 * 60 * 1000);
+
+// Suresi dolan zaman-sinirli paylasimlari otomatik kapat
+async function expireTimedSharing() {
+  try {
+    const expired = await prisma.user.findMany({
+      where: { sharingEnabled: true, sharingUntil: { lte: new Date() } },
+      select: { id: true },
+    });
+    for (const u of expired) {
+      await prisma.user.update({
+        where: { id: u.id },
+        data: { sharingEnabled: false, sharingUntil: null },
+      });
+      await broadcastSharingChange(u.id, false);
+    }
+  } catch (err) {
+    console.error('süreli paylaşım kapatma:', err);
+  }
+}
+setInterval(expireTimedSharing, 60 * 1000);
 
 server.listen(config.port, () => {
   console.log(`PaperMap server http://localhost:${config.port}`);

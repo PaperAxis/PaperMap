@@ -18,6 +18,15 @@ const HISTORY_MIN_INTERVAL_MS = 2 * 60 * 1000;
 const HISTORY_MIN_DISTANCE_M = 120;
 const lastHistory = new Map();
 
+// Paylasim etkin mi — sureli paylasimda suresi gecmisse kapali sayilir
+function sharingActive(user) {
+  if (!user?.sharingEnabled) return false;
+  if (user.sharingUntil && new Date(user.sharingUntil).getTime() <= Date.now()) {
+    return false;
+  }
+  return true;
+}
+
 function shouldRecordHistory(userId, lat, lng) {
   const prev = lastHistory.get(userId);
   if (!prev) return true;
@@ -53,7 +62,11 @@ async function snapshotFor(userId) {
   const related = await relatedUserIds(userId);
   if (related.size === 0) return [];
   const users = await prisma.user.findMany({
-    where: { id: { in: [...related] }, sharingEnabled: true },
+    where: {
+      id: { in: [...related] },
+      sharingEnabled: true,
+      OR: [{ sharingUntil: null }, { sharingUntil: { gt: new Date() } }],
+    },
     include: { location: true },
   });
   return users.filter((u) => u.location).map((u) => peerPayload(u, u.location));
@@ -88,7 +101,7 @@ export async function handleLocationUpdate(
   });
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user?.sharingEnabled) return;
+  if (!sharingActive(user)) return;
 
   // Konum gecmisine kisitlamali kaydet (yalnizca paylasim acikken)
   if (shouldRecordHistory(userId, lat, lng)) {

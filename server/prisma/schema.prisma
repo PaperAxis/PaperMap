@@ -13,6 +13,7 @@ model User {
   displayName    String
   passwordHash   String
   sharingEnabled Boolean  @default(true)
+  sharingUntil   DateTime? // doluysa: bu zamana kadar paylasim acik, sonra otomatik kapanir
   avatarColor    String   @default("#10b981")
   avatarPath     String?
   bannerPath     String?

@@ -67,6 +67,8 @@ export default function MapView() {
   const [geoError, setGeoError] = useState('');
   const [locationSettingsNeeded, setLocationSettingsNeeded] = useState(false);
   const [notice, setNotice] = useState('');
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [, setShareTick] = useState(0);
   const [panelOpen, setPanelOpen] = useState(false);
   const [mapTheme, setMapTheme] = useState(currentMapTheme());
 
@@ -217,6 +219,13 @@ export default function MapView() {
       if (mapRef.current) map.getCanvas().style.cursor = '';
     };
   }, [placingMode]);
+
+  // Sureli paylasimda kalan sureyi periyodik tazele
+  useEffect(() => {
+    if (!user.sharingUntil) return undefined;
+    const t = setInterval(() => setShareTick((n) => n + 1), 30000);
+    return () => clearInterval(t);
+  }, [user.sharingUntil]);
 
   // Socket baglantisi
   useEffect(() => {
@@ -381,16 +390,32 @@ export default function MapView() {
     }
   }
 
-  async function toggleSharing() {
+  async function setSharing(enabled, durationMinutes) {
     try {
       const d = await api('/api/location/sharing', {
         method: 'PATCH',
-        body: { enabled: !user.sharingEnabled },
+        body: { enabled, durationMinutes: durationMinutes ?? undefined },
       });
       setUser(d.user);
+      setShareMenuOpen(false);
     } catch (err) {
       setGeoError(err.message);
+      setShareMenuOpen(false);
     }
+  }
+
+  function shareLabel() {
+    if (!user.sharingEnabled) return 'Paylaşım kapalı';
+    if (user.sharingUntil) {
+      const ms = new Date(user.sharingUntil).getTime() - Date.now();
+      if (ms > 0) {
+        const mins = Math.round(ms / 60000);
+        const h = Math.floor(mins / 60);
+        const m = mins % 60;
+        return `Paylaşım: ${h > 0 ? `${h}s ` : ''}${m}dk`;
+      }
+    }
+    return 'Paylaşım açık';
   }
 
   async function sendSos() {
@@ -447,10 +472,12 @@ export default function MapView() {
         <button
           type="button"
           className={`share-toggle ${user.sharingEnabled ? 'on' : 'off'}`}
-          onClick={toggleSharing}
+          onClick={() =>
+            user.sharingEnabled ? setSharing(false) : setShareMenuOpen(true)
+          }
         >
           {user.sharingEnabled ? <MapPin size={16} /> : <MapPinOff size={16} />}
-          {user.sharingEnabled ? 'Paylaşım açık' : 'Paylaşım kapalı'}
+          {shareLabel()}
         </button>
         <button
           type="button"
@@ -616,6 +643,33 @@ export default function MapView() {
               <button type="submit">Oluştur</button>
             </div>
           </form>
+        </div>
+      )}
+
+      {shareMenuOpen && (
+        <div className="modal-overlay">
+          <div className="modal-card">
+            <h3>Konum paylaşımını aç</h3>
+            <p className="muted">Ne kadar süreyle paylaşmak istersin?</p>
+            <div className="share-options">
+              <button type="button" onClick={() => setSharing(true, 60)}>
+                1 saat
+              </button>
+              <button type="button" onClick={() => setSharing(true, 8 * 60)}>
+                8 saat
+              </button>
+              <button type="button" onClick={() => setSharing(true, null)}>
+                Süresiz
+              </button>
+            </div>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => setShareMenuOpen(false)}
+            >
+              Vazgeç
+            </button>
+          </div>
         </div>
       )}
 

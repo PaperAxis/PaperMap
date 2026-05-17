@@ -41,16 +41,21 @@ router.get('/history/:userId', requireAuth, async (req, res) => {
   res.json({ points });
 });
 
-// Konum paylasimini ac/kapat
+// Konum paylasimini ac/kapat. Istege bagli durationMinutes ile sureli acilir.
 router.patch('/sharing', requireAuth, async (req, res) => {
-  const { enabled } = req.body || {};
+  const { enabled, durationMinutes } = req.body || {};
   if (typeof enabled !== 'boolean') {
     return res.status(400).json({ error: 'enabled (boolean) zorunlu' });
   }
-  const user = await prisma.user.update({
-    where: { id: req.userId },
-    data: { sharingEnabled: enabled },
-  });
+  const data = { sharingEnabled: enabled, sharingUntil: null };
+  if (enabled && durationMinutes != null) {
+    const mins = Number(durationMinutes);
+    if (!Number.isFinite(mins) || mins <= 0 || mins > 7 * 24 * 60) {
+      return res.status(400).json({ error: 'Geçersiz süre' });
+    }
+    data.sharingUntil = new Date(Date.now() + mins * 60 * 1000);
+  }
+  const user = await prisma.user.update({ where: { id: req.userId }, data });
   await broadcastSharingChange(req.userId, enabled);
   res.json({ user: publicUser(user) });
 });

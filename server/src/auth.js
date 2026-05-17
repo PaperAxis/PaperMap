@@ -25,6 +25,7 @@ export function publicUser(u) {
     email: u.email,
     displayName: u.displayName,
     sharingEnabled: u.sharingEnabled,
+    sharingUntil: u.sharingUntil,
     avatarColor: u.avatarColor,
     avatarPath: u.avatarPath,
     bannerPath: u.bannerPath,
