@@ -327,14 +327,38 @@ runner**'ında iOS uygulamasını derler ve **imzasız bir IPA** üretip Release
 yükler. (Mac sahibi olmanız gerekmez.) APK ile aynı anda, tek tetiklemeyle.
 
 **Önemli — iOS imzalama:** Android'in aksine iOS'ta imzasız IPA doğrudan
-kurulamaz. İmzasız `papermap-unsigned.ipa`'yı bir iPhone'a yüklemek için:
+kurulamaz. İmzasız `papermap-unsigned.ipa`'yı bir iPhone'a yüklemek için
+**AltStore / SideStore** veya **Sideloadly** kullanılır; bunlar kendi
+(ücretsiz) Apple ID'nizle uygulamayı imzalar. Uygulama 7 günde bir
+yenilenmelidir (ücretsiz Apple ID sınırı).
 
-- **AltStore** veya **Sideloadly** ile kendi (ücretsiz) Apple ID'nizle imzalayın.
-  Uygulama 7 günde bir yenilenmelidir (ücretsiz Apple ID sınırı).
-- Kalıcı kurulum / TestFlight için **Apple Developer Program** üyeliği (yılda
-  99$) gerekir. Üyelik alındığında bu workflow'a imzalama (sertifika +
-  provisioning profile, GitHub Secrets ile) eklenerek doğrudan kurulabilir IPA
-  üretilebilir.
+### AltStore kaynağı (önerilen)
+
+Workflow her sürümde bir **AltStore kaynağı** (`altstore.json`) üretip
+Release'e ekler. Bu sayede IPA'yı elle indirmeye gerek kalmaz:
+
+1. iPhone'a [AltStore](https://altstore.io) (veya SideStore) kurun ve
+   bilgisayarınızda AltServer'ı çalıştırın.
+2. AltStore → **Browse** → sağ üst **+** → şu kaynak URL'sini ekleyin:
+
+   ```
+   https://github.com/captainendis/papermap/releases/latest/download/altstore.json
+   ```
+
+3. **PaperMap** listede çıkar; **Free** / **Get** ile tek dokunuşla kurulur.
+4. Yeni bir workflow çalıştığında AltStore uygulamayı **otomatik günceller**
+   (kaynak hep en son sürüme işaret eder).
+
+### Elle kurulum (kaynak olmadan)
+
+Release'ten `papermap-unsigned.ipa`'yı indirip AltStore'da **My Apps → +**
+ile seçerek de kurabilirsiniz. Sideloadly kullanıyorsanız IPA'yı uygulamaya
+sürükleyip Apple ID'nizle imzalayın.
+
+Kalıcı kurulum / TestFlight için **Apple Developer Program** üyeliği (yılda
+99$) gerekir. Üyelik alındığında bu workflow'a imzalama (sertifika +
+provisioning profile, GitHub Secrets ile) eklenerek doğrudan kurulabilir IPA
+üretilebilir.
 
 iOS projesi `web/ios/` altında üretilir (`.gitignore`'da). Yerel derleme için
 Mac'te: `cd web && npm run build && npm run cap:add:ios && npm run cap:open:ios`.
