@@ -316,9 +316,23 @@ Ayrıca backend `https` değil `http` ise (yerel geliştirme), `<application>`
 etiketine `android:usesCleartextTraffic="true"` ekleyin. Üretimde backend'i
 HTTPS arkasına almanız önerilir.
 
-> **Arka plan konumu:** APK'da uygulama arka plandayken/kapalıyken de konum
-> güncellenir (`@capacitor-community/background-geolocation`); Android kalıcı
-> bir bildirim gösterir. Tarayıcıda konum yalnızca sayfa açıkken güncellenir.
+> **Arka plan konumu:** APK'da uygulama arka plandayken de konum güncellenir
+> (`@capacitor-community/background-geolocation`); Android kalıcı bir bildirim
+> gösterir. Tarayıcıda konum yalnızca sayfa açıkken güncellenir.
+>
+> Arka planda **çalışması için iki ayar şart** (Android'in koyduğu kısıt):
+> 1. **Konum izni "Her zaman izin ver"** olmalı — uygulama ilk açılışta
+>    yalnızca "Uygulamayı kullanırken" izni alır. *Ayarlar > Uygulamalar >
+>    PaperMap > İzinler > Konum > Her zaman izin ver* seçin. Bu seçili
+>    değilse uygulama arka plana geçince konum **tamamen durur**.
+> 2. **Pil optimizasyonu kapalı** olmalı — *Ayarlar > Uygulamalar > PaperMap
+>    > Pil > Sınırsız / Optimize etme*. Aksi halde Android (özellikle
+>    Xiaomi/Samsung/Oppo gibi markalarda) arka plandaki uygulamayı uyutur.
+>
+> Uygulama izin eksikse haritanın üstünde uyarı ve "Ayarları aç" düğmesi
+> gösterir. **Uygulamayı görev yöneticisinden tamamen kapatırsanız** (kartı
+> kaydırınca) arka plan servisi de durur — bu eklentinin/Android'in bir
+> sınırıdır; uygulamanın arka planda *açık* kalması gerekir.
 
 ## iOS (iPhone)
 

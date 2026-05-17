@@ -4,7 +4,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { MapPin, MapPinOff, Users, Flag, LocateFixed } from 'lucide-react';
 import { api, getToken, API_BASE } from '../lib/api.js';
 import { createSocket } from '../lib/socket.js';
-import { watchPosition } from '../lib/geo.js';
+import { watchPosition, openLocationSettings } from '../lib/geo.js';
 import { getBattery, batteryLabel } from '../lib/battery.js';
 import { timeAgo } from '../lib/time.js';
 import { useAuth } from '../lib/auth.jsx';
@@ -65,6 +65,7 @@ export default function MapView() {
   const [myPos, setMyPos] = useState(null);
   const [myMeta, setMyMeta] = useState(null);
   const [geoError, setGeoError] = useState('');
+  const [locationSettingsNeeded, setLocationSettingsNeeded] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const [mapTheme, setMapTheme] = useState(currentMapTheme());
 
@@ -238,6 +239,7 @@ export default function MapView() {
     const stop = watchPosition(
       async (pos) => {
         setGeoError('');
+        setLocationSettingsNeeded(false);
         setMyPos(pos);
         const bat = await getBattery();
         // Konum HTTP ile gonderilir — arka planda da calisir
@@ -255,11 +257,18 @@ export default function MapView() {
           .catch(() => {});
       },
       (err) => {
-        setGeoError(
-          err?.code === 1
-            ? 'Konum izni reddedildi. Haritada görünmek için izin verin.'
-            : 'Konum alınamadı: ' + (err?.message || 'bilinmeyen hata'),
-        );
+        if (err?.code === 'NOT_AUTHORIZED') {
+          setGeoError(
+            'Arka planda konum paylaşımı için konum izni "Her zaman izin ver" ' +
+              'olmalı. Ayarlardan seçin.',
+          );
+          setLocationSettingsNeeded(true);
+        } else if (err?.code === 1) {
+          setGeoError('Konum izni reddedildi. Haritada görünmek için izin verin.');
+          setLocationSettingsNeeded(true);
+        } else {
+          setGeoError('Konum alınamadı: ' + (err?.message || 'bilinmeyen hata'));
+        }
       },
     );
     return stop;
@@ -441,7 +450,19 @@ export default function MapView() {
         </button>
       </div>
 
-      {geoError && <div className="geo-banner">{geoError}</div>}
+      {geoError && (
+        <div className="geo-banner">
+          {geoError}
+          {locationSettingsNeeded && (
+            <>
+              {' '}
+              <button type="button" className="link-btn" onClick={openLocationSettings}>
+                Ayarları aç
+              </button>
+            </>
+          )}
+        </div>
+      )}
       {history && (
         <div className="geo-banner">
           {history.name} · son 30 günlük konum geçmişi

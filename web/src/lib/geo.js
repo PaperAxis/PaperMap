@@ -5,6 +5,17 @@ import { Geolocation } from '@capacitor/geolocation';
 // de konum bildirir. Web'de bu eklenti yoktur; tarayici API'sine dusulur.
 const BackgroundGeolocation = registerPlugin('BackgroundGeolocation');
 
+// Konum/uygulama ayarlar ekranini acar (arka plan izni "Her zaman izin ver"
+// secilmesi ya da pil optimizasyonunun kapatilmasi icin).
+export async function openLocationSettings() {
+  if (!Capacitor.isNativePlatform()) return;
+  try {
+    await BackgroundGeolocation.openSettings();
+  } catch {
+    /* ayarlar acilamadi */
+  }
+}
+
 // Konum izleme. onUpdate({lat,lng,accuracy}) cagrilir. Durdurma fonksiyonu doner.
 export function watchPosition(onUpdate, onError) {
   if (Capacitor.isNativePlatform()) {
