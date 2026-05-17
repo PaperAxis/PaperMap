@@ -5,6 +5,7 @@ import { prisma } from './prisma.js';
 import { relatedUserIds } from './visibility.js';
 import { setIo } from './realtime.js';
 import { checkGeofences, distanceMeters } from './geofence.js';
+import { createNotification } from './notify.js';
 
 let io = null;
 
@@ -17,6 +18,25 @@ function room(userId) {
 const HISTORY_MIN_INTERVAL_MS = 2 * 60 * 1000;
 const HISTORY_MIN_DISTANCE_M = 120;
 const lastHistory = new Map();
+
+// Dusuk pil bildirimi — esigin altina ilk inişte bir kez bildirilir
+const LOW_BATTERY = 15;
+const lastBattery = new Map();
+
+async function notifyLowBattery(userId, name, battery) {
+  try {
+    const related = await relatedUserIds(userId);
+    for (const peerId of related) {
+      createNotification(
+        peerId,
+        'Düşük pil',
+        `${name} adlı kişinin telefon pili %${battery}`,
+      ).catch(() => {});
+    }
+  } catch (err) {
+    console.error('düşük pil bildirimi:', err);
+  }
+}
 
 // Paylasim etkin mi — sureli paylasimda suresi gecmisse kapali sayilir
 function sharingActive(user) {
@@ -102,6 +122,15 @@ export async function handleLocationUpdate(
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!sharingActive(user)) return;
+
+  // Pil esiğin altina ilk inince iliskili kisilere bildir
+  if (battery != null) {
+    const prev = lastBattery.get(userId);
+    lastBattery.set(userId, battery);
+    if (charging !== true && battery <= LOW_BATTERY && (prev == null || prev > LOW_BATTERY)) {
+      notifyLowBattery(userId, user.displayName, battery);
+    }
+  }
 
   // Konum gecmisine kisitlamali kaydet (yalnizca paylasim acikken)
   if (shouldRecordHistory(userId, lat, lng)) {
