@@ -524,6 +524,54 @@ button.small {
   background: var(--card);
 }
 
+.geofence-edit,
+.geofence-people {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.geofence-add {
+  margin-top: 10px;
+}
+
+.add-head {
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.add-group {
+  margin-bottom: 6px;
+}
+
+.add-group-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--muted);
+  margin: 8px 0 2px;
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 2px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.check-row input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  padding: 0;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
 .invite-code {
   margin-top: 8px;
   font-size: 13px;
