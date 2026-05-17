@@ -19,11 +19,64 @@ model User {
   fontPref       String   @default("default") // default | atkinson | opendyslexic
   createdAt      DateTime @default(now())
 
-  sentRequests      Friendship[]   @relation("requester")
-  receivedRequests  Friendship[]   @relation("addressee")
-  ownedFamilies     Family[]       @relation("owner")
+  sentRequests      Friendship[]    @relation("requester")
+  receivedRequests  Friendship[]    @relation("addressee")
+  ownedFamilies     Family[]        @relation("owner")
   familyMemberships FamilyMember[]
   location          Location?
+  geofences         Geofence[]      @relation("geofenceOwner")
+  watchedIn         GeofenceWatch[] @relation("watchedUser")
+  notifications     Notification[]
+  deviceTokens      DeviceToken[]
+}
+
+model Geofence {
+  id            String   @id @default(cuid())
+  ownerId       String
+  name          String
+  lat           Float
+  lng           Float
+  radius        Float // metre
+  notifyOnEnter Boolean  @default(true)
+  notifyOnExit  Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  owner   User            @relation("geofenceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  watches GeofenceWatch[]
+}
+
+model GeofenceWatch {
+  id         String   @id @default(cuid())
+  geofenceId String
+  userId     String // izlenen kullanici
+  inside     Boolean? // son bilinen durum (null = henuz bilinmiyor)
+  createdAt  DateTime @default(now())
+
+  geofence Geofence @relation(fields: [geofenceId], references: [id], onDelete: Cascade)
+  user     User     @relation("watchedUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([geofenceId, userId])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String // alici
+  title     String
+  body      String
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model DeviceToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  platform  String // android | web
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Friendship {

@@ -2,6 +2,8 @@ import { Server } from 'socket.io';
 import { verifyToken } from './auth.js';
 import { prisma } from './prisma.js';
 import { relatedUserIds } from './visibility.js';
+import { setIo } from './realtime.js';
+import { checkGeofences } from './geofence.js';
 
 let io = null;
 
@@ -32,8 +34,37 @@ async function snapshotFor(userId) {
   return users.filter((u) => u.location).map((u) => peerPayload(u, u.location));
 }
 
+// Konum guncellemesini isler — hem Socket.IO hem HTTP (arka plan) icin.
+export async function handleLocationUpdate(userId, rawLat, rawLng, rawAccuracy) {
+  const lat = Number(rawLat);
+  const lng = Number(rawLng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return;
+  const accuracy = Number.isFinite(Number(rawAccuracy)) ? Number(rawAccuracy) : null;
+
+  const loc = await prisma.location.upsert({
+    where: { userId },
+    create: { userId, lat, lng, accuracy },
+    update: { lat, lng, accuracy },
+  });
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user?.sharingEnabled) return;
+
+  const payload = peerPayload(user, loc);
+  const related = await relatedUserIds(userId);
+  for (const peerId of related) {
+    io?.to(room(peerId)).emit('peer:location', payload);
+  }
+
+  checkGeofences(userId, lat, lng).catch((err) =>
+    console.error('geofence kontrolü:', err),
+  );
+}
+
 export function initSocket(httpServer) {
   io = new Server(httpServer, { cors: { origin: '*' } });
+  setIo(io);
 
   io.use((socket, next) => {
     const token = socket.handshake.auth?.token;
@@ -46,37 +77,27 @@ export function initSocket(httpServer) {
     }
   });
 
-  io.on('connection', async (socket) => {
+  io.on('connection', (socket) => {
     const userId = socket.data.userId;
     socket.join(room(userId));
-    socket.emit('peers:snapshot', await snapshotFor(userId));
 
-    socket.on('location:update', async (data) => {
-      const lat = Number(data?.lat);
-      const lng = Number(data?.lng);
-      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
-      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return;
-      const accuracy = Number.isFinite(Number(data?.accuracy)) ? Number(data.accuracy) : null;
-
-      const loc = await prisma.location.upsert({
-        where: { userId },
-        create: { userId, lat, lng, accuracy },
-        update: { lat, lng, accuracy },
-      });
-
-      const user = await prisma.user.findUnique({ where: { id: userId } });
-      if (!user?.sharingEnabled) return;
-
-      const payload = peerPayload(user, loc);
-      const related = await relatedUserIds(userId);
-      for (const peerId of related) {
-        io.to(room(peerId)).emit('peer:location', payload);
-      }
+    // Dinleyiciler senkron kaydedilir — baglanti sonrasi gelen ilk
+    // location:update olayinin kaybolmamasi icin (await'ten once).
+    socket.on('location:update', (data) => {
+      handleLocationUpdate(userId, data?.lat, data?.lng, data?.accuracy).catch(
+        (err) => console.error('location:update:', err),
+      );
     });
 
-    socket.on('refresh', async () => {
-      socket.emit('peers:snapshot', await snapshotFor(userId));
+    socket.on('refresh', () => {
+      snapshotFor(userId)
+        .then((snap) => socket.emit('peers:snapshot', snap))
+        .catch((err) => console.error('refresh:', err));
     });
+
+    snapshotFor(userId)
+      .then((snap) => socket.emit('peers:snapshot', snap))
+      .catch((err) => console.error('snapshot:', err));
   });
 
   return io;
