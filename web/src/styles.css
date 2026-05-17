@@ -693,3 +693,45 @@ form.card {
   font-weight: 700;
   text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
 }
+
+/* --- Modal --- */
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 900;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 340px;
+  background: var(--card);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-card h3 {
+  font-size: 16px;
+  margin-bottom: 14px;
+}
+
+.modal-card .row {
+  margin-top: 6px;
+}
+
+.modal-card .row button {
+  flex: 1;
+}
+
+input[type='range'] {
+  padding: 0;
+  border: none;
+  background: transparent;
+  accent-color: var(--accent);
+}
