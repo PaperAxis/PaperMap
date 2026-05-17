@@ -10,6 +10,7 @@ import familiesRoutes from './routes/families.js';
 import locationRoutes from './routes/location.js';
 import geofencesRoutes from './routes/geofences.js';
 import notificationsRoutes from './routes/notifications.js';
+import conversationsRoutes from './routes/conversations.js';
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use('/api/families', familiesRoutes);
 app.use('/api/location', locationRoutes);
 app.use('/api/geofences', geofencesRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/conversations', conversationsRoutes);
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {

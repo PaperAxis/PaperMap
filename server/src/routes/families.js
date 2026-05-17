@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../prisma.js';
 import { requireAuth } from '../middleware/auth.js';
 import { notifyPeersChanged } from '../socket.js';
+import { syncFamilyConversation } from '../chat.js';
 
 const router = Router();
 
@@ -89,6 +90,7 @@ router.post('/', requireAuth, async (req, res) => {
       members: { create: { userId: req.userId, role: 'owner' } },
     },
   });
+  await syncFamilyConversation(family.id);
   res.status(201).json({ id: family.id, name: family.name, inviteCode: family.inviteCode });
 });
 
@@ -117,6 +119,7 @@ router.post('/join', requireAuth, async (req, res) => {
   await prisma.familyMember.create({
     data: { familyId: family.id, userId: req.userId, role: 'member' },
   });
+  await syncFamilyConversation(family.id);
   notifyPeersChanged([...before.map((m) => m.userId), req.userId]);
   res.status(201).json({ id: family.id, name: family.name });
 });
@@ -152,11 +155,13 @@ router.delete('/:id/leave', requireAuth, async (req, res) => {
       prisma.familyMember.update({ where: { id: others[0].id }, data: { role: 'owner' } }),
       prisma.familyMember.delete({ where: { id: membership.id } }),
     ]);
+    await syncFamilyConversation(family.id);
     notifyPeersChanged(allMemberIds);
     return res.json({ ok: true, ownershipTransferred: true });
   }
 
   await prisma.familyMember.delete({ where: { id: membership.id } });
+  await syncFamilyConversation(family.id);
   notifyPeersChanged(allMemberIds);
   res.json({ ok: true });
 });
