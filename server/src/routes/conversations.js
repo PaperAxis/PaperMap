@@ -3,7 +3,7 @@ import { prisma } from '../prisma.js';
 import { requireAuth } from '../middleware/auth.js';
 import { relatedUserIds } from '../visibility.js';
 import { emitToUser } from '../realtime.js';
-import { sendPush } from '../push.js';
+import { createNotification } from '../notify.js';
 import { getOrCreateDirect } from '../chat.js';
 
 const router = Router();
@@ -191,13 +191,22 @@ router.post('/:id/messages', requireAuth, async (req, res) => {
   });
 
   const view = messageView(message);
+  const conv = await prisma.conversation.findUnique({ where: { id: req.params.id } });
+  const senderName = message.sender.displayName;
+  const isGroup = conv && conv.type !== 'direct';
+  const preview = body.length > 140 ? `${body.slice(0, 140)}…` : body;
+  const notifTitle = isGroup
+    ? conv.name || (conv.type === 'family' ? 'Aile' : 'Grup')
+    : senderName;
+  const notifBody = isGroup ? `${senderName}: ${preview}` : preview;
+
   const members = await prisma.conversationMember.findMany({
     where: { conversationId: req.params.id },
   });
   for (const mem of members) {
     emitToUser(mem.userId, 'message', { conversationId: req.params.id, message: view });
     if (mem.userId !== req.userId) {
-      sendPush(mem.userId, message.sender.displayName, body).catch(() => {});
+      createNotification(mem.userId, notifTitle, notifBody).catch(() => {});
     }
   }
   res.status(201).json({ message: view });
