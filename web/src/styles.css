@@ -12,6 +12,9 @@
   --shadow: rgba(15, 23, 42, 0.08);
   --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --nav-h: 64px;
+  --r-sm: 10px;
+  --r: 14px;
+  --r-lg: 20px;
   color-scheme: light;
 }
 
@@ -59,11 +62,11 @@ a {
 }
 
 .error {
-  background: color-mix(in srgb, var(--danger) 14%, var(--card));
+  background: color-mix(in srgb, var(--danger) 12%, var(--card));
   color: var(--danger);
-  border: 1px solid color-mix(in srgb, var(--danger) 40%, var(--card));
-  padding: 8px 12px;
-  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--danger) 34%, var(--card));
+  padding: 9px 12px;
+  border-radius: var(--r-sm);
   font-size: 14px;
 }
 
@@ -98,15 +101,27 @@ a {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 3px;
   text-decoration: none;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
+  position: relative;
+  transition: color 0.15s ease;
 }
 
 .nav-item.active {
   color: var(--accent-dark);
   font-weight: 600;
+}
+
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 26px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: var(--accent);
 }
 
 .nav-icon {
@@ -155,24 +170,27 @@ a {
 
 .auth-card {
   width: 100%;
-  max-width: 360px;
+  max-width: 380px;
   background: var(--card);
-  border-radius: 16px;
-  padding: 32px 24px;
-  box-shadow: 0 8px 30px var(--shadow);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 36px 28px;
+  box-shadow: 0 12px 40px var(--shadow);
 }
 
 .brand {
-  font-size: 28px;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
   color: var(--accent-dark);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .auth-card form {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin: 20px 0 12px;
+  margin: 22px 0 14px;
 }
 
 input,
@@ -180,11 +198,12 @@ select {
   width: 100%;
   padding: 12px 14px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--r-sm);
   font-size: 16px;
   background: var(--input-bg);
   color: var(--text);
   font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 input[type='checkbox'] {
@@ -198,17 +217,22 @@ input[type='checkbox'] {
 
 input:focus,
 select:focus {
-  outline: 2px solid var(--accent);
-  outline-offset: -1px;
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+input::placeholder {
+  color: color-mix(in srgb, var(--muted) 75%, transparent);
 }
 
 button {
   padding: 12px 16px;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--r-sm);
   background: var(--accent);
   color: #fff;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
@@ -216,10 +240,15 @@ button {
   align-items: center;
   justify-content: center;
   gap: 6px;
+  transition: transform 0.06s ease, opacity 0.15s ease, background 0.15s ease;
+}
+
+button:active {
+  transform: scale(0.985);
 }
 
 button:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -229,13 +258,23 @@ button.secondary {
   border: 1px solid var(--border);
 }
 
+button.ghost {
+  background: transparent;
+  color: var(--accent-dark);
+}
+
 button.danger {
   background: var(--danger);
 }
 
 button.small {
   padding: 8px 12px;
-  font-size: 14px;
+  font-size: 13px;
+  border-radius: 8px;
+}
+
+button.btn-auto {
+  width: auto;
 }
 
 /* --- Generic page layout --- */
@@ -253,23 +292,26 @@ button.small {
 }
 
 .page-title {
-  font-size: 22px;
+  font-size: 21px;
   font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .card {
   background: var(--card);
-  border-radius: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
   padding: 16px;
-  box-shadow: 0 2px 12px var(--shadow);
+  box-shadow: 0 1px 2px var(--shadow);
 }
 
 .card h3 {
-  font-size: 15px;
-  margin-bottom: 10px;
+  font-size: 12px;
+  margin-bottom: 12px;
   color: var(--muted);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.07em;
+  font-weight: 700;
 }
 
 .row {
@@ -295,10 +337,15 @@ button.small {
   gap: 12px;
   padding: 12px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--r-sm);
   background: var(--card);
   color: inherit;
   text-decoration: none;
+}
+
+a.list-item:active,
+button.link-row:active {
+  background: color-mix(in srgb, var(--accent) 8%, var(--card));
 }
 
 .row-selected {
@@ -703,7 +750,7 @@ button.link-row {
 /* --- Family --- */
 .family-card {
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--r-sm);
   padding: 12px;
   background: var(--card);
 }
@@ -958,14 +1005,16 @@ form.card {
   width: 100%;
   max-width: 340px;
   background: var(--card);
-  border-radius: 14px;
+  border-radius: var(--r);
   padding: 20px;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
 }
 
 .modal-card h3 {
-  font-size: 16px;
+  font-size: 17px;
+  font-weight: 700;
   margin-bottom: 14px;
 }
 
@@ -1166,12 +1215,12 @@ input[type='range'] {
   gap: 8px;
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--r);
   padding: 14px 16px;
   font-weight: 600;
   color: var(--text);
   text-decoration: none;
-  box-shadow: 0 2px 12px var(--shadow);
+  box-shadow: 0 1px 2px var(--shadow);
 }
 
 .stat-grid {
@@ -1212,4 +1261,39 @@ input[type='range'] {
   stroke-width: 2;
   stroke-linejoin: miter;
   stroke-linecap: square;
+}
+
+/* --- Yardimci siniflar (satir-ici stilleri azaltmak icin) --- */
+.mt-1 {
+  margin-top: 8px;
+}
+
+.mt-2 {
+  margin-top: 12px;
+}
+
+.field-hint {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.row-wrap {
+  flex-wrap: wrap;
+}
+
+.row-equal > button {
+  flex: 1;
+}
+
+/* Banner barindiran kart: ic bosluk yok, tasma gizli */
+.card-flush {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Ic ice gecmis list-item: kendi cercevesini kaldirir */
+.flush {
+  border: none;
+  padding: 0;
+  background: none;
 }
