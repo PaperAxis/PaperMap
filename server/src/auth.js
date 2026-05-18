@@ -33,6 +33,7 @@ export function publicUser(u) {
     fontPref: u.fontPref,
     iconStyle: u.iconStyle,
     statusText: u.statusText,
+    emailVerified: u.emailVerified,
     isAdmin: u.isAdmin,
   };
 }

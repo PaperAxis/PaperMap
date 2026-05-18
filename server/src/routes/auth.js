@@ -11,6 +11,7 @@ import { sendMail } from '../mailer.js';
 const router = Router();
 
 const RESET_TTL_MS = 60 * 60 * 1000; // 1 saat
+const VERIFY_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 gun
 
 // Tek kullanimlik token uretir ve kaydeder.
 async function createAuthToken(userId, type, ttlMs) {
@@ -19,6 +20,25 @@ async function createAuthToken(userId, type, ttlMs) {
     data: { token, userId, type, expiresAt: new Date(Date.now() + ttlMs) },
   });
   return token;
+}
+
+// E-posta dogrulama bağlantısı gonderir (onceki verify token'larini siler).
+async function sendVerifyEmail(user) {
+  await prisma.authToken.deleteMany({
+    where: { userId: user.id, type: 'verify' },
+  });
+  const token = await createAuthToken(user.id, 'verify', VERIFY_TTL_MS);
+  const link = `${config.appUrl}/verify/${token}`;
+  return sendMail({
+    to: user.email,
+    subject: 'PaperMap — E-posta doğrulama',
+    text:
+      `Merhaba ${user.displayName},\n\n` +
+      `E-posta adresini doğrulamak için aşağıdaki bağlantıya tıkla:\n` +
+      `${link}\n\n` +
+      `Bu hesabı sen oluşturmadıysan bu e-postayı yok sayabilirsin.`,
+    link,
+  });
 }
 
 // ADMIN_EMAILS listesindeki kullanicilari otomatik yonetici yapar
@@ -49,7 +69,41 @@ router.post('/register', async (req, res) => {
       passwordHash: await hashPassword(password),
     },
   });
+  sendVerifyEmail(user).catch((err) =>
+    console.error('doğrulama e-postası:', err),
+  );
   res.status(201).json({ token: signToken(user.id), user: publicUser(user) });
+});
+
+// E-posta doğrulama — token ile hesabı doğrular.
+router.get('/verify/:token', async (req, res) => {
+  const row = await prisma.authToken.findUnique({
+    where: { token: req.params.token },
+  });
+  if (!row || row.type !== 'verify' || row.expiresAt < new Date()) {
+    return res.status(400).json({ error: 'Bağlantı geçersiz veya süresi dolmuş' });
+  }
+  await prisma.user.update({
+    where: { id: row.userId },
+    data: { emailVerified: true },
+  });
+  await prisma.authToken.deleteMany({
+    where: { userId: row.userId, type: 'verify' },
+  });
+  res.json({ ok: true });
+});
+
+// Doğrulama e-postasını yeniden gönder.
+router.post('/verify/resend', requireAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.userId } });
+  if (!user) {
+    return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
+  }
+  if (user.emailVerified) {
+    return res.status(400).json({ error: 'E-posta zaten doğrulanmış' });
+  }
+  await sendVerifyEmail(user);
+  res.json({ ok: true });
 });
 
 router.post('/login', async (req, res) => {

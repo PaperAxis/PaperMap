@@ -23,6 +23,7 @@ export default function Profile() {
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [busy, setBusy] = useState(false);
+  const [verifyBusy, setVerifyBusy] = useState(false);
   const [privacyPeople, setPrivacyPeople] = useState([]);
   const [shareLinks, setShareLinks] = useState([]);
 
@@ -108,6 +109,18 @@ export default function Profile() {
       fail(err);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function resendVerify() {
+    setVerifyBusy(true);
+    try {
+      await api('/api/auth/verify/resend', { method: 'POST' });
+      flash('Doğrulama e-postası gönderildi.');
+    } catch (err) {
+      fail(err);
+    } finally {
+      setVerifyBusy(false);
     }
   }
 
@@ -273,6 +286,19 @@ export default function Profile() {
 
       {error && <div className="error">{error}</div>}
       {info && <div className="badge">{info}</div>}
+
+      {!user.emailVerified && (
+        <div className="card">
+          <h3>E-posta doğrulama</h3>
+          <p className="muted" style={{ marginBottom: 10 }}>
+            E-posta adresin ({user.email}) henüz doğrulanmadı. Doğrulama
+            bağlantısını e-postandan onayla.
+          </p>
+          <button type="button" disabled={verifyBusy} onClick={resendVerify}>
+            {verifyBusy ? 'Gönderiliyor…' : 'Doğrulama e-postası gönder'}
+          </button>
+        </div>
+      )}
 
       <form className="card" onSubmit={saveInfo}>
         <h3>Profil bilgileri</h3>
