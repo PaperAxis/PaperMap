@@ -17,22 +17,36 @@ if (jwtSecret.length < 32 || PLACEHOLDER_SECRETS.has(jwtSecret)) {
   );
 }
 
+// Tarayicidan API'ye erisebilecek origin'ler (virgulle ayrilir). Bos
+// birakilirsa tum origin'lere izin verilir (acilista uyari gosterilir).
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
 export const config = {
   port: parseInt(process.env.PORT || '4015', 10),
   jwtSecret,
   databaseUrl: process.env.DATABASE_URL,
   uploadsDir: process.env.UPLOADS_DIR || path.resolve('uploads'),
-  // Tarayicidan API'ye erisebilecek origin'ler (virgulle ayrilir). Bos
-  // birakilirsa tum origin'lere izin verilir (acilista uyari gosterilir).
-  allowedOrigins: (process.env.ALLOWED_ORIGINS || '')
-    .split(',')
-    .map((o) => o.trim())
-    .filter(Boolean),
+  allowedOrigins,
   // Bu e-postalarla giris yapan kullanicilar otomatik yonetici olur
   adminEmails: (process.env.ADMIN_EMAILS || '')
     .split(',')
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean),
+  // SMTP — yapilandirilmamissa (SMTP_HOST bos) e-posta gonderimi atlanir.
+  smtp: {
+    host: process.env.SMTP_HOST || '',
+    port: parseInt(process.env.SMTP_PORT || '587', 10),
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASS || '',
+    from: process.env.SMTP_FROM || '',
+  },
+  // E-posta baglantilarinda kullanilan genel web adresi. Bos birakilirsa
+  // ilk ALLOWED_ORIGINS degeri kullanilir.
+  appUrl:
+    (process.env.APP_URL || '').replace(/\/$/, '') || allowedOrigins[0] || '',
 };
 
 // Capacitor (APK/IPA) WebView origin'leri — her zaman izinli (mobil uygulama).

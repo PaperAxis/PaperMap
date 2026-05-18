@@ -23,6 +23,8 @@ const ChatView = lazy(() => import('./pages/ChatView.jsx'));
 const NewGroup = lazy(() => import('./pages/NewGroup.jsx'));
 const Admin = lazy(() => import('./pages/Admin.jsx'));
 const SharePage = lazy(() => import('./pages/SharePage.jsx'));
+const Forgot = lazy(() => import('./pages/Forgot.jsx'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword.jsx'));
 
 function Shell({ children }) {
   return (
@@ -53,6 +55,8 @@ export default function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/s/:token" element={<SharePage />} />
+              <Route path="/forgot" element={<Forgot />} />
+              <Route path="/reset/:token" element={<ResetPassword />} />
               <Route path="/" element={<Protected><MapView /></Protected>} />
               <Route path="/friends" element={<Protected><Friends /></Protected>} />
               <Route path="/family" element={<Protected><Family /></Protected>} />

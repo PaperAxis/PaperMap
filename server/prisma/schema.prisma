@@ -21,6 +21,7 @@ model User {
   fontPref       String   @default("default") // default | atkinson | opendyslexic
   iconStyle      String   @default("normal") // normal | thin | bold | sharp
   statusText     String? // kullanicinin elle ayarladigi durum (or. "Evdeyim")
+  emailVerified  Boolean  @default(false)
   isAdmin        Boolean  @default(false)
   disabled       Boolean  @default(false)
   createdAt      DateTime @default(now())
@@ -44,6 +45,21 @@ model User {
   trip              Trip?
   meetings           Meeting[]       @relation("meetingOwner")
   meetingMemberships MeetingMember[] @relation("meetingMember")
+  authTokens         AuthToken[]
+}
+
+// Tek kullanimlik token: sifre sifirlama (reset) / e-posta dogrulama (verify)
+model AuthToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  type      String // reset | verify
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // Buluşma noktasi — ortak bir hedef; uyeler oraya olan ETA'larini gorur

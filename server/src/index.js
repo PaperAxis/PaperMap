@@ -65,6 +65,8 @@ const authLimiter = rateLimit({
 });
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/forgot', authLimiter);
+app.use('/api/auth/reset', authLimiter);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
@@ -103,6 +105,7 @@ async function pruneLocationHistory() {
     });
     if (count > 0) console.log(`Eski konum geçmişi temizlendi: ${count} kayıt`);
     await prisma.shareLink.deleteMany({ where: { expiresAt: { lt: new Date() } } });
+    await prisma.authToken.deleteMany({ where: { expiresAt: { lt: new Date() } } });
   } catch (err) {
     console.error('konum geçmişi temizleme:', err);
   }

@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { Router } from 'express';
 import { prisma } from '../prisma.js';
 import { hashPassword, verifyPassword, signToken, publicUser } from '../auth.js';
@@ -5,8 +6,20 @@ import { requireAuth } from '../middleware/auth.js';
 import { uploadSingle, deleteUpload } from '../upload.js';
 import { config } from '../config.js';
 import { broadcastPeerUpdate } from '../socket.js';
+import { sendMail } from '../mailer.js';
 
 const router = Router();
+
+const RESET_TTL_MS = 60 * 60 * 1000; // 1 saat
+
+// Tek kullanimlik token uretir ve kaydeder.
+async function createAuthToken(userId, type, ttlMs) {
+  const token = crypto.randomBytes(32).toString('base64url');
+  await prisma.authToken.create({
+    data: { token, userId, type, expiresAt: new Date(Date.now() + ttlMs) },
+  });
+  return token;
+}
 
 // ADMIN_EMAILS listesindeki kullanicilari otomatik yonetici yapar
 async function applyAdminEmail(user) {
@@ -55,6 +68,58 @@ router.post('/login', async (req, res) => {
     return res.status(403).json({ error: 'Hesabınız devre dışı bırakıldı.' });
   }
   res.json({ token: signToken(user.id), user: publicUser(user) });
+});
+
+// Şifre sıfırlama isteği — kayıtlıysa e-posta gönderir. Yanıt her durumda
+// aynıdır (e-posta sayımını sızdırmamak için).
+router.post('/forgot', async (req, res) => {
+  const { email } = req.body || {};
+  if (!email) {
+    return res.status(400).json({ error: 'email zorunlu' });
+  }
+  const normalizedEmail = String(email).toLowerCase().trim();
+  const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+  if (user && !user.disabled) {
+    await prisma.authToken.deleteMany({
+      where: { userId: user.id, type: 'reset' },
+    });
+    const token = await createAuthToken(user.id, 'reset', RESET_TTL_MS);
+    const link = `${config.appUrl}/reset/${token}`;
+    sendMail({
+      to: user.email,
+      subject: 'PaperMap — Şifre sıfırlama',
+      text:
+        `Merhaba ${user.displayName},\n\n` +
+        `Şifreni sıfırlamak için aşağıdaki bağlantıya tıkla (1 saat geçerli):\n` +
+        `${link}\n\n` +
+        `Bu isteği sen yapmadıysan bu e-postayı yok sayabilirsin.`,
+      link,
+    }).catch(() => {});
+  }
+  res.json({ ok: true });
+});
+
+// Şifre sıfırlama — token ile yeni şifre belirler.
+router.post('/reset', async (req, res) => {
+  const { token, newPassword } = req.body || {};
+  if (!token || !newPassword) {
+    return res.status(400).json({ error: 'token ve newPassword zorunlu' });
+  }
+  if (String(newPassword).length < 8) {
+    return res.status(400).json({ error: 'Yeni şifre en az 8 karakter olmalı' });
+  }
+  const row = await prisma.authToken.findUnique({ where: { token: String(token) } });
+  if (!row || row.type !== 'reset' || row.expiresAt < new Date()) {
+    return res.status(400).json({ error: 'Bağlantı geçersiz veya süresi dolmuş' });
+  }
+  await prisma.user.update({
+    where: { id: row.userId },
+    data: { passwordHash: await hashPassword(newPassword) },
+  });
+  await prisma.authToken.deleteMany({
+    where: { userId: row.userId, type: 'reset' },
+  });
+  res.json({ ok: true });
 });
 
 router.get('/me', requireAuth, async (req, res) => {

@@ -55,6 +55,9 @@ export default function Login() {
         <p className="muted">
           Hesabın yok mu? <Link to="/register">Kayıt ol</Link>
         </p>
+        <p className="muted">
+          <Link to="/forgot">Şifreni mi unuttun?</Link>
+        </p>
       </div>
     </div>
   );
