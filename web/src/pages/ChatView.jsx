@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { MapPin } from 'lucide-react';
 import { api } from '../lib/api.js';
+import { getCurrentPosition } from '../lib/geo.js';
 import { useAuth } from '../lib/auth.jsx';
 import { useMessages } from '../lib/messages.jsx';
 import { timeAgo } from '../lib/time.js';
@@ -15,6 +17,9 @@ export default function ChatView() {
   const [text, setText] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [places, setPlaces] = useState([]);
+  const [pickerBusy, setPickerBusy] = useState(false);
   const endRef = useRef(null);
 
   useEffect(() => {
@@ -59,6 +64,39 @@ export default function ChatView() {
     }
   }
 
+  async function sendPlace(place) {
+    setError('');
+    try {
+      await api(`/api/conversations/${id}/messages`, {
+        method: 'POST',
+        body: { placeLat: place.lat, placeLng: place.lng, placeLabel: place.name },
+      });
+      setPickerOpen(false);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  function openPicker() {
+    setPickerOpen(true);
+    api('/api/places')
+      .then((d) => setPlaces(d.places))
+      .catch(() => {});
+  }
+
+  async function sendCurrentLocation() {
+    setPickerBusy(true);
+    setError('');
+    try {
+      const pos = await getCurrentPosition();
+      await sendPlace({ lat: pos.lat, lng: pos.lng, name: 'Şu anki konumum' });
+    } catch {
+      setError('Konum alınamadı. Konum izni verildiğinden emin olun.');
+    } finally {
+      setPickerBusy(false);
+    }
+  }
+
   const isGroup = conversation && conversation.type !== 'direct';
 
   return (
@@ -91,7 +129,19 @@ export default function ChatView() {
             {isGroup && m.senderId !== user.id && (
               <div className="msg-sender">{m.senderName}</div>
             )}
-            <div className="msg-bubble">{m.body}</div>
+            {m.placeLat != null ? (
+              <button
+                type="button"
+                className="msg-bubble msg-place"
+                onClick={() => navigate(`/?focus=${m.placeLat},${m.placeLng}`)}
+              >
+                <MapPin size={18} />
+                <span className="msg-place-label">{m.placeLabel || 'Konum'}</span>
+                <span className="msg-place-go">Haritada göster</span>
+              </button>
+            ) : (
+              <div className="msg-bubble">{m.body}</div>
+            )}
             <div className="msg-time">{timeAgo(m.createdAt)}</div>
           </div>
         ))}
@@ -101,6 +151,14 @@ export default function ChatView() {
       {error && <div className="error">{error}</div>}
 
       <form className="chat-input" onSubmit={send}>
+        <button
+          type="button"
+          className="chat-place-btn"
+          aria-label="Konum paylaş"
+          onClick={openPicker}
+        >
+          <MapPin size={20} />
+        </button>
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -108,6 +166,56 @@ export default function ChatView() {
         />
         <button type="submit">Gönder</button>
       </form>
+
+      {pickerOpen && (
+        <div className="modal-overlay">
+          <div className="modal-card">
+            <h3>Konum paylaş</h3>
+            <button
+              type="button"
+              disabled={pickerBusy}
+              style={{ marginBottom: 10 }}
+              onClick={sendCurrentLocation}
+            >
+              {pickerBusy ? 'Konum alınıyor…' : 'Şu anki konumum'}
+            </button>
+            {places.length > 0 && (
+              <div className="list">
+                {places.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    className="list-item link-row"
+                    onClick={() => sendPlace(p)}
+                  >
+                    <div className="li-left">
+                      <span
+                        className="place-dot"
+                        style={{ background: p.color }}
+                        aria-hidden="true"
+                      />
+                      <div className="info">
+                        <div className="name">{p.name}</div>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+            {places.length === 0 && (
+              <p className="empty">Kayıtlı yerin yok. Haritadan yer ekleyebilirsin.</p>
+            )}
+            <button
+              type="button"
+              className="secondary"
+              style={{ marginTop: 10 }}
+              onClick={() => setPickerOpen(false)}
+            >
+              Vazgeç
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

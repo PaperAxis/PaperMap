@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Message" ADD COLUMN "placeLat" DOUBLE PRECISION,
+ADD COLUMN "placeLng" DOUBLE PRECISION,
+ADD COLUMN "placeLabel" TEXT;

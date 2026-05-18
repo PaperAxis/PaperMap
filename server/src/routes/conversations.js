@@ -13,6 +13,9 @@ function messageView(m) {
     id: m.id,
     conversationId: m.conversationId,
     body: m.body,
+    placeLat: m.placeLat,
+    placeLng: m.placeLng,
+    placeLabel: m.placeLabel,
     createdAt: m.createdAt,
     senderId: m.senderId,
     senderName: m.sender.displayName,
@@ -41,7 +44,11 @@ function conversationView(conv, myId, membership, unread) {
     otherUser,
     memberCount: conv.members.length,
     lastMessage: last
-      ? { body: last.body, createdAt: last.createdAt, senderName: last.sender.displayName }
+      ? {
+          body: last.placeLat != null ? `Konum: ${last.placeLabel}` : last.body,
+          createdAt: last.createdAt,
+          senderName: last.sender.displayName,
+        }
       : null,
     updatedAt: last ? last.createdAt : conv.createdAt,
     unread,
@@ -176,7 +183,22 @@ router.post('/:id/messages', requireAuth, async (req, res) => {
     return res.status(404).json({ error: 'Sohbet bulunamadı' });
   }
   const body = String(req.body?.body || '').trim();
-  if (!body) {
+  const hasPlace = req.body?.placeLat != null && req.body?.placeLng != null;
+  let placeLat = null;
+  let placeLng = null;
+  let placeLabel = null;
+  if (hasPlace) {
+    placeLat = Number(req.body.placeLat);
+    placeLng = Number(req.body.placeLng);
+    if (
+      !Number.isFinite(placeLat) || !Number.isFinite(placeLng) ||
+      placeLat < -90 || placeLat > 90 || placeLng < -180 || placeLng > 180
+    ) {
+      return res.status(400).json({ error: 'Geçersiz konum' });
+    }
+    placeLabel = (String(req.body.placeLabel || '').trim() || 'Konum').slice(0, 80);
+  }
+  if (!body && !hasPlace) {
     return res.status(400).json({ error: 'Mesaj boş olamaz' });
   }
   if (body.length > 4000) {
@@ -184,7 +206,14 @@ router.post('/:id/messages', requireAuth, async (req, res) => {
   }
 
   const message = await prisma.message.create({
-    data: { conversationId: req.params.id, senderId: req.userId, body },
+    data: {
+      conversationId: req.params.id,
+      senderId: req.userId,
+      body,
+      placeLat,
+      placeLng,
+      placeLabel,
+    },
     include: { sender: true },
   });
   await prisma.conversationMember.update({
@@ -196,7 +225,11 @@ router.post('/:id/messages', requireAuth, async (req, res) => {
   const conv = await prisma.conversation.findUnique({ where: { id: req.params.id } });
   const senderName = message.sender.displayName;
   const isGroup = conv && conv.type !== 'direct';
-  const preview = body.length > 140 ? `${body.slice(0, 140)}…` : body;
+  const preview = hasPlace
+    ? `Konum: ${placeLabel}`
+    : body.length > 140
+      ? `${body.slice(0, 140)}…`
+      : body;
   const notifTitle = isGroup
     ? conv.name || (conv.type === 'family' ? 'Aile' : 'Grup')
     : senderName;

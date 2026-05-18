@@ -306,6 +306,13 @@ button.small {
   box-shadow: 0 0 0 1px var(--accent) inset;
 }
 
+button.link-row {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
 .li-left {
   display: flex;
   align-items: center;
@@ -1070,6 +1077,37 @@ input[type='range'] {
   background: var(--accent);
   color: #fff;
   border-color: var(--accent);
+}
+
+.msg-place {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.msg-place-label {
+  font-weight: 600;
+}
+
+.msg-place-go {
+  margin-left: auto;
+  font-size: 12px;
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
+.chat-place-btn {
+  width: auto;
+  flex: 0 0 auto;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--accent);
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
 }
 
 .msg-time {

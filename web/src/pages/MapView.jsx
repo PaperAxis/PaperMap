@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import {
@@ -64,6 +65,7 @@ function avatarElement(name, color, avatarPath) {
 
 export default function MapView() {
   const { user, setUser } = useAuth();
+  const [searchParams] = useSearchParams();
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const appliedThemeRef = useRef(null);
@@ -186,6 +188,16 @@ export default function MapView() {
       mapRef.current = null;
     };
   }, []);
+
+  // Sohbetten gelen "Haritada göster" — ?focus=lat,lng noktasina ucur
+  useEffect(() => {
+    const focus = searchParams.get('focus');
+    if (!focus) return;
+    const [lat, lng] = focus.split(',').map(Number);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    const map = mapRef.current;
+    if (map) map.flyTo({ center: [lng, lat], zoom: 16 });
+  }, [searchParams]);
 
   // Tema degisimini izle
   useEffect(() => {
@@ -417,7 +429,9 @@ export default function MapView() {
         .setLngLat([myPos.lng, myPos.lat])
         .setPopup(new maplibregl.Popup({ offset: 24 }).setHTML(popupHtml))
         .addTo(map);
-      map.flyTo({ center: [myPos.lng, myPos.lat], zoom: 15 });
+      if (!searchParams.get('focus')) {
+        map.flyTo({ center: [myPos.lng, myPos.lat], zoom: 15 });
+      }
     } else {
       ownMarkerRef.current.setLngLat([myPos.lng, myPos.lat]);
       setAvatar(
@@ -428,7 +442,7 @@ export default function MapView() {
       );
       ownMarkerRef.current.getPopup().setHTML(popupHtml);
     }
-  }, [myPos, myMeta, user.displayName, user.avatarColor, user.avatarPath]);
+  }, [myPos, myMeta, user.displayName, user.avatarColor, user.avatarPath, searchParams]);
 
   // Peer isaretcileri
   useEffect(() => {

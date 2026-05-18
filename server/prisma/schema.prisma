@@ -195,6 +195,9 @@ model Message {
   conversationId String
   senderId       String
   body           String
+  placeLat       Float? // doluysa: konum (yer) mesaji
+  placeLng       Float?
+  placeLabel     String?
   createdAt      DateTime @default(now())
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)

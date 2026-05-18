@@ -16,6 +16,24 @@ export async function openLocationSettings() {
   }
 }
 
+// Tek seferlik konum — sohbette yer paylasimi gibi anlik kullanim icin.
+export async function getCurrentPosition() {
+  try {
+    await Geolocation.requestPermissions();
+  } catch {
+    /* web'de desteklenmeyebilir */
+  }
+  const pos = await Geolocation.getCurrentPosition({
+    enableHighAccuracy: true,
+    timeout: 15000,
+  });
+  return {
+    lat: pos.coords.latitude,
+    lng: pos.coords.longitude,
+    accuracy: pos.coords.accuracy ?? null,
+  };
+}
+
 // Konum izleme. onUpdate({lat,lng,accuracy}) cagrilir. Durdurma fonksiyonu doner.
 export function watchPosition(onUpdate, onError) {
   if (Capacitor.isNativePlatform()) {
