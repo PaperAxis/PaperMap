@@ -66,12 +66,12 @@ export default function PlacesPanel({
         </button>
       </div>
 
-      <button type="button" onClick={onStartPlacing} style={{ marginBottom: 12 }}>
+      <button type="button" className="mb-2" onClick={onStartPlacing}>
         + Yeni yer (haritada nokta seç)
       </button>
 
       {error && (
-        <div className="error" style={{ marginBottom: 10 }}>
+        <div className="error mb-1">
           {error}
         </div>
       )}
@@ -84,7 +84,7 @@ export default function PlacesPanel({
         <div className="list">
           {places.map((p) => (
             <div key={p.id} className="family-card">
-              <div className="list-item" style={{ border: 'none', padding: 0 }}>
+              <div className="list-item flush">
                 <button
                   type="button"
                   className="li-left peer-main"

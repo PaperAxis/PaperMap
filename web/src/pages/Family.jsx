@@ -114,7 +114,7 @@ export default function Family() {
         <div className="card">
           <h3>Aileniz</h3>
           <div className="family-card">
-            <div className="list-item" style={{ border: 'none', padding: 0 }}>
+            <div className="list-item flush">
               <div className="info">
                 <div className="name">
                   {family.name}{' '}
@@ -145,7 +145,7 @@ export default function Family() {
             </div>
 
             {expanded === family.id && details[family.id] && (
-              <div className="list" style={{ marginTop: 8 }}>
+              <div className="list mt-1">
                 {details[family.id].members.map((m) => (
                   <div key={m.id} className="list-item">
                     <Link to={`/users/${m.id}`} className="li-left">
@@ -187,7 +187,7 @@ export default function Family() {
                 onChange={(e) => setName(e.target.value)}
                 required
               />
-              <button type="submit" disabled={busy} style={{ width: 'auto' }}>
+              <button type="submit" className="btn-auto" disabled={busy}>
                 Oluştur
               </button>
             </form>
@@ -203,7 +203,7 @@ export default function Family() {
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                 required
               />
-              <button type="submit" disabled={busy} style={{ width: 'auto' }}>
+              <button type="submit" className="btn-auto" disabled={busy}>
                 Katıl
               </button>
             </form>

@@ -127,7 +127,7 @@ export default function Admin() {
           <label>Uygulama adı</label>
           <div className="row">
             <input value={name} onChange={(e) => setName(e.target.value)} />
-            <button type="button" style={{ width: 'auto' }} onClick={saveName}>
+            <button type="button" className="btn-auto" onClick={saveName}>
               Kaydet
             </button>
           </div>
@@ -137,8 +137,7 @@ export default function Admin() {
           <div className="color-row">
             {logoPath ? (
               <img
-                className="brand-logo"
-                style={{ maxHeight: 40, margin: 0 }}
+                className="brand-logo logo-mini"
                 src={`${API_BASE}${logoPath}`}
                 alt="logo"
               />
@@ -176,11 +175,11 @@ export default function Admin() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
-          <button type="submit" style={{ width: 'auto' }}>
+          <button type="submit" className="btn-auto">
             Ara
           </button>
         </form>
-        <div className="list" style={{ marginTop: 10 }}>
+        <div className="list mt-1">
           {users.map((u) => (
             <div key={u.id} className="family-card">
               <div className="li-left">
@@ -202,7 +201,7 @@ export default function Admin() {
                 </div>
               </div>
               {u.id !== user.id && (
-                <div className="actions" style={{ marginTop: 8, flexWrap: 'wrap' }}>
+                <div className="actions mt-1 row-wrap">
                   <button
                     type="button"
                     className="small secondary"

@@ -99,12 +99,12 @@ export default function GeofencePanel({ geofences, onClose, onStartPlacing, onCh
         </button>
       </div>
 
-      <button type="button" onClick={onStartPlacing} style={{ marginBottom: 12 }}>
+      <button type="button" className="mb-2" onClick={onStartPlacing}>
         + Yeni alan (haritada nokta seç)
       </button>
 
       {error && (
-        <div className="error" style={{ marginBottom: 10 }}>
+        <div className="error mb-1">
           {error}
         </div>
       )}
@@ -128,7 +128,7 @@ export default function GeofencePanel({ geofences, onClose, onStartPlacing, onCh
 
             return (
               <div key={g.id} className="family-card">
-                <div className="list-item" style={{ border: 'none', padding: 0 }}>
+                <div className="list-item flush">
                   <div className="info">
                     <div className="name">{g.name}</div>
                     <div className="sub">
@@ -204,7 +204,7 @@ export default function GeofencePanel({ geofences, onClose, onStartPlacing, onCh
                       />
                       <span>Çıkışta bildir</span>
                     </label>
-                    <div className="row" style={{ marginTop: 8 }}>
+                    <div className="row mt-1">
                       <button
                         type="button"
                         className="small secondary"
@@ -254,7 +254,7 @@ export default function GeofencePanel({ geofences, onClose, onStartPlacing, onCh
                     )}
 
                     {famMembers.length === 0 && friendOpts.length === 0 ? (
-                      <p className="empty" style={{ marginTop: 8 }}>
+                      <p className="empty mt-1">
                         Eklenebilecek kişi yok.
                       </p>
                     ) : (

@@ -76,12 +76,12 @@ export default function Friends() {
             autoCorrect="off"
             required
           />
-          <button type="submit" disabled={busy} style={{ width: 'auto' }}>
+          <button type="submit" className="btn-auto" disabled={busy}>
             Gönder
           </button>
         </form>
-        {error && <div className="error" style={{ marginTop: 10 }}>{error}</div>}
-        {info && <div className="badge" style={{ marginTop: 10 }}>{info}</div>}
+        {error && <div className="error mt-1">{error}</div>}
+        {info && <div className="badge mt-1">{info}</div>}
       </div>
 
       {data.incoming.length > 0 && (

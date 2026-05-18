@@ -242,7 +242,7 @@ export default function Profile() {
         </Link>
       )}
 
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+      <div className="card card-flush">
         <div
           className="profile-banner"
           style={bannerUrl ? { backgroundImage: `url(${bannerUrl})` } : undefined}
@@ -291,7 +291,7 @@ export default function Profile() {
       {!user.emailVerified && (
         <div className="card">
           <h3>E-posta doğrulama</h3>
-          <p className="muted" style={{ marginBottom: 10 }}>
+          <p className="muted mb-1">
             E-posta adresin ({user.email}) henüz doğrulanmadı. Doğrulama
             bağlantısını e-postandan onayla.
           </p>
@@ -358,7 +358,7 @@ export default function Profile() {
             title="3-20 karakter: küçük harf, rakam ve alt çizgi"
             required
           />
-          <span className="muted" style={{ fontSize: 12 }}>
+          <span className="field-hint">
             Arkadaşların seni @{username} ile bulur.
           </span>
         </div>
@@ -383,10 +383,10 @@ export default function Profile() {
 
       <div className="card">
         <h3>Durum</h3>
-        <p className="muted" style={{ marginBottom: 10 }}>
+        <p className="muted mb-1">
           Arkadaşların ve aile üyelerin durumunu haritada ve kişi listesinde görür.
         </p>
-        <div className="font-list" style={{ marginBottom: 10 }}>
+        <div className="font-list mb-1">
           {STATUS_PRESETS.map((s) => (
             <button
               key={s}
@@ -466,7 +466,7 @@ export default function Profile() {
 
       <div className="card">
         <h3>Konum gizliliği</h3>
-        <p className="muted" style={{ marginBottom: 10 }}>
+        <p className="muted mb-1">
           İşareti kaldırdığın kişiler konumunu haritada göremez.
         </p>
         {privacyPeople.length === 0 ? (
@@ -502,35 +502,23 @@ export default function Profile() {
 
       <div className="card">
         <h3>Geçici konum bağlantısı</h3>
-        <p className="muted" style={{ marginBottom: 10 }}>
+        <p className="muted mb-1">
           Uygulaması olmayan birine, süreli bir bağlantıyla canlı konumunu
           gösterebilirsin. Süre dolunca bağlantı kendiliğinden geçersizleşir.
         </p>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            type="button"
-            style={{ flex: 1 }}
-            onClick={() => createShareLink(60)}
-          >
+        <div className="row row-equal">
+          <button type="button" onClick={() => createShareLink(60)}>
             1 saat
           </button>
-          <button
-            type="button"
-            style={{ flex: 1 }}
-            onClick={() => createShareLink(8 * 60)}
-          >
+          <button type="button" onClick={() => createShareLink(8 * 60)}>
             8 saat
           </button>
-          <button
-            type="button"
-            style={{ flex: 1 }}
-            onClick={() => createShareLink(24 * 60)}
-          >
+          <button type="button" onClick={() => createShareLink(24 * 60)}>
             24 saat
           </button>
         </div>
         {shareLinks.length > 0 && (
-          <div className="list" style={{ marginTop: 12 }}>
+          <div className="list mt-2">
             {shareLinks.map((l) => (
               <div key={l.id} className="list-item">
                 <div className="info">

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MapPin } from 'lucide-react';
+import { MapPin, ArrowLeft } from 'lucide-react';
 import { api } from '../lib/api.js';
 import { getCurrentPosition } from '../lib/geo.js';
 import { useAuth } from '../lib/auth.jsx';
@@ -108,19 +108,19 @@ export default function ChatView() {
           aria-label="Geri"
           onClick={() => navigate('/messages')}
         >
-          ←
+          <ArrowLeft size={20} />
         </button>
         <span className="chat-title">{conversation?.title || 'Sohbet'}</span>
       </div>
 
       <div className="chat-messages">
         {loading && (
-          <p className="empty" style={{ textAlign: 'center' }}>
+          <p className="empty center-text">
             Yükleniyor…
           </p>
         )}
         {!loading && messages.length === 0 && (
-          <p className="empty" style={{ textAlign: 'center' }}>
+          <p className="empty center-text">
             Henüz mesaj yok. İlk mesajı sen gönder.
           </p>
         )}
@@ -173,8 +173,8 @@ export default function ChatView() {
             <h3>Konum paylaş</h3>
             <button
               type="button"
+              className="mb-1"
               disabled={pickerBusy}
-              style={{ marginBottom: 10 }}
               onClick={sendCurrentLocation}
             >
               {pickerBusy ? 'Konum alınıyor…' : 'Şu anki konumum'}
@@ -207,8 +207,7 @@ export default function ChatView() {
             )}
             <button
               type="button"
-              className="secondary"
-              style={{ marginTop: 10 }}
+              className="secondary mt-1"
               onClick={() => setPickerOpen(false)}
             >
               Vazgeç

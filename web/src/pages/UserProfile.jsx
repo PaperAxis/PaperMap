@@ -61,7 +61,7 @@ export default function UserProfile() {
       {!error && !user && <p className="empty">Yükleniyor…</p>}
 
       {user && (
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        <div className="card card-flush">
           <div
             className="profile-banner"
             style={bannerUrl ? { backgroundImage: `url(${bannerUrl})` } : undefined}
@@ -75,7 +75,7 @@ export default function UserProfile() {
               />
             </div>
           </div>
-          <div style={{ padding: '38px 16px 16px' }}>
+          <div className="banner-body">
             <div className="page-title">{user.displayName}</div>
             <div className="muted">@{user.username}</div>
           </div>
