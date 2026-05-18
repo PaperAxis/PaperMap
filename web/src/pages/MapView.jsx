@@ -11,6 +11,7 @@ import {
   Siren,
   Bookmark,
   Handshake,
+  Layers,
   Play,
   Pause,
 } from 'lucide-react';
@@ -87,6 +88,7 @@ export default function MapView() {
   const [notice, setNotice] = useState('');
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const [, setShareTick] = useState(0);
+  const [mapMenuOpen, setMapMenuOpen] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const [mapTheme, setMapTheme] = useState(currentMapTheme());
 
@@ -827,6 +829,15 @@ export default function MapView() {
 
   const peerList = Object.values(peers);
 
+  // Katman menüsünden bir panel acar (digerlerini kapatir)
+  function openPanel(which) {
+    setPanelOpen(which === 'peers');
+    setGeofencePanelOpen(which === 'geofences');
+    setPlacesPanelOpen(which === 'places');
+    setMeetingsPanelOpen(which === 'meetings');
+    setMapMenuOpen(false);
+  }
+
   return (
     <div className="map-page">
       <div className="map-topbar">
@@ -842,59 +853,11 @@ export default function MapView() {
         </button>
         <button
           type="button"
-          className="peer-count"
-          aria-label="Haritadaki kişiler"
-          onClick={() => {
-            setGeofencePanelOpen(false);
-            setPlacesPanelOpen(false);
-            setMeetingsPanelOpen(false);
-            setPanelOpen((v) => !v);
-          }}
+          className={`map-menu-btn ${mapMenuOpen ? 'active' : ''}`}
+          aria-label="Katmanlar menüsü"
+          onClick={() => setMapMenuOpen((v) => !v)}
         >
-          <Users size={16} />
-          {peerList.length}
-        </button>
-        <button
-          type="button"
-          className="peer-count"
-          aria-label="Alanlar"
-          onClick={() => {
-            setPanelOpen(false);
-            setPlacesPanelOpen(false);
-            setMeetingsPanelOpen(false);
-            setGeofencePanelOpen((v) => !v);
-          }}
-        >
-          <Flag size={16} />
-          {geofences.length}
-        </button>
-        <button
-          type="button"
-          className="peer-count"
-          aria-label="Kayıtlı yerler"
-          onClick={() => {
-            setPanelOpen(false);
-            setGeofencePanelOpen(false);
-            setMeetingsPanelOpen(false);
-            setPlacesPanelOpen((v) => !v);
-          }}
-        >
-          <Bookmark size={16} />
-          {places.length}
-        </button>
-        <button
-          type="button"
-          className="peer-count"
-          aria-label="Buluşmalar"
-          onClick={() => {
-            setPanelOpen(false);
-            setGeofencePanelOpen(false);
-            setPlacesPanelOpen(false);
-            setMeetingsPanelOpen((v) => !v);
-          }}
-        >
-          <Handshake size={16} />
-          {meetings.length}
+          <Layers size={18} />
         </button>
         <button
           type="button"
@@ -905,6 +868,46 @@ export default function MapView() {
           <Siren size={16} />
           SOS
         </button>
+        {mapMenuOpen && (
+          <div className="map-menu">
+            <button
+              type="button"
+              className="map-menu-item"
+              onClick={() => openPanel('peers')}
+            >
+              <Users size={18} />
+              <span className="map-menu-label">Kişiler</span>
+              <span className="map-menu-count">{peerList.length}</span>
+            </button>
+            <button
+              type="button"
+              className="map-menu-item"
+              onClick={() => openPanel('geofences')}
+            >
+              <Flag size={18} />
+              <span className="map-menu-label">Alanlar</span>
+              <span className="map-menu-count">{geofences.length}</span>
+            </button>
+            <button
+              type="button"
+              className="map-menu-item"
+              onClick={() => openPanel('places')}
+            >
+              <Bookmark size={18} />
+              <span className="map-menu-label">Yerler</span>
+              <span className="map-menu-count">{places.length}</span>
+            </button>
+            <button
+              type="button"
+              className="map-menu-item"
+              onClick={() => openPanel('meetings')}
+            >
+              <Handshake size={18} />
+              <span className="map-menu-label">Buluşmalar</span>
+              <span className="map-menu-count">{meetings.length}</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {geoError && (
@@ -1084,8 +1087,7 @@ export default function MapView() {
           </div>
           <button
             type="button"
-            className="small secondary"
-            style={{ marginBottom: 10 }}
+            className="small secondary mb-1"
             onClick={() =>
               showHistory({ userId: user.id, displayName: 'Senin' })
             }
