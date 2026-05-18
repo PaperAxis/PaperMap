@@ -22,7 +22,7 @@ router.get('/:id', requireAuth, async (req, res) => {
     user: {
       id: u.id,
       displayName: u.displayName,
-      email: u.email,
+      username: u.username,
       avatarColor: u.avatarColor,
       avatarPath: u.avatarPath,
       bannerPath: u.bannerPath,

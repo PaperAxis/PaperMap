@@ -18,11 +18,17 @@ export function verifyToken(token) {
   return jwt.verify(token, config.jwtSecret);
 }
 
+// Gecerli kullanici adi: 3-20 karakter, kucuk harf / rakam / alt cizgi
+export function isValidUsername(s) {
+  return typeof s === 'string' && /^[a-z0-9_]{3,20}$/.test(s);
+}
+
 // Oturum sahibinin kendi profili (tum alanlar dahil)
 export function publicUser(u) {
   return {
     id: u.id,
     email: u.email,
+    username: u.username,
     displayName: u.displayName,
     sharingEnabled: u.sharingEnabled,
     sharingUntil: u.sharingUntil,

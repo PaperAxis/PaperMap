@@ -8,6 +8,7 @@ export default function Register() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -19,7 +20,7 @@ export default function Register() {
     setError('');
     setBusy(true);
     try {
-      await register(email, displayName, password);
+      await register(displayName, username, email, password);
       navigate('/');
     } catch (err) {
       setError(err.message);
@@ -36,9 +37,20 @@ export default function Register() {
         <form onSubmit={onSubmit}>
           <input
             type="text"
-            placeholder="Adın"
+            placeholder="Adın (ör. Mehmet)"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
+            required
+          />
+          <input
+            type="text"
+            placeholder="Kullanıcı adı (arkadaşların seni bununla bulur)"
+            value={username}
+            onChange={(e) => setUsername(e.target.value.toLowerCase())}
+            autoCapitalize="none"
+            autoCorrect="off"
+            pattern="[a-z0-9_]{3,20}"
+            title="3-20 karakter: küçük harf, rakam ve alt çizgi"
             required
           />
           <input

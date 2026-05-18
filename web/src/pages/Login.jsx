@@ -6,7 +6,7 @@ import Brand from '../components/Brand.jsx';
 export default function Login() {
   const { user, login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -18,7 +18,7 @@ export default function Login() {
     setError('');
     setBusy(true);
     try {
-      await login(email, password);
+      await login(loginId, password);
       navigate('/');
     } catch (err) {
       setError(err.message);
@@ -34,10 +34,12 @@ export default function Login() {
         <p className="muted">Hesabına giriş yap</p>
         <form onSubmit={onSubmit}>
           <input
-            type="email"
-            placeholder="E-posta"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            placeholder="Kullanıcı adı veya e-posta"
+            value={loginId}
+            onChange={(e) => setLoginId(e.target.value)}
+            autoCapitalize="none"
+            autoCorrect="off"
             required
           />
           <input

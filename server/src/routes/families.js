@@ -29,7 +29,7 @@ function memberView(m) {
   return {
     id: m.user.id,
     displayName: m.user.displayName,
-    email: m.user.email,
+    username: m.user.username,
     avatarColor: m.user.avatarColor,
     avatarPath: m.user.avatarPath,
     role: m.role,

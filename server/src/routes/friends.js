@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../prisma.js';
 import { requireAuth } from '../middleware/auth.js';
 import { notifyPeersChanged } from '../socket.js';
+import { createNotification } from '../notify.js';
 
 const router = Router();
 
@@ -9,7 +10,7 @@ function friendView(u) {
   return {
     id: u.id,
     displayName: u.displayName,
-    email: u.email,
+    username: u.username,
     avatarColor: u.avatarColor,
     avatarPath: u.avatarPath,
   };
@@ -43,17 +44,17 @@ router.get('/', requireAuth, async (req, res) => {
   res.json({ friends, incoming, outgoing });
 });
 
-// E-posta ile arkadaslik istegi gonder
+// Kullanici adi ile arkadaslik istegi gonder
 router.post('/', requireAuth, async (req, res) => {
-  const { email } = req.body || {};
-  if (!email) {
-    return res.status(400).json({ error: 'email zorunlu' });
+  const { username } = req.body || {};
+  if (!username) {
+    return res.status(400).json({ error: 'username zorunlu' });
   }
   const target = await prisma.user.findUnique({
-    where: { email: String(email).toLowerCase().trim() },
+    where: { username: String(username).toLowerCase().trim() },
   });
   if (!target) {
-    return res.status(404).json({ error: 'Bu e-postayla kullanıcı bulunamadı' });
+    return res.status(404).json({ error: 'Bu kullanıcı adıyla kullanıcı bulunamadı' });
   }
   if (target.id === req.userId) {
     return res.status(400).json({ error: 'Kendinize arkadaşlık isteği gönderemezsiniz' });
@@ -79,6 +80,12 @@ router.post('/', requireAuth, async (req, res) => {
   const friendship = await prisma.friendship.create({
     data: { requesterId: req.userId, addresseeId: target.id },
   });
+  const me = await prisma.user.findUnique({ where: { id: req.userId } });
+  createNotification(
+    target.id,
+    'Arkadaşlık isteği',
+    `${me.displayName} sana arkadaşlık isteği gönderdi.`,
+  ).catch(() => {});
   res.status(201).json({ friendshipId: friendship.id, user: friendView(target) });
 });
 

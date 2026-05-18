@@ -172,7 +172,7 @@ export default function Admin() {
           }}
         >
           <input
-            placeholder="Ad veya e-posta ara"
+            placeholder="Ad, kullanıcı adı veya e-posta ara"
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
@@ -198,7 +198,7 @@ export default function Admin() {
                       <span className="badge badge-danger">Devre dışı</span>
                     )}
                   </div>
-                  <div className="sub">{u.email}</div>
+                  <div className="sub">@{u.username} · {u.email}</div>
                 </div>
               </div>
               {u.id !== user.id && (

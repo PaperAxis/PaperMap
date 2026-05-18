@@ -11,6 +11,7 @@ function adminUserView(u) {
   return {
     id: u.id,
     email: u.email,
+    username: u.username,
     displayName: u.displayName,
     avatarColor: u.avatarColor,
     avatarPath: u.avatarPath,
@@ -39,6 +40,7 @@ router.get('/users', async (req, res) => {
       ? {
           OR: [
             { email: { contains: q, mode: 'insensitive' } },
+            { username: { contains: q, mode: 'insensitive' } },
             { displayName: { contains: q, mode: 'insensitive' } },
           ],
         }

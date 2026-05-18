@@ -5,7 +5,7 @@ import Avatar from '../components/Avatar.jsx';
 
 export default function Friends() {
   const [data, setData] = useState({ friends: [], incoming: [], outgoing: [] });
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [busy, setBusy] = useState(false);
@@ -31,9 +31,9 @@ export default function Friends() {
     setInfo('');
     setBusy(true);
     try {
-      await api('/api/friends', { method: 'POST', body: { email } });
+      await api('/api/friends', { method: 'POST', body: { username } });
       setInfo('Arkadaşlık isteği gönderildi.');
-      setEmail('');
+      setUsername('');
       await load();
     } catch (err) {
       setError(err.message);
@@ -68,10 +68,12 @@ export default function Friends() {
         <h3>Arkadaş ekle</h3>
         <form className="row" onSubmit={sendRequest}>
           <input
-            type="email"
-            placeholder="Arkadaşının e-postası"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            placeholder="Arkadaşının kullanıcı adı"
+            value={username}
+            onChange={(e) => setUsername(e.target.value.toLowerCase())}
+            autoCapitalize="none"
+            autoCorrect="off"
             required
           />
           <button type="submit" disabled={busy} style={{ width: 'auto' }}>
@@ -97,7 +99,7 @@ export default function Friends() {
                   />
                   <div className="info">
                     <div className="name">{f.user.displayName}</div>
-                    <div className="sub">{f.user.email}</div>
+                    <div className="sub">@{f.user.username}</div>
                   </div>
                 </Link>
                 <div className="actions">
@@ -132,7 +134,7 @@ export default function Friends() {
                   />
                   <div className="info">
                     <div className="name">{f.user.displayName}</div>
-                    <div className="sub">{f.user.email}</div>
+                    <div className="sub">@{f.user.username}</div>
                   </div>
                 </Link>
                 <div className="actions">
@@ -154,7 +156,7 @@ export default function Friends() {
         {loading ? (
           <p className="empty">Yükleniyor…</p>
         ) : data.friends.length === 0 ? (
-          <p className="empty">Henüz arkadaşın yok. Yukarıdan e-posta ile ekle.</p>
+          <p className="empty">Henüz arkadaşın yok. Yukarıdan kullanıcı adıyla ekle.</p>
         ) : (
           <div className="list">
             {data.friends.map((f) => (
@@ -168,7 +170,7 @@ export default function Friends() {
                   />
                   <div className="info">
                     <div className="name">{f.user.displayName}</div>
-                    <div className="sub">{f.user.email}</div>
+                    <div className="sub">@{f.user.username}</div>
                   </div>
                 </Link>
                 <div className="actions">

@@ -162,7 +162,7 @@ export default function Family() {
                             <span className="badge">Sahip</span>
                           )}
                         </div>
-                        <div className="sub">{m.email}</div>
+                        <div className="sub">@{m.username}</div>
                       </div>
                     </Link>
                   </div>

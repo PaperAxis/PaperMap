@@ -24,16 +24,19 @@ export function AuthProvider({ children }) {
     applyAppearance(user?.theme, user?.fontPref, user?.iconStyle);
   }, [user?.theme, user?.fontPref, user?.iconStyle]);
 
-  async function login(email, password) {
-    const d = await api('/api/auth/login', { method: 'POST', body: { email, password } });
+  async function login(loginId, password) {
+    const d = await api('/api/auth/login', {
+      method: 'POST',
+      body: { login: loginId, password },
+    });
     setToken(d.token);
     setUser(d.user);
   }
 
-  async function register(email, displayName, password) {
+  async function register(displayName, username, email, password) {
     const d = await api('/api/auth/register', {
       method: 'POST',
-      body: { email, displayName, password },
+      body: { displayName, username, email, password },
     });
     setToken(d.token);
     setUser(d.user);

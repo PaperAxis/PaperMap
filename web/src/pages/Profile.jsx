@@ -16,6 +16,7 @@ export default function Profile() {
   const avatarFileRef = useRef(null);
 
   const [displayName, setDisplayName] = useState(user.displayName);
+  const [username, setUsername] = useState(user.username);
   const [avatarColor, setAvatarColor] = useState(user.avatarColor);
   const [statusText, setStatusText] = useState(user.statusText || '');
   const [currentPassword, setCurrentPassword] = useState('');
@@ -103,7 +104,7 @@ export default function Profile() {
     e.preventDefault();
     setBusy(true);
     try {
-      await patchProfile({ displayName, avatarColor });
+      await patchProfile({ displayName, username, avatarColor });
       flash('Profil bilgileri kaydedildi.');
     } catch (err) {
       fail(err);
@@ -345,6 +346,21 @@ export default function Profile() {
             onChange={(e) => setDisplayName(e.target.value)}
             required
           />
+        </div>
+        <div className="field">
+          <label>Kullanıcı adı</label>
+          <input
+            value={username}
+            onChange={(e) => setUsername(e.target.value.toLowerCase())}
+            autoCapitalize="none"
+            autoCorrect="off"
+            pattern="[a-z0-9_]{3,20}"
+            title="3-20 karakter: küçük harf, rakam ve alt çizgi"
+            required
+          />
+          <span className="muted" style={{ fontSize: 12 }}>
+            Arkadaşların seni @{username} ile bulur.
+          </span>
         </div>
         {!user.avatarPath && (
           <div className="field">

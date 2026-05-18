@@ -77,7 +77,7 @@ export default function UserProfile() {
           </div>
           <div style={{ padding: '38px 16px 16px' }}>
             <div className="page-title">{user.displayName}</div>
-            <div className="muted">{user.email}</div>
+            <div className="muted">@{user.username}</div>
           </div>
         </div>
       )}
