@@ -10,6 +10,7 @@ import {
   LocateFixed,
   Siren,
   Bookmark,
+  Handshake,
   Play,
   Pause,
 } from 'lucide-react';
@@ -24,6 +25,7 @@ import { geofencesToGeoJSON, historyToGeoJSON } from '../lib/geojson.js';
 import PeerList from '../components/PeerList.jsx';
 import GeofencePanel from '../components/GeofencePanel.jsx';
 import PlacesPanel, { PLACE_COLORS } from '../components/PlacesPanel.jsx';
+import MeetingsPanel from '../components/MeetingsPanel.jsx';
 
 // [lng, lat] — MapLibre koordinat sirasi
 const TURKEY_CENTER = [35.0, 39.0];
@@ -74,6 +76,7 @@ export default function MapView() {
   const geofencesRef = useRef([]);
   const historyRef = useRef([]);
   const placeMarkersRef = useRef({});
+  const meetingMarkersRef = useRef({});
   const playbackMarkerRef = useRef(null);
 
   const [peers, setPeers] = useState({});
@@ -103,6 +106,15 @@ export default function MapView() {
   const [gfName, setGfName] = useState('');
   const [gfRadius, setGfRadius] = useState(300);
   const [gfError, setGfError] = useState('');
+
+  const [meetings, setMeetings] = useState([]);
+  const [meetingsPanelOpen, setMeetingsPanelOpen] = useState(false);
+  const [placingMeeting, setPlacingMeeting] = useState(false);
+  const [pendingMeeting, setPendingMeeting] = useState(null);
+  const [meetName, setMeetName] = useState('');
+  const [meetCandidates, setMeetCandidates] = useState({ friends: [], family: null });
+  const [meetSelected, setMeetSelected] = useState(() => new Set());
+  const [meetError, setMeetError] = useState('');
 
   const [places, setPlaces] = useState([]);
   const [placesPanelOpen, setPlacesPanelOpen] = useState(false);
@@ -235,6 +247,16 @@ export default function MapView() {
   }
   useEffect(() => {
     loadPlaces();
+  }, []);
+
+  // Buluşmalari yukle
+  function loadMeetings() {
+    api('/api/meetings')
+      .then((d) => setMeetings(d.meetings))
+      .catch(() => {});
+  }
+  useEffect(() => {
+    loadMeetings();
   }, []);
 
   // Geofence verisi degisince haritayi guncelle
@@ -542,6 +564,57 @@ export default function MapView() {
     };
   }, [placingPlace]);
 
+  // Buluşma noktasi isaretcileri
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const markers = meetingMarkersRef.current;
+    for (const id of Object.keys(markers)) {
+      if (!meetings.find((m) => m.id === id)) {
+        markers[id].remove();
+        delete markers[id];
+      }
+    }
+    for (const mt of meetings) {
+      const html = `<b>${escapeHtml(mt.label)}</b><br>Buluşma noktası`;
+      if (markers[mt.id]) {
+        markers[mt.id].setLngLat([mt.lng, mt.lat]);
+        markers[mt.id].getPopup().setHTML(html);
+      } else {
+        const el = document.createElement('div');
+        el.className = 'map-meeting';
+        markers[mt.id] = new maplibregl.Marker({ element: el })
+          .setLngLat([mt.lng, mt.lat])
+          .setPopup(new maplibregl.Popup({ offset: 16 }).setHTML(html))
+          .addTo(map);
+      }
+    }
+  }, [meetings]);
+
+  // Buluşma noktasi yerlestirme modu — haritada tiklama
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !placingMeeting) return undefined;
+    function onClick(e) {
+      setPendingMeeting({ lat: e.lngLat.lat, lng: e.lngLat.lng });
+      setMeetName('');
+      setMeetSelected(new Set());
+      setMeetError('');
+      setPlacingMeeting(false);
+      api('/api/geofences/candidates')
+        .then((d) =>
+          setMeetCandidates({ friends: d.friends || [], family: d.family || null }),
+        )
+        .catch(() => {});
+    }
+    map.on('click', onClick);
+    map.getCanvas().style.cursor = 'crosshair';
+    return () => {
+      map.off('click', onClick);
+      if (mapRef.current) map.getCanvas().style.cursor = '';
+    };
+  }, [placingMeeting]);
+
   function recenter() {
     if (mapRef.current && myPos) {
       mapRef.current.flyTo({ center: [myPos.lng, myPos.lat], zoom: 15 });
@@ -688,6 +761,50 @@ export default function MapView() {
     setPlacingMode(true);
   }
 
+  function startPlacingMeeting() {
+    setMeetingsPanelOpen(false);
+    setPlacingMeeting(true);
+  }
+
+  function toggleMeetMember(id) {
+    setMeetSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function createMeeting(e) {
+    e.preventDefault();
+    setMeetError('');
+    try {
+      await api('/api/meetings', {
+        method: 'POST',
+        body: {
+          label: meetName,
+          lat: pendingMeeting.lat,
+          lng: pendingMeeting.lng,
+          memberIds: [...meetSelected],
+        },
+      });
+      setPendingMeeting(null);
+      loadMeetings();
+      setMeetingsPanelOpen(true);
+    } catch (err) {
+      setMeetError(err.message);
+    }
+  }
+
+  function focusMeeting(mt) {
+    setMeetingsPanelOpen(false);
+    const map = mapRef.current;
+    if (!map) return;
+    map.flyTo({ center: [mt.lng, mt.lat], zoom: 16 });
+    const marker = meetingMarkersRef.current[mt.id];
+    if (marker && !marker.getPopup().isOpen()) marker.togglePopup();
+  }
+
   async function createGeofence(e) {
     e.preventDefault();
     setGfError('');
@@ -730,6 +847,7 @@ export default function MapView() {
           onClick={() => {
             setGeofencePanelOpen(false);
             setPlacesPanelOpen(false);
+            setMeetingsPanelOpen(false);
             setPanelOpen((v) => !v);
           }}
         >
@@ -743,6 +861,7 @@ export default function MapView() {
           onClick={() => {
             setPanelOpen(false);
             setPlacesPanelOpen(false);
+            setMeetingsPanelOpen(false);
             setGeofencePanelOpen((v) => !v);
           }}
         >
@@ -756,11 +875,26 @@ export default function MapView() {
           onClick={() => {
             setPanelOpen(false);
             setGeofencePanelOpen(false);
+            setMeetingsPanelOpen(false);
             setPlacesPanelOpen((v) => !v);
           }}
         >
           <Bookmark size={16} />
           {places.length}
+        </button>
+        <button
+          type="button"
+          className="peer-count"
+          aria-label="Buluşmalar"
+          onClick={() => {
+            setPanelOpen(false);
+            setGeofencePanelOpen(false);
+            setPlacesPanelOpen(false);
+            setMeetingsPanelOpen((v) => !v);
+          }}
+        >
+          <Handshake size={16} />
+          {meetings.length}
         </button>
         <button
           type="button"
@@ -874,6 +1008,18 @@ export default function MapView() {
           </button>
         </div>
       )}
+      {placingMeeting && (
+        <div className="geo-banner">
+          Buluşma noktası için haritada bir noktaya dokunun…{' '}
+          <button
+            type="button"
+            className="link-btn"
+            onClick={() => setPlacingMeeting(false)}
+          >
+            İptal
+          </button>
+        </div>
+      )}
 
       <div ref={containerRef} className="map-canvas" />
 
@@ -973,6 +1119,87 @@ export default function MapView() {
           onFocus={focusPlace}
           onNavigate={startTrip}
         />
+      )}
+
+      {meetingsPanelOpen && (
+        <MeetingsPanel
+          meetings={meetings}
+          onClose={() => setMeetingsPanelOpen(false)}
+          onStartPlacing={startPlacingMeeting}
+          onChanged={loadMeetings}
+          onFocus={focusMeeting}
+        />
+      )}
+
+      {pendingMeeting && (
+        <div className="modal-overlay">
+          <form className="modal-card" onSubmit={createMeeting}>
+            <h3>Yeni buluşma</h3>
+            <div className="field">
+              <label>Buluşma adı</label>
+              <input
+                value={meetName}
+                onChange={(e) => setMeetName(e.target.value)}
+                placeholder="Örn. Akşam yemeği"
+                required
+              />
+            </div>
+            <div className="field">
+              <label>Kimleri davet etmek istersin?</label>
+              {meetCandidates.family?.members?.length > 0 && (
+                <div className="add-group">
+                  <div className="add-group-head">
+                    <span>{meetCandidates.family.name} (aile)</span>
+                  </div>
+                  {meetCandidates.family.members.map((m) => (
+                    <label key={m.id} className="check-row">
+                      <input
+                        type="checkbox"
+                        checked={meetSelected.has(m.id)}
+                        onChange={() => toggleMeetMember(m.id)}
+                      />
+                      <span>{m.displayName}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+              {meetCandidates.friends.length > 0 && (
+                <div className="add-group">
+                  <div className="add-group-head">
+                    <span>Arkadaşlar</span>
+                  </div>
+                  {meetCandidates.friends.map((f) => (
+                    <label key={f.id} className="check-row">
+                      <input
+                        type="checkbox"
+                        checked={meetSelected.has(f.id)}
+                        onChange={() => toggleMeetMember(f.id)}
+                      />
+                      <span>{f.displayName}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+              {meetCandidates.friends.length === 0 &&
+                !meetCandidates.family?.members?.length && (
+                  <p className="empty">
+                    Davet edebileceğin arkadaş ya da aile üyen yok.
+                  </p>
+                )}
+            </div>
+            {meetError && <div className="error">{meetError}</div>}
+            <div className="row">
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => setPendingMeeting(null)}
+              >
+                Vazgeç
+              </button>
+              <button type="submit">Oluştur</button>
+            </div>
+          </form>
+        </div>
       )}
 
       {pendingPoint && (

@@ -42,6 +42,36 @@ model User {
   hiddenByPeers     HiddenPeer[]    @relation("hiddenTarget")
   shareLinks        ShareLink[]
   trip              Trip?
+  meetings           Meeting[]       @relation("meetingOwner")
+  meetingMemberships MeetingMember[] @relation("meetingMember")
+}
+
+// Buluşma noktasi — ortak bir hedef; uyeler oraya olan ETA'larini gorur
+model Meeting {
+  id        String   @id @default(cuid())
+  ownerId   String
+  label     String
+  lat       Float
+  lng       Float
+  createdAt DateTime @default(now())
+
+  owner   User            @relation("meetingOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members MeetingMember[]
+
+  @@index([ownerId])
+}
+
+model MeetingMember {
+  id        String   @id @default(cuid())
+  meetingId String
+  userId    String
+  joinedAt  DateTime @default(now())
+
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user    User    @relation("meetingMember", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([meetingId, userId])
+  @@index([userId])
 }
 
 // Kullanicinin etkin yolculugu — bir hedefe varis tahmini (ETA) icin
