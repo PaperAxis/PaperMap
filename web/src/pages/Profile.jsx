@@ -8,6 +8,8 @@ import { ICON_STYLES } from '../lib/iconStyles.js';
 import Avatar from '../components/Avatar.jsx';
 import ThemePicker from '../components/ThemePicker.jsx';
 
+const STATUS_PRESETS = ['Evdeyim', 'Yoldayım', 'İşteyim', 'Müsait değilim'];
+
 export default function Profile() {
   const { user, setUser, logout } = useAuth();
   const fileRef = useRef(null);
@@ -15,6 +17,7 @@ export default function Profile() {
 
   const [displayName, setDisplayName] = useState(user.displayName);
   const [avatarColor, setAvatarColor] = useState(user.avatarColor);
+  const [statusText, setStatusText] = useState(user.statusText || '');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [error, setError] = useState('');
@@ -105,6 +108,16 @@ export default function Profile() {
       fail(err);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function saveStatus(value) {
+    try {
+      await patchProfile({ statusText: value });
+      setStatusText(value);
+      flash(value ? 'Durum güncellendi.' : 'Durum temizlendi.');
+    } catch (err) {
+      fail(err);
     }
   }
 
@@ -325,6 +338,46 @@ export default function Profile() {
           Kaydet
         </button>
       </form>
+
+      <div className="card">
+        <h3>Durum</h3>
+        <p className="muted" style={{ marginBottom: 10 }}>
+          Arkadaşların ve aile üyelerin durumunu haritada ve kişi listesinde görür.
+        </p>
+        <div className="font-list" style={{ marginBottom: 10 }}>
+          {STATUS_PRESETS.map((s) => (
+            <button
+              key={s}
+              type="button"
+              className={`font-option ${statusText === s ? 'selected' : ''}`}
+              onClick={() => saveStatus(s)}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+        <div className="field">
+          <label>Özel durum</label>
+          <input
+            value={statusText}
+            maxLength={60}
+            onChange={(e) => setStatusText(e.target.value)}
+            placeholder="Örn. Tatildeyim"
+          />
+        </div>
+        <div className="row">
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => saveStatus('')}
+          >
+            Temizle
+          </button>
+          <button type="button" onClick={() => saveStatus(statusText.trim())}>
+            Kaydet
+          </button>
+        </div>
+      </div>
 
       <div className="card">
         <h3>Görünüm</h3>

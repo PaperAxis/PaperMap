@@ -32,6 +32,7 @@ export function publicUser(u) {
     theme: u.theme,
     fontPref: u.fontPref,
     iconStyle: u.iconStyle,
+    statusText: u.statusText,
     isAdmin: u.isAdmin,
   };
 }

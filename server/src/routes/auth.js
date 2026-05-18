@@ -4,6 +4,7 @@ import { hashPassword, verifyPassword, signToken, publicUser } from '../auth.js'
 import { requireAuth } from '../middleware/auth.js';
 import { uploadSingle, deleteUpload } from '../upload.js';
 import { config } from '../config.js';
+import { broadcastPeerUpdate } from '../socket.js';
 
 const router = Router();
 
@@ -103,11 +104,27 @@ router.patch('/profile', requireAuth, async (req, res) => {
     }
     data.iconStyle = iconStyle;
   }
+  let statusChanged = false;
+  if (req.body?.statusText !== undefined) {
+    const raw = req.body.statusText;
+    if (raw !== null && typeof raw !== 'string') {
+      return res.status(400).json({ error: 'Geçersiz durum' });
+    }
+    const status = raw == null ? '' : String(raw).trim();
+    if (status.length > 60) {
+      return res.status(400).json({ error: 'Durum en fazla 60 karakter olabilir' });
+    }
+    data.statusText = status || null;
+    statusChanged = true;
+  }
   if (Object.keys(data).length === 0) {
     return res.status(400).json({ error: 'Güncellenecek alan yok' });
   }
 
   const user = await prisma.user.update({ where: { id: req.userId }, data });
+  if (statusChanged) {
+    broadcastPeerUpdate(req.userId).catch(() => {});
+  }
   res.json({ user: publicUser(user) });
 });
 

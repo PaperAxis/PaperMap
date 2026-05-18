@@ -313,6 +313,11 @@ button.link-row {
   cursor: pointer;
 }
 
+.peer-status {
+  color: var(--accent);
+  font-weight: 500;
+}
+
 .li-left {
   display: flex;
   align-items: center;

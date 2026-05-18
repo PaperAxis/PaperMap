@@ -136,6 +136,7 @@ function peerPayload(user, loc) {
     displayName: user.displayName,
     avatarColor: user.avatarColor,
     avatarPath: user.avatarPath,
+    statusText: user.statusText ?? null,
     lat: loc.lat,
     lng: loc.lng,
     accuracy: loc.accuracy ?? null,
@@ -294,6 +295,23 @@ export async function broadcastSharingChange(userId, enabled) {
     for (const peerId of related) {
       io.to(room(peerId)).emit('peer:offline', { userId });
     }
+  }
+}
+
+// Profil (durum vb.) degisince iliskili gizlenmemis kisilere konum yukunu
+// yeniden yayinlar — boylece guncel statusText haritaya/listeye yansir.
+export async function broadcastPeerUpdate(userId) {
+  if (!io) return;
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { location: true },
+  });
+  if (!user || !sharingActive(user) || !user.location) return;
+  const related = await relatedUserIds(userId);
+  const hidden = await hiddenByUser(userId);
+  const payload = peerPayload(user, user.location);
+  for (const peerId of related) {
+    if (!hidden.has(peerId)) io.to(room(peerId)).emit('peer:location', payload);
   }
 }
 

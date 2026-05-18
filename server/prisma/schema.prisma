@@ -20,6 +20,7 @@ model User {
   theme          String   @default("light") // light | dark | system
   fontPref       String   @default("default") // default | atkinson | opendyslexic
   iconStyle      String   @default("normal") // normal | thin | bold | sharp
+  statusText     String? // kullanicinin elle ayarladigi durum (or. "Evdeyim")
   isAdmin        Boolean  @default(false)
   disabled       Boolean  @default(false)
   createdAt      DateTime @default(now())

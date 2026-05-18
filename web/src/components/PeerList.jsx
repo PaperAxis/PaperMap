@@ -28,6 +28,7 @@ export default function PeerList({ peers, trips = {}, onSelect, onHistory }) {
             />
             <div className="info">
               <div className="name">{p.displayName}</div>
+              {p.statusText && <div className="sub peer-status">{p.statusText}</div>}
               <div className="sub">
                 {batteryLabel(p.battery, p.charging)
                   ? `${batteryLabel(p.battery, p.charging)} · `

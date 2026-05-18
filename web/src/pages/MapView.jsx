@@ -421,7 +421,10 @@ export default function MapView() {
       const b = batteryLabel(myMeta.battery, myMeta.charging);
       meta = `${b ? `${b} · ` : ''}${timeAgo(myMeta.updatedAt)}`;
     }
-    const popupHtml = `<b>Sen</b>${meta ? `<br>${meta}` : ''}`;
+    const status = user.statusText
+      ? `<br><i>${escapeHtml(user.statusText)}</i>`
+      : '';
+    const popupHtml = `<b>Sen</b>${status}${meta ? `<br>${meta}` : ''}`;
     if (!ownMarkerRef.current) {
       ownMarkerRef.current = new maplibregl.Marker({
         element: avatarElement(user.displayName, user.avatarColor, user.avatarPath),
@@ -442,7 +445,15 @@ export default function MapView() {
       );
       ownMarkerRef.current.getPopup().setHTML(popupHtml);
     }
-  }, [myPos, myMeta, user.displayName, user.avatarColor, user.avatarPath, searchParams]);
+  }, [
+    myPos,
+    myMeta,
+    user.displayName,
+    user.avatarColor,
+    user.avatarPath,
+    user.statusText,
+    searchParams,
+  ]);
 
   // Peer isaretcileri
   useEffect(() => {
@@ -457,7 +468,10 @@ export default function MapView() {
     }
     for (const p of Object.values(peers)) {
       const meta = batteryLabel(p.battery, p.charging);
-      const html = `<b>${escapeHtml(p.displayName)}</b><br>${
+      const status = p.statusText
+        ? `<i>${escapeHtml(p.statusText)}</i><br>`
+        : '';
+      const html = `<b>${escapeHtml(p.displayName)}</b><br>${status}${
         meta ? `${meta} · ` : ''
       }${timeAgo(p.updatedAt)}`;
       if (markers[p.userId]) {
