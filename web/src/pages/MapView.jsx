@@ -91,6 +91,7 @@ export default function MapView() {
   const [sosConfirm, setSosConfirm] = useState(false);
   const [sosBusy, setSosBusy] = useState(false);
   const [sosAlert, setSosAlert] = useState(null); // gelen acil durum cagrisi
+  const [locReq, setLocReq] = useState(null); // { fromName } gelen konum istegi
   const [myTrip, setMyTrip] = useState(null); // { destLabel, etaMinutes }
   const [peerTrips, setPeerTrips] = useState({}); // userId -> trip
   const [geofences, setGeofences] = useState([]);
@@ -328,6 +329,7 @@ export default function MapView() {
     });
     socket.on('peers:changed', () => socket.emit('refresh'));
     socket.on('sos', (payload) => setSosAlert(payload));
+    socket.on('location:request', (payload) => setLocReq(payload));
     socket.on('trip:update', (t) => {
       if (t.userId === user.id) {
         setMyTrip({ destLabel: t.destLabel, etaMinutes: t.etaMinutes });
@@ -770,6 +772,29 @@ export default function MapView() {
           {myTrip.etaMinutes != null ? ` · ~${myTrip.etaMinutes} dk` : ''}{' '}
           <button type="button" className="link-btn" onClick={cancelTrip}>
             İptal
+          </button>
+        </div>
+      )}
+      {locReq && (
+        <div className="geo-banner">
+          {locReq.fromName} konumunu istiyor.
+          {!user.sharingEnabled && (
+            <>
+              {' '}
+              <button
+                type="button"
+                className="link-btn"
+                onClick={() => {
+                  setSharing(true, null);
+                  setLocReq(null);
+                }}
+              >
+                Paylaşımı aç
+              </button>
+            </>
+          )}{' '}
+          <button type="button" className="link-btn" onClick={() => setLocReq(null)}>
+            Kapat
           </button>
         </div>
       )}

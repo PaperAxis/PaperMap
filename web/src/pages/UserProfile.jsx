@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MessageCircle } from 'lucide-react';
+import { MessageCircle, MapPin } from 'lucide-react';
 import { api, API_BASE } from '../lib/api.js';
 import { useAuth } from '../lib/auth.jsx';
 import Avatar from '../components/Avatar.jsx';
@@ -11,6 +11,7 @@ export default function UserProfile() {
   const { user: me } = useAuth();
   const [user, setUser] = useState(null);
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
 
   async function startChat() {
     try {
@@ -24,9 +25,21 @@ export default function UserProfile() {
     }
   }
 
+  async function requestLocation() {
+    setError('');
+    setInfo('');
+    try {
+      await api('/api/location/request', { method: 'POST', body: { userId: id } });
+      setInfo('Konum isteği gönderildi.');
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
   useEffect(() => {
     setUser(null);
     setError('');
+    setInfo('');
     api(`/api/users/${id}`)
       .then((d) => setUser(d.user))
       .catch((e) => setError(e.message));
@@ -43,6 +56,7 @@ export default function UserProfile() {
       </div>
 
       {error && <div className="error">{error}</div>}
+      {info && <div className="badge">{info}</div>}
 
       {!error && !user && <p className="empty">Yükleniyor…</p>}
 
@@ -69,10 +83,16 @@ export default function UserProfile() {
       )}
 
       {user && me?.id !== user.id && (
-        <button type="button" onClick={startChat}>
-          <MessageCircle size={18} />
-          Mesaj gönder
-        </button>
+        <div className="row">
+          <button type="button" onClick={startChat}>
+            <MessageCircle size={18} />
+            Mesaj gönder
+          </button>
+          <button type="button" className="secondary" onClick={requestLocation}>
+            <MapPin size={18} />
+            Konum iste
+          </button>
+        </div>
       )}
     </div>
   );

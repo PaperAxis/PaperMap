@@ -4,6 +4,8 @@ import { requireAuth } from '../middleware/auth.js';
 import { publicUser } from '../auth.js';
 import { relatedUserIds } from '../visibility.js';
 import { broadcastSharingChange, handleLocationUpdate } from '../socket.js';
+import { emitToUser } from '../realtime.js';
+import { createNotification } from '../notify.js';
 
 const router = Router();
 
@@ -39,6 +41,34 @@ router.get('/history/:userId', requireAuth, async (req, res) => {
     select: { lat: true, lng: true, accuracy: true, recordedAt: true },
   });
   res.json({ points });
+});
+
+// Konum isteği — ilişkili birine konumunu paylaşmasını hatırlatır.
+router.post('/request', requireAuth, async (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId || typeof userId !== 'string') {
+    return res.status(400).json({ error: 'userId zorunlu' });
+  }
+  if (userId === req.userId) {
+    return res.status(400).json({ error: 'Kendinizden konum isteyemezsiniz' });
+  }
+  const related = await relatedUserIds(req.userId);
+  if (!related.has(userId)) {
+    return res.status(403).json({
+      error: 'Yalnızca arkadaşlarınızdan veya aile üyelerinizden konum isteyebilirsiniz',
+    });
+  }
+  const me = await prisma.user.findUnique({ where: { id: req.userId } });
+  createNotification(
+    userId,
+    'Konum isteği',
+    `${me.displayName} konumunu soruyor.`,
+  ).catch(() => {});
+  emitToUser(userId, 'location:request', {
+    fromId: req.userId,
+    fromName: me.displayName,
+  });
+  res.json({ ok: true });
 });
 
 // Konum paylasimini ac/kapat. Istege bagli durationMinutes ile sureli acilir.
