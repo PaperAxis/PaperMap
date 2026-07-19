@@ -107,10 +107,23 @@ crontab -e
 
 Harita kutucukları kendi sunucunda barındırılır — dış harita servisine bağımlılık
 yoktur. `scripts/build-turkey-tiles.sh` betiği [planetiler](https://github.com/onthegomap/planetiler)
-ile OpenStreetMap Türkiye verisinden vektör tile üretir (`tiles/turkey.mbtiles`,
-~1-3 GB). `tiles` servisi (`tileserver-gl`) bunu sunar; web arayüzü `/tiles/`
-üzerinden erişir. Harita stilleri (açık/koyu) `web/src/lib/mapStyle.js` içinde
-tanımlıdır — renkler tema ile birlikte değişir.
+ile OpenStreetMap Türkiye verisinden vektör tile üretir (`tiles/turkey.mbtiles`).
+`tiles` servisi (`tileserver-gl`) bunu sunar; web arayüzü `/tiles/` üzerinden
+erişir. Harita stilleri (açık/koyu) `web/src/lib/mapStyle.js` içinde tanımlıdır;
+POI'ler, ev numaraları, havalimanları, il/ilçe sınırları, tarım/kumsal/sulak
+alanlar, patika ve tali yollar dahil tüm OpenMapTiles katmanları çizilir —
+renkler tema ile birlikte değişir.
+
+**Detay seviyesi (maxzoom).** Betik varsayılan olarak **z15** üretir (planetiler'in
+kendi varsayılanı 14). z15; bina, POI ve sokak geometrisini çok daha ayrıntılı
+saklar, MapLibre bunları z16+ için büyüterek (overzoom) gösterir. Bedeli:
+`turkey.mbtiles` ~2-3× büyür (~3-8 GB) ve üretim daha uzun sürer. Disk/süre
+kısıtlıysa düşürebilirsiniz — bu durumda `mapStyle.js` içindeki kaynak `maxzoom`
+değerini de eşitleyin:
+
+```bash
+TILE_MAXZOOM=14 ./scripts/build-turkey-tiles.sh --force
+```
 
 Betik **idempotenttir**: `tiles/turkey.mbtiles` zaten varsa hiçbir şey indirmez
 veya yeniden üretmez, anında çıkar. Yani `git pull` + yeniden dağıtımlarda tekrar
