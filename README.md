@@ -321,6 +321,32 @@ base64 -w0 papermap.jks        # macOS: base64 -i papermap.jks
 
 Derleme bitince **Releases** sayfasından `papermap.apk` indirilip cihaza kurulur.
 
+## Uygulama ikonu ve favicon (marka)
+
+Tek kaynak: **`branding/logo.png`**. Bundan hem web favicon'ları hem de mobil
+uygulama ikonlarının kaynakları üretilir:
+
+- **Web favicon** (`web/public/favicon.ico`, `favicon-16/32.png`,
+  `apple-touch-icon.png`, `icon-192/512.png`) — `index.html`'de bağlıdır,
+  build ile `dist/`'e kopyalanır. Bunlar repoda **hazır** durur.
+- **Mobil ikonlar** — `web/assets/` altındaki kaynaklardan (`icon-only.png`,
+  `icon-foreground.png`, `icon-background.png`, `splash.png`, `splash-dark.png`)
+  CI'da `@capacitor/assets` ile Android `mipmap` ve iOS `AppIcon` setine
+  otomatik üretilir (mobile-release workflow'unda `cap add` sonrası adım).
+  Yani her APK/IPA derlemesinde ikon markanızla gömülür.
+
+**Logoyu değiştirmek** için `branding/logo.png`'yi yenisiyle değiştirip:
+
+```bash
+pip install Pillow            # tek sefer
+python3 scripts/generate-icons.py
+```
+
+Bu betik `web/public/` favicon'larını ve `web/assets/` mobil kaynaklarını
+yeniden üretir; commit'leyip yeni bir derleme tetiklemeniz yeterli. Adaptive
+ikon güvenli bölgesi, iOS için opak zemin ve koyu tema açılış ekranı otomatik
+ayarlanır.
+
 ## Mobil (Capacitor / Android) — yerel derleme
 
 Android projesi `web/android/` altında üretilir ve `.gitignore` ile hariç tutulur;
@@ -337,6 +363,12 @@ export VITE_API_URL=http://192.168.1.20:4015
 npm install
 npm run build
 npm run cap:add:android     # ilk kez: android/ klasorunu olusturur
+
+# Uygulama ikonunu markayla uret (CI bunu otomatik yapar)
+npx --package @capacitor/assets@3 -- capacitor-assets generate --android \
+  --iconBackgroundColor '#ffffff' --iconBackgroundColorDark '#ffffff' \
+  --splashBackgroundColor '#ffffff' --splashBackgroundColorDark '#10131c'
+
 npm run cap:sync            # web build'ini ve eklentileri senkronlar
 npm run cap:open:android    # Android Studio'da acar -> Run ile cihaza yukle
 ```

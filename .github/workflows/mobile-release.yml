@@ -73,6 +73,16 @@ jobs:
           npx cap add android
           node scripts/patch-manifest.mjs
 
+      - name: Uygulama ikonlarını üret (assets/ -> mipmap)
+        working-directory: web
+        run: |
+          npx --yes --package @capacitor/assets@3 -- capacitor-assets generate \
+            --android \
+            --iconBackgroundColor '#ffffff' \
+            --iconBackgroundColorDark '#ffffff' \
+            --splashBackgroundColor '#ffffff' \
+            --splashBackgroundColorDark '#10131c'
+
       - name: Firebase push yapılandır (varsa)
         working-directory: web
         env:
@@ -180,6 +190,14 @@ jobs:
         run: |
           npx cap add ios
           node scripts/patch-ios-plist.mjs
+
+      - name: Uygulama ikonlarını üret (assets/ -> AppIcon)
+        working-directory: web
+        run: |
+          npx --yes --package @capacitor/assets@3 -- capacitor-assets generate \
+            --ios \
+            --splashBackgroundColor '#ffffff' \
+            --splashBackgroundColorDark '#10131c'
 
       - name: İmzasız IPA derle
         working-directory: web/ios/App
