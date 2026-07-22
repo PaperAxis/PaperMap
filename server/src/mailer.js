@@ -12,18 +12,25 @@ if (smtpConfigured) {
     secure: smtp.port === 465,
     auth: smtp.user ? { user: smtp.user, pass: smtp.pass } : undefined,
   });
+  console.log(`[mailer] SMTP ayarlı: ${smtp.host}:${smtp.port}`);
+} else {
+  console.warn(
+    '[mailer] SMTP ayarlı DEĞİL (SMTP_HOST boş) — doğrulama ve şifre ' +
+      'sıfırlama e-postaları GÖNDERİLMEYECEK. Bağlantılar yalnızca bu loga ' +
+      'yazılır. Ayarlamak için .env içine SMTP_HOST/PORT/USER/PASS/FROM girin.',
+  );
 }
 
-// E-posta gonderir. SMTP yapilandirilmamissa (SMTP_HOST bos) gonderim
-// atlanir; bunun yerine baglanti sunucu loguna yazilir — boylece SMTP
-// olmadan da sifre sifirlama/dogrulama akislari kirilmaz.
+// E-posta gonderir. Sonuc: { ok, skipped?, error? }. SMTP yapilandirilmamissa
+// (SMTP_HOST bos) gonderim atlanir ve baglanti sunucu loguna yazilir — boylece
+// SMTP olmadan da akislar kirilmaz. Hata firlatmaz; cagiran sonuca bakabilir.
 export async function sendMail({ to, subject, text, link }) {
   if (!smtpConfigured) {
     console.warn(
       `[mailer] SMTP yapılandırılmadı — e-posta gönderilmedi (${to}: ${subject}).` +
         (link ? ` Bağlantı: ${link}` : ''),
     );
-    return;
+    return { ok: false, skipped: true };
   }
   try {
     await transporter.sendMail({
@@ -32,7 +39,9 @@ export async function sendMail({ to, subject, text, link }) {
       subject,
       text,
     });
+    return { ok: true };
   } catch (err) {
-    console.error('[mailer] e-posta gönderilemedi:', err.message);
+    console.error(`[mailer] e-posta gönderilemedi (${to}): ${err.message}`);
+    return { ok: false, error: err.message };
   }
 }

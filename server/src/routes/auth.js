@@ -12,7 +12,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { uploadSingle, deleteUpload } from '../upload.js';
 import { config } from '../config.js';
 import { broadcastPeerUpdate } from '../socket.js';
-import { sendMail } from '../mailer.js';
+import { sendMail, smtpConfigured } from '../mailer.js';
 
 const router = Router();
 
@@ -123,7 +123,18 @@ router.post('/verify/resend', requireAuth, async (req, res) => {
   if (user.emailVerified) {
     return res.status(400).json({ error: 'E-posta zaten doğrulanmış' });
   }
-  await sendVerifyEmail(user);
+  if (!smtpConfigured) {
+    return res.status(503).json({
+      error:
+        'Sunucuda e-posta gönderimi yapılandırılmamış. Yöneticiyle iletişime geçin.',
+    });
+  }
+  const result = await sendVerifyEmail(user);
+  if (!result?.ok) {
+    return res.status(502).json({
+      error: 'Doğrulama e-postası gönderilemedi. Lütfen daha sonra tekrar deneyin.',
+    });
+  }
   res.json({ ok: true });
 });
 
