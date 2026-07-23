@@ -11,6 +11,10 @@ if (smtpConfigured) {
     port: smtp.port,
     secure: smtp.port === 465,
     auth: smtp.user ? { user: smtp.user, pass: smtp.pass } : undefined,
+    // Ulasilamayan SMTP'de istek askida kalmasin (proxy 504 yerine hizli hata):
+    connectionTimeout: 10000, // baglanti kurma
+    greetingTimeout: 10000, // sunucu selamlamasi
+    socketTimeout: 20000, // sonraki islemler
   });
   console.log(`[mailer] SMTP ayarlı: ${smtp.host}:${smtp.port}`);
 } else {
