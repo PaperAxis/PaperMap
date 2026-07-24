@@ -34,6 +34,7 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_FROM: ${SMTP_FROM:-}
+      SMTP_ALLOW_SELF_SIGNED: ${SMTP_ALLOW_SELF_SIGNED:-false}
       APP_URL: ${APP_URL:-}
     volumes:
       - papermap_uploads:/app/uploads
