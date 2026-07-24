@@ -42,6 +42,10 @@ export const config = {
     user: process.env.SMTP_USER || '',
     pass: process.env.SMTP_PASS || '',
     from: process.env.SMTP_FROM || '',
+    // Kendinden-imzali (self-signed) TLS sertifikasi olan mail sunuculari icin.
+    // Sertifika dogrulamasini kapatir — yalnizca kendi guvendiginiz sunucuda
+    // "true" yapin (aksi halde MITM riski). Varsayilan: guvenli (dogrulama acik).
+    allowSelfSigned: process.env.SMTP_ALLOW_SELF_SIGNED === 'true',
   },
   // E-posta baglantilarinda kullanilan genel web adresi. Bos birakilirsa
   // ilk ALLOWED_ORIGINS degeri kullanilir.

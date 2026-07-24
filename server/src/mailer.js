@@ -15,7 +15,15 @@ if (smtpConfigured) {
     connectionTimeout: 10000, // baglanti kurma
     greetingTimeout: 10000, // sunucu selamlamasi
     socketTimeout: 20000, // sonraki islemler
+    // Self-signed sertifika (SMTP_ALLOW_SELF_SIGNED=true) — dogrulamayi kapat:
+    ...(smtp.allowSelfSigned ? { tls: { rejectUnauthorized: false } } : {}),
   });
+  if (smtp.allowSelfSigned) {
+    console.warn(
+      '[mailer] SMTP_ALLOW_SELF_SIGNED=true — TLS sertifika doğrulaması KAPALI ' +
+        '(yalnızca kendi güvendiğiniz sunucuda kullanın).',
+    );
+  }
   console.log(`[mailer] SMTP ayarlı: ${smtp.host}:${smtp.port}`);
 } else {
   console.warn(
