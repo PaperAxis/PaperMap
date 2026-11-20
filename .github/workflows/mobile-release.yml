@@ -1,7 +1,7 @@
 name: Mobil Sürüm (APK + IPA)
 
 # Tek workflow — Android APK ve iOS IPA paralel derlenir, tek Release'e yüklenir.
-# Android APK self-hosted runner'da derlenir ve PaperUpdates'e
+# Android APK ve iOS IPA GitHub'ın runner'larında derlenir; APK ayrıca PaperUpdates'e
 # (updates.paperaxis.com/papermap/) yayınlanır; uygulama oradan güncellenir.
 # Tetikleme:
 #  - main'e itme (web/ ya da marka değiştiyse)
@@ -31,9 +31,46 @@ permissions:
   contents: write
 
 jobs:
+  # ----- Release'i önceden aç -----
+  # Dosyalar artifact yerine doğrudan Release'e yüklenir (artifact kotasına takılmaz).
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Backend adresini belirle
+        id: cfg
+        env:
+          INPUT_URL: ${{ github.event.inputs.api_url }}
+          VAR_URL: ${{ vars.VITE_API_URL }}
+        run: |
+          URL="$INPUT_URL"
+          if [ -z "$URL" ]; then URL="$VAR_URL"; fi
+          if [ -z "$URL" ]; then URL='https://maps.paperaxis.com'; fi
+          echo "api_url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: GitHub Release oluştur
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('build-{0}', github.run_number) }}
+          name: PaperMap ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('#{0}', github.run_number) }}
+          body: |
+            PaperMap mobil sürüm.
+
+            - Backend (gömülü): `${{ steps.cfg.outputs.api_url }}`
+            - Uygulama kimliği: `com.paperaxis.papermap`
+
+            **Android** — `papermap.apk`'yı indirip kurun (Ayarlar > bilinmeyen
+            kaynaklara izin verin).
+
+            **iOS (AltStore)** — AltStore/SideStore'da kaynak (source) ekleyin:
+            `${{ github.server_url }}/${{ github.repository }}/releases/latest/download/altstore.json`
+            PaperMap listede çıkar; tek dokunuşla kurulur ve yeni sürümlerde
+            güncellenir. Alternatif olarak `papermap-unsigned.ipa`'yı indirip
+            AltStore "My Apps > +" ile elle de kurabilirsiniz.
+
   # ----- Android APK -----
   android:
-    runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '["self-hosted","linux","x64"]') }}
+    needs: prepare
+    runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
       # Sürüm: versionCode workflow çalıştırma numarasıdır, hep artar.
@@ -58,6 +95,9 @@ jobs:
 
       - name: Android SDK kurulumu
         uses: android-actions/setup-android@v3
+        with:
+          # Varsayılan "tools" paketi yeni cmdline-tools'ta yok; sdkmanager hata verir.
+          packages: platform-tools
 
       - name: Gerekli SDK paketleri
         run: sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
@@ -207,15 +247,16 @@ jobs:
           curl -fsSL https://updates.paperaxis.com/paperaxis-upload.sh -o "$RUNNER_TEMP/paperaxis-upload.sh"
           bash "$RUNNER_TEMP/paperaxis-upload.sh" "$OUT" --version "$APP_VERSION"
 
-      - name: APK'yı artifact olarak yükle
-        uses: actions/upload-artifact@v4
+      - name: APK'yı Release'e yükle
+        uses: softprops/action-gh-release@v2
         with:
-          name: papermap-apk
-          path: papermap.apk
-          if-no-files-found: error
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('build-{0}', github.run_number) }}
+          files: papermap.apk
+          fail_on_unmatched_files: true
 
   # ----- iOS IPA (imzasız) -----
   ios:
+    needs: prepare
     runs-on: macos-latest
     steps:
       - name: Kodu al
@@ -287,39 +328,19 @@ jobs:
             echo "::warning::Uygulama ikonu bulunamadı — AltStore kaynağında ikon olmayacak."
           fi
 
-      - name: IPA'yı artifact olarak yükle
-        uses: actions/upload-artifact@v4
-        with:
-          name: papermap-ipa
-          path: |
-            papermap-unsigned.ipa
-            icon.png
-          if-no-files-found: error
-
-  # ----- Yayınla -----
-  release:
-    needs: [android, ios]
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Artifact'leri indir
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-
       - name: AltStore kaynağı oluştur
         id: altstore
         env:
           APP_VERSION: 1.0.${{ github.run_number }}
           REPO_URL: ${{ github.server_url }}/${{ github.repository }}
         run: |
-          IPA=artifacts/papermap-ipa/papermap-unsigned.ipa
+          IPA="$GITHUB_WORKSPACE/papermap-unsigned.ipa"
           if [ ! -f "$IPA" ]; then
             echo "::warning::IPA bulunamadı — AltStore kaynağı atlanıyor."
             echo "made=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          SIZE=$(stat -c%s "$IPA")
+          SIZE=$(wc -c < "$IPA" | tr -d " ")  # macOS: BSD stat, -c yok
           DATE=$(date -u +%Y-%m-%d)
           DL="$REPO_URL/releases/latest/download/papermap-unsigned.ipa"
           ICON="$REPO_URL/releases/latest/download/icon.png"
@@ -363,28 +384,12 @@ jobs:
           echo "AltStore kaynağı oluşturuldu ($SIZE bayt IPA)."
           cat altstore.json
 
-      - name: GitHub Release oluştur
+      - name: IPA'yı Release'e yükle
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('build-{0}', github.run_number) }}
-          name: PaperMap ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('#{0}', github.run_number) }}
           files: |
-            artifacts/papermap-apk/papermap.apk
-            artifacts/papermap-ipa/papermap-unsigned.ipa
-            artifacts/papermap-ipa/icon.png
+            papermap-unsigned.ipa
+            icon.png
             altstore.json
           fail_on_unmatched_files: false
-          body: |
-            PaperMap mobil sürüm.
-
-            - Backend (gömülü): `${{ needs.android.outputs.api_url }}`
-            - Uygulama kimliği: `com.paperaxis.papermap`
-
-            **Android** — `papermap.apk`'yı indirip kurun (Ayarlar > bilinmeyen
-            kaynaklara izin verin).
-
-            **iOS (AltStore)** — AltStore/SideStore'da kaynak (source) ekleyin:
-            `${{ github.server_url }}/${{ github.repository }}/releases/latest/download/altstore.json`
-            PaperMap listede çıkar; tek dokunuşla kurulur ve yeni sürümlerde
-            güncellenir. Alternatif olarak `papermap-unsigned.ipa`'yı indirip
-            AltStore "My Apps > +" ile elle de kurabilirsiniz.
