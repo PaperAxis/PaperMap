@@ -75,6 +75,17 @@ final class ChatStore: ObservableObject {
         append(res.message)
     }
 
+    /// Location message (current position or a saved place).
+    func sendPlace(lat: Double, lng: Double, label: String, to conversationId: String) async throws {
+        guard let session else { return }
+        struct Body: Encodable { let placeLat: Double; let placeLng: Double; let placeLabel: String }
+        let res: SentMessageResponse = try await session.api(
+            "POST", "/api/conversations/\(conversationId)/messages",
+            body: Body(placeLat: lat, placeLng: lng, placeLabel: label)
+        )
+        append(res.message)
+    }
+
     /// Opens (or finds) the direct chat with a friend.
     func openDirect(with userId: String, title: String) async throws -> ChatTarget {
         guard let session else { throw APIError(status: 0, message: "Oturum yok") }
