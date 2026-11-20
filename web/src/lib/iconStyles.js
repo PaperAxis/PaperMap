@@ -1,13 +1,14 @@
-// İkon (SVG) stilleri — çizgi kalınlığı/biçimi. CSS ile global uygulanır.
-// preview: tek bir ikonun önizlemesi için React style nesnesi.
+// Icon (SVG) styles: stroke width and shape, applied globally from CSS.
+// "normal" is the PaperAxis default: Lucide at a 1.5 px stroke.
+// preview: React style object for a single sample icon.
 export const ICON_STYLES = [
-  { id: 'normal', name: 'Normal', preview: { strokeWidth: 2 } },
-  { id: 'thin', name: 'İnce', preview: { strokeWidth: 1.3 } },
-  { id: 'bold', name: 'Kalın', preview: { strokeWidth: 2.75 } },
+  { id: 'normal', name: 'Normal', preview: { strokeWidth: 1.5 } },
+  { id: 'thin', name: 'İnce', preview: { strokeWidth: 1.15 } },
+  { id: 'bold', name: 'Kalın', preview: { strokeWidth: 2.25 } },
   {
     id: 'sharp',
     name: 'Keskin',
-    preview: { strokeWidth: 2, strokeLinejoin: 'miter', strokeLinecap: 'square' },
+    preview: { strokeWidth: 1.5, strokeLinejoin: 'miter', strokeLinecap: 'square' },
   },
 ];
 

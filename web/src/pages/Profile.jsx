@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom';
 import { Wrench, Star } from 'lucide-react';
 import { api, apiUpload, API_BASE } from '../lib/api.js';
 import { useAuth } from '../lib/auth.jsx';
-import { FONTS } from '../lib/fonts.js';
+import { FONTS, FONT_CATEGORIES, resolveFontId } from '../lib/appearance/fonts.js';
 import { ICON_STYLES } from '../lib/iconStyles.js';
 import Avatar from '../components/Avatar.jsx';
 import ThemePicker from '../components/ThemePicker.jsx';
+import Credit from '../components/Credit.jsx';
 
 const STATUS_PRESETS = ['Evdeyim', 'Yoldayım', 'İşteyim', 'Müsait değilim'];
 
@@ -432,19 +433,25 @@ export default function Profile() {
         </div>
         <div className="field">
           <label>Yazı tipi</label>
-          <div className="font-list">
-            {FONTS.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                className={`font-option ${user.fontPref === f.id ? 'selected' : ''}`}
-                style={{ fontFamily: f.stack }}
-                onClick={() => changeAppearance({ fontPref: f.id })}
-              >
-                {f.name}
-              </button>
-            ))}
-          </div>
+          {FONT_CATEGORIES.map((cat) => (
+            <div key={cat.key} className="font-group">
+              <span className="pa-label">{cat.label}</span>
+              <div className="font-list">
+                {FONTS.filter((f) => f.category === cat.key).map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    aria-pressed={resolveFontId(user.fontPref) === f.id}
+                    className={`font-option ${resolveFontId(user.fontPref) === f.id ? 'selected' : ''}`}
+                    style={{ fontFamily: f.stack }}
+                    onClick={() => changeAppearance({ fontPref: f.id })}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
         <div className="field">
           <label>İkon stili</label>
@@ -580,6 +587,7 @@ export default function Profile() {
           Şifreyi değiştir
         </button>
       </form>
+      <Credit />
     </div>
   );
 }

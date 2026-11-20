@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { api, getToken, setToken } from './api.js';
-import { applyAppearance } from './appearance.js';
+import { applyAppearance } from './appearance/index.js';
 
 const AuthContext = createContext(null);
 

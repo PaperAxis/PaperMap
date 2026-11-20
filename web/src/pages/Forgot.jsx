@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api.js';
 import Brand from '../components/Brand.jsx';
+import Credit from '../components/Credit.jsx';
 
 export default function Forgot() {
   const [email, setEmail] = useState('');
@@ -59,6 +60,7 @@ export default function Forgot() {
           </>
         )}
       </div>
+      <Credit />
     </div>
   );
 }

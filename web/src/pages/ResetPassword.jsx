@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api.js';
 import Brand from '../components/Brand.jsx';
+import Credit from '../components/Credit.jsx';
 
 export default function ResetPassword() {
   const { token } = useParams();
@@ -64,6 +65,7 @@ export default function ResetPassword() {
           </>
         )}
       </div>
+      <Credit />
     </div>
   );
 }

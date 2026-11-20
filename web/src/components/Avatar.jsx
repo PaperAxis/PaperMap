@@ -21,7 +21,7 @@ export default function Avatar({ name, color, avatarPath, size = 40 }) {
     <span
       className="avatar"
       style={{
-        background: color || '#10b981',
+        background: color || '#315bdb',
         width: size,
         height: size,
         fontSize: Math.round(size * 0.42),

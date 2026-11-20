@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth.jsx';
 import Brand from '../components/Brand.jsx';
+import Credit from '../components/Credit.jsx';
 
 export default function Register() {
   const { user, register } = useAuth();
@@ -77,6 +78,7 @@ export default function Register() {
           Zaten hesabın var mı? <Link to="/login">Giriş yap</Link>
         </p>
       </div>
+      <Credit />
     </div>
   );
 }

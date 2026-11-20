@@ -1,60 +1,79 @@
 import { useState } from 'react';
-import { Sun, Moon, Sunrise, Sparkles, Accessibility } from 'lucide-react';
-import { THEME_CATEGORIES, resolveTheme } from '../lib/themes.js';
+import { Check, ChevronDown, ChevronRight } from 'lucide-react';
+import {
+  CATEGORY_LABELS,
+  getTheme,
+  resolveThemeId,
+  themeHex,
+  themesByCategory,
+} from '../lib/appearance/themes.js';
 
-const CATEGORY_ICONS = {
-  light: Sun,
-  dark: Moon,
-  'light-gradient': Sunrise,
-  'dark-gradient': Sparkles,
-  'light-access': Accessibility,
-  'dark-access': Accessibility,
-};
+const GROUPS = Object.entries(themesByCategory());
 
-// Klasorlu (kategori bazli) tema secici
+// Category folders; PaperAxis brand themes first, same catalog as PaperApp.
 export default function ThemePicker({ value, onSelect }) {
-  const current = resolveTheme(value);
-  const [openCategory, setOpenCategory] = useState(current.categoryKey);
+  const current = getTheme(resolveThemeId(value));
+  const [openCategory, setOpenCategory] = useState(current.category);
 
   return (
     <div className="theme-picker">
-      {THEME_CATEGORIES.map((cat) => {
-        const open = openCategory === cat.key;
-        const CatIcon = CATEGORY_ICONS[cat.key] || Sun;
+      <p className="theme-current">
+        <span className="pa-label">Seçili</span> {current.label}
+      </p>
+      {GROUPS.map(([key, themes]) => {
+        const open = openCategory === key;
+        const Toggle = open ? ChevronDown : ChevronRight;
         return (
-          <div key={cat.key} className="theme-cat">
+          <div key={key} className="theme-cat">
             <button
               type="button"
               className="theme-cat-head"
-              onClick={() => setOpenCategory(open ? null : cat.key)}
+              aria-expanded={open}
+              onClick={() => setOpenCategory(open ? null : key)}
             >
-              <span className="theme-cat-name">
-                <CatIcon size={18} />
-                {cat.name}
+              <span>{CATEGORY_LABELS[key]}</span>
+              <span className="theme-cat-meta">
+                <span className="theme-cat-count">{themes.length}</span>
+                <Toggle size={18} aria-hidden="true" />
               </span>
-              <span className="theme-cat-toggle">{open ? '▾' : '▸'}</span>
             </button>
             {open && (
-              <div className="theme-grid">
-                {cat.themes.map((t) => (
-                  <button
-                    key={t.id}
-                    type="button"
-                    title={t.name}
-                    aria-label={t.name}
-                    className={`theme-swatch ${t.id === current.id ? 'selected' : ''}`}
-                    style={{ background: t.swatchBg }}
-                    onClick={() => onSelect(t.id)}
-                  >
-                    <span
-                      className="theme-swatch-dot"
-                      style={{ background: t.accent }}
-                    />
-                    {t.id === current.id && (
-                      <span className="theme-swatch-check">✓</span>
-                    )}
-                  </button>
-                ))}
+              <div className={`theme-grid ${key === 'paperaxis' ? 'theme-grid-wide' : ''}`}>
+                {themes.map((t) => {
+                  const selected = t.id === current.id;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      title={t.label}
+                      aria-label={t.label}
+                      aria-pressed={selected}
+                      className={`theme-swatch ${selected ? 'selected' : ''}`}
+                      style={{ background: t.appBg }}
+                      onClick={() => onSelect(t.id)}
+                    >
+                      <span
+                        className="theme-swatch-card"
+                        style={{ background: themeHex(t.vars.surface) }}
+                      >
+                        <span
+                          className="theme-swatch-dot"
+                          style={{ background: themeHex(t.vars.brand) }}
+                        />
+                      </span>
+                      {key === 'paperaxis' && (
+                        <span className="theme-swatch-name" style={{ color: themeHex(t.vars.fg) }}>
+                          {t.label}
+                        </span>
+                      )}
+                      {selected && (
+                        <span className="theme-swatch-check">
+                          <Check size={12} strokeWidth={3} aria-hidden="true" />
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>

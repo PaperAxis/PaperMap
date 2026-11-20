@@ -49,7 +49,7 @@ export default function SharePage() {
           if (!markerRef.current) {
             const el = document.createElement('div');
             el.className = 'map-avatar';
-            el.style.backgroundColor = d.avatarColor || '#2563eb';
+            el.style.backgroundColor = d.avatarColor || '#315bdb';
             el.textContent = (d.displayName || '?').trim().charAt(0).toUpperCase();
             markerRef.current = new maplibregl.Marker({ element: el })
               .setLngLat(lngLat)

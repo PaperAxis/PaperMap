@@ -7,9 +7,11 @@ Aile ve arkadaşlarla karşılıklı **konum paylaşımı** yapılan bir harita 
 - **Gerçek zamanlı**: Konumlar Socket.IO (WebSocket) ile anlık güncellenir.
 - **Gizlilik**: Konum paylaşımını istediğin an aç/kapat. Kapalıyken kimse seni göremez.
 - **Profil**: Banner, görünen ad, avatar rengi ve şifre düzenleme.
-- **Görünüm**: 6 kategori (aydınlık, karanlık, gradyan, erişilebilir) altında
-  60 tema ve okunabilirlik dostu yazı tipleri (Lexend, Atkinson Hyperlegible
-  vb.). Tercihler hesaba kayıtlıdır, tüm cihazlarda senkron.
+- **Görünüm**: PaperAxis tasarım sistemi (PaperApp ile aynı tokenlar).
+  Varsayılan PaperAxis Aydınlık; PaperAxis Koyu ve 6 kategoride 150 tema daha
+  (aydınlık, karanlık, gradyanlar, erişilebilir), 25 yazı tipi. Tema ve yazı
+  tipi kimlikleri PaperApp ve PaperBudget ile aynıdır. Tercihler hesaba
+  kayıtlıdır, tüm cihazlarda senkron. Ayrıntı: `docs/DESIGN_SYSTEM.md`.
 - **Mobil**: Capacitor ile Android uygulamasına paketlenir.
 
 ## Teknolojiler

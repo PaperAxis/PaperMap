@@ -54,7 +54,7 @@ function setAvatar(el, name, color, avatarPath) {
     el.textContent = '';
   } else {
     el.style.backgroundImage = '';
-    el.style.backgroundColor = color || '#2563eb';
+    el.style.backgroundColor = color || '#315bdb';
     el.textContent = (name || '?').trim().charAt(0).toUpperCase() || '?';
   }
 }
@@ -140,13 +140,13 @@ export default function MapView() {
       id: 'geofence-fill',
       type: 'fill',
       source: 'geofences',
-      paint: { 'fill-color': '#2563eb', 'fill-opacity': 0.13 },
+      paint: { 'fill-color': '#315bdb', 'fill-opacity': 0.13 },
     });
     map.addLayer({
       id: 'geofence-line',
       type: 'line',
       source: 'geofences',
-      paint: { 'line-color': '#2563eb', 'line-width': 2, 'line-dasharray': [2, 1] },
+      paint: { 'line-color': '#315bdb', 'line-width': 2, 'line-dasharray': [2, 1] },
     });
   }
 

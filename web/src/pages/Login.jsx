@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth.jsx';
 import Brand from '../components/Brand.jsx';
+import Credit from '../components/Credit.jsx';
 
 export default function Login() {
   const { user, login } = useAuth();
@@ -61,6 +62,7 @@ export default function Login() {
           <Link to="/forgot">Şifreni mi unuttun?</Link>
         </p>
       </div>
+      <Credit />
     </div>
   );
 }

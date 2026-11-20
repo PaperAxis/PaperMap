@@ -4,7 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import './fonts.js';
 import App from './App.jsx';
 import './styles.css';
-import { applyCachedAppearance } from './lib/appearance.js';
+import { applyCachedAppearance } from './lib/appearance/index.js';
 import { initNative } from './lib/native.js';
 import { disableZoom } from './lib/noZoom.js';
 

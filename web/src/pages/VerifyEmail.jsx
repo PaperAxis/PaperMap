@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../lib/api.js';
 import Brand from '../components/Brand.jsx';
+import Credit from '../components/Credit.jsx';
 
 export default function VerifyEmail() {
   const { token } = useParams();
@@ -33,6 +34,7 @@ export default function VerifyEmail() {
           <Link to="/login">Girişe dön</Link>
         </p>
       </div>
+      <Credit />
     </div>
   );
 }
