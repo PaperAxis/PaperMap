@@ -44,13 +44,13 @@ enum APIClient {
             req.httpBody = try JSONEncoder().encode(body)
         }
 
-        let data: Data
-        let response: URLResponse
+        let result: (Data, URLResponse)
         do {
-            (data, response) = try await session.data(for: req)
+            result = try await session.data(for: req)
         } catch {
             throw APIError(status: 0, message: "Sunucuya ulaşılamadı. İnternet bağlantını kontrol et.")
         }
+        let (data, response) = result
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard (200..<300).contains(status) else {
             let msg = (try? JSONDecoder().decode(ServerError.self, from: data))?.error
