@@ -14,6 +14,15 @@ Aile ve arkadaşlarla karşılıklı **konum paylaşımı** yapılan bir harita 
   kayıtlıdır, tüm cihazlarda senkron. Ayrıntı: `docs/DESIGN_SYSTEM.md`.
 - **Mobil**: Capacitor ile Android uygulamasına paketlenir.
 
+## Native uygulamalar (2.0)
+
+Android (Kotlin + Jetpack Compose) ve iOS (SwiftUI) native uygulamaları
+`apps/` altındadır; aynı sunucuya bağlanır. Ayrıntı, kapsam ve API sözleşmesi:
+[apps/README.md](apps/README.md). Derleme ve yayın:
+`.github/workflows/native-release.yml` (APK → PaperUpdates `papermap-android`
+ve GitHub Release, IPA → AltStore kaynağı). Capacitor ile paketlenen eski web
+kabuğu (`mobile-release.yml`) yalnızca elle çalışır.
+
 ## Teknolojiler
 
 | Katman      | Teknoloji                             |
