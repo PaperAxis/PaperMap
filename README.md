@@ -50,7 +50,6 @@ curl -fsSL https://get.docker.com | sh
 
 # 2) Projeyi al
 git clone <repo-url> papermap && cd papermap
-git checkout claude/papermap-location-app-4bIAf
 
 # 3) Ortam dosyasini olustur ve duzenle
 cp .env.example .env
@@ -80,6 +79,38 @@ git pull && docker compose up -d --build
 `server` ve `web` konteynerlerinde **healthcheck** vardır; `docker compose ps`
 çıktısında durumları `healthy` görünmelidir. `web`, `server` sağlıklı olana
 kadar başlamayı bekler.
+
+### Otomatik dağıtım (self-hosted runner)
+
+`.github/workflows/deploy.yml`, `main`'e her itmede sunucudaki self-hosted
+runner'da çalışır: önce veritabanı yedeği alır, sonra `scripts/deploy.sh` ile
+git'te izlenen dosyaları `/opt/papermap`'e kopyalar ve
+`docker compose up -d --build --wait` ile yeniden derler. `.env`, `tiles/`,
+`fcm/` ve `backups/` korunur; `.env` yoksa iş durur.
+
+Sunucuda bir kez:
+
+- Runner'ı organizasyona ya da bu depoya kaydedin (etiketler
+  `self-hosted,linux,x64`; farklıysa repo değişkeni `RUNNER_LINUX`, ör.
+  `["self-hosted","papermap"]`). Runner kullanıcısı `docker` grubunda olmalı.
+- Kurulum klasörü runner kullanıcısına yazılabilir olmalı:
+  `sudo chown -R <runner kullanıcısı> /opt/papermap`.
+  Farklı klasör için repo değişkeni `PAPERMAP_DIR`.
+
+### Uygulama güncellemeleri (PaperUpdates)
+
+Mobil sürüm iş akışı Android APK'yı self-hosted runner'da derler ve
+`updates.paperaxis.com/papermap/` altına yayınlar (`releases.android.json` +
+`PaperMap-<sürüm>.apk`). `versionCode` iş akışının çalıştırma numarasıdır.
+Uygulama açılışta günde en fazla bir kez bu dosyayı okur; daha yeni sürüm varsa
+altta "İndir ve kur" bandı çıkar, kurulum kullanıcının onayıyla yapılır.
+
+Gerekenler:
+
+- PaperUpdates yönetim uygulamasında `papermap` ürünü ve yayın anahtarı
+  (`pup_…`) → repo secret'ı `PAPERAXIS_PUBLISH_TOKEN`.
+- Kalıcı keystore secret'ları (aşağıda). Geçici anahtarla imzalanan APK
+  kurulu uygulamanın üstüne kurulamadığı için o derlemede yayın atlanır.
 
 ### Veritabanı yedekleme
 
@@ -304,6 +335,17 @@ altına `VITE_API_URL` değişkenini ekleyin (ya da elle çalıştırırken giri
 keystore oluşturur (APK kurulur ama her derlemede anahtar değişir). Uygulamayı
 önceki kurulum üzerine **güncelleyebilmek** için kalıcı bir keystore oluşturup
 aşağıdaki 4 secret'ı ekleyin (**Settings → Secrets and variables → Actions → Secrets**):
+
+En kolayı: kendi bilgisayarınızda (openssl + `gh auth login` gerekli) tek komut.
+Anahtarı openssl ile üretir, 4 secret'ı doğrudan yükler, parolayı ekrana basmaz;
+yedeği `~/.papermap-keystore` altına koyar — **bu yedeği güvenli saklayın**,
+kaybolursa kurulu uygulamalar bir daha güncellenemez:
+
+```bash
+./scripts/setup-android-keystore.sh
+```
+
+Elle yapmak isterseniz:
 
 ```bash
 # 1) Keystore olustur (bir kez)
