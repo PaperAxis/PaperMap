@@ -99,7 +99,7 @@ Sunucuda bir kez:
 
 ### Uygulama güncellemeleri (PaperUpdates)
 
-Mobil sürüm iş akışı Android APK'yı self-hosted runner'da derler ve
+Mobil sürüm iş akışı Android APK'yı GitHub'ın runner'ında derler ve
 `updates.paperaxis.com/papermap/` altına yayınlar (`releases.android.json` +
 `PaperMap-<sürüm>.apk`). `versionCode` iş akışının çalıştırma numarasıdır.
 Uygulama açılışta günde en fazla bir kez bu dosyayı okur; daha yeni sürüm varsa

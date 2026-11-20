@@ -1,7 +1,7 @@
 name: Mobil Sürüm (APK + IPA)
 
 # Tek workflow — Android APK ve iOS IPA paralel derlenir, tek Release'e yüklenir.
-# Android APK self-hosted runner'da derlenir ve PaperUpdates'e
+# Android APK ve iOS IPA GitHub'ın runner'larında derlenir; APK ayrıca PaperUpdates'e
 # (updates.paperaxis.com/papermap/) yayınlanır; uygulama oradan güncellenir.
 # Tetikleme:
 #  - main'e itme (web/ ya da marka değiştiyse)
@@ -70,7 +70,7 @@ jobs:
   # ----- Android APK -----
   android:
     needs: prepare
-    runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '["self-hosted","linux","x64"]') }}
+    runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
       # Sürüm: versionCode workflow çalıştırma numarasıdır, hep artar.
