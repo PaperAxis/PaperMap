@@ -35,6 +35,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -46,6 +47,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.paperaxis.papermap.data.User
 import com.paperaxis.papermap.notify.Notifier
 import com.paperaxis.papermap.ui.auth.AuthScreen
+import com.paperaxis.papermap.ui.auth.ForgotPasswordScreen
+import com.paperaxis.papermap.ui.auth.ResetPasswordScreen
+import com.paperaxis.papermap.ui.auth.VerifyEmailScreen
 import com.paperaxis.papermap.ui.chat.ChatScreen
 import com.paperaxis.papermap.ui.chat.ConversationsScreen
 import com.paperaxis.papermap.ui.family.FamilyScreen
@@ -72,6 +76,8 @@ fun PaperMapRoot(vm: AppViewModel) {
     val update by vm.update.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     val openUrl by vm.openUrl.collectAsStateWithLifecycle()
+    val authLink by vm.authLink.collectAsStateWithLifecycle()
+    val appSettings by vm.appSettings.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     // SSO start: hand the server URL to the browser; it returns via papermap://sso.
@@ -99,17 +105,48 @@ fun PaperMapRoot(vm: AppViewModel) {
                     CircularProgressIndicator()
                 }
                 SessionState.SignedOut -> {
-                    LaunchedEffect(Unit) { vm.refreshSsoProviders() }
-                    AuthScreen(
-                        busy = busy,
-                        initialLogin = vm.rememberedLogin.collectAsState().value,
-                        ssoProviders = vm.ssoProviders.collectAsState().value,
-                        onLogin = vm::login,
-                        onRegister = vm::register,
-                        onSso = vm::startSsoLogin,
-                    )
+                    var forgot by rememberSaveable { mutableStateOf(false) }
+                    LaunchedEffect(Unit) {
+                        vm.refreshSsoProviders()
+                        vm.refreshAppSettings()
+                    }
+                    if (forgot) {
+                        ForgotPasswordScreen(
+                            settings = appSettings,
+                            onSubmit = vm::forgotPassword,
+                            onBack = { forgot = false },
+                        )
+                    } else {
+                        AuthScreen(
+                            busy = busy,
+                            initialLogin = vm.rememberedLogin.collectAsState().value,
+                            ssoProviders = vm.ssoProviders.collectAsState().value,
+                            onLogin = vm::login,
+                            onRegister = vm::register,
+                            onSso = vm::startSsoLogin,
+                            settings = appSettings,
+                            onForgot = { forgot = true },
+                        )
+                    }
                 }
                 is SessionState.SignedIn -> SignedInShell(vm, s.user)
+            }
+            // Account e-mail links open above everything, signed in or not.
+            when (val link = authLink) {
+                is AuthLink.Reset -> ResetPasswordScreen(
+                    settings = appSettings,
+                    token = link.token,
+                    onSubmit = vm::resetPassword,
+                    onClose = vm::closeAuthLink,
+                )
+                is AuthLink.Verify -> VerifyEmailScreen(
+                    settings = appSettings,
+                    token = link.token,
+                    signedIn = session is SessionState.SignedIn,
+                    onVerify = vm::verifyEmail,
+                    onClose = vm::closeAuthLink,
+                )
+                null -> Unit
             }
         }
     }

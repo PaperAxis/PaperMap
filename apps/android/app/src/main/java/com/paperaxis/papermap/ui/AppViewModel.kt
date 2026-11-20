@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.paperaxis.papermap.PaperMapApp
 import com.paperaxis.papermap.data.AndroidRelease
+import com.paperaxis.papermap.data.AppSettings
 import com.paperaxis.papermap.data.ApiException
 import com.paperaxis.papermap.data.AppNotification
 import com.paperaxis.papermap.data.ChatMessage
@@ -23,6 +24,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+
+/** Account e-mail links opened in the app: reset password, verify e-mail. */
+sealed interface AuthLink {
+    data class Reset(val token: String) : AuthLink
+    data class Verify(val token: String) : AuthLink
+}
 
 sealed interface SessionState {
     data object Loading : SessionState
@@ -100,7 +107,15 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val _openUrl = MutableStateFlow<String?>(null)
     val openUrl: StateFlow<String?> = _openUrl.asStateFlow()
 
+    /** Server branding (app name and logo) set in the admin panel. */
+    private val _appSettings = MutableStateFlow(AppSettings())
+    val appSettings: StateFlow<AppSettings> = _appSettings.asStateFlow()
+
+    private val _authLink = MutableStateFlow<AuthLink?>(null)
+    val authLink: StateFlow<AuthLink?> = _authLink.asStateFlow()
+
     init {
+        refreshAppSettings()
         viewModelScope.launch {
             _rememberedLogin.value = app.session.rememberedLogin()
             val token = app.session.token()
@@ -213,6 +228,58 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun currentUser(): User? = (session.value as? SessionState.SignedIn)?.user
+
+    fun refreshAppSettings() {
+        viewModelScope.launch { runCatching { api.appSettings() }.onSuccess { _appSettings.value = it } }
+    }
+
+    /** Runs [block] and reports null on success or the error text (forms that show errors inline). */
+    private fun attempt(block: suspend () -> Unit, onResult: (String?) -> Unit) {
+        viewModelScope.launch {
+            val error = try {
+                block()
+                null
+            } catch (e: Exception) {
+                e.message ?: "Bir hata oluştu"
+            }
+            onResult(error)
+        }
+    }
+
+    fun forgotPassword(email: String, onResult: (String?) -> Unit) =
+        attempt({ api.forgotPassword(email) }, onResult)
+
+    fun resetPassword(token: String, password: String, onResult: (String?) -> Unit) =
+        attempt({ api.resetPassword(token, password) }, onResult)
+
+    fun verifyEmail(token: String, onResult: (String?) -> Unit) = attempt({
+        api.verifyEmail(token)
+        if (currentUser() != null) _session.value = SessionState.SignedIn(api.me())
+    }, onResult)
+
+    /**
+     * Handles https://maps.paperaxis.com/reset/<token>, /verify/<token> and the
+     * papermap://reset/<token>, papermap://verify/<token> forms. Returns false for other URIs.
+     */
+    fun handleAccountLink(uri: android.net.Uri): Boolean {
+        val parts = if (uri.scheme == "papermap") {
+            listOfNotNull(uri.host) + uri.pathSegments
+        } else {
+            uri.pathSegments
+        }
+        if (parts.size < 2) return false
+        val token = parts[1]
+        _authLink.value = when (parts[0]) {
+            "reset" -> AuthLink.Reset(token)
+            "verify" -> AuthLink.Verify(token)
+            else -> return false
+        }
+        return true
+    }
+
+    fun closeAuthLink() {
+        _authLink.value = null
+    }
 
     // SSO: Google / PaperApp via the server-side flow (docs/SSO.md).
     fun refreshSsoProviders() {

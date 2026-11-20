@@ -34,7 +34,8 @@ class MainActivity : ComponentActivity() {
         handleOpen(intent)
     }
 
-    // Tapping a system notification opens the notifications page; SSO returns land here too.
+    // Tapping a system notification opens the notifications page; SSO returns and
+    // account e-mail links land here too.
     private fun handleOpen(intent: Intent?) {
         val i = intent ?: return
         // SSO return: papermap://sso?code=… (docs/SSO.md)
@@ -42,6 +43,11 @@ class MainActivity : ComponentActivity() {
         if (i.action == Intent.ACTION_VIEW && data != null && data.scheme == "papermap" && data.host == "sso") {
             i.data = null
             vm.handleSsoReturn(data)
+            return
+        }
+        // Account e-mail links: …/reset/<token>, …/verify/<token> (https or papermap://).
+        if (i.action == Intent.ACTION_VIEW && data != null && vm.handleAccountLink(data)) {
+            i.data = null
             return
         }
         if (i.getStringExtra(Notifier.EXTRA_OPEN) == Notifier.OPEN_NOTIFICATIONS) {

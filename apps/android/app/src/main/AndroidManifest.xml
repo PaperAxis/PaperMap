@@ -39,6 +39,24 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="papermap" android:host="sso" />
             </intent-filter>
+            <!-- Reset password / verify e-mail links from account e-mails -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:host="maps.paperaxis.com" />
+                <data android:pathPrefix="/reset/" />
+                <data android:pathPrefix="/verify/" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="papermap" />
+                <data android:host="reset" />
+                <data android:host="verify" />
+            </intent-filter>
         </activity>
 
         <service
