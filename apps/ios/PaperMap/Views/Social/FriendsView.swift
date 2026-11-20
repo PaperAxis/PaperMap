@@ -8,6 +8,8 @@ struct FriendsView: View {
     @EnvironmentObject private var chats: ChatStore
     @State private var chatTarget: ChatTarget?
     @State private var openChat = false
+    @State private var profileId: String?
+    @State private var openProfile = false
     @State private var data = FriendsResponse(friends: [], incoming: [], outgoing: [])
     @State private var loaded = false
     @State private var error: String?
@@ -44,7 +46,14 @@ struct FriendsView: View {
                 }
                 ForEach(data.friends) { entry in
                     HStack {
-                        PersonRow(person: entry.user)
+                        Button {
+                            profileId = entry.user.id
+                            openProfile = true
+                        } label: {
+                            PersonRow(person: entry.user)
+                        }
+                        .buttonStyle(.borderless)
+                        .accessibilityHint("Profili açar")
                         Spacer()
                         Button {
                             Task { await message(entry) }
@@ -72,6 +81,9 @@ struct FriendsView: View {
         .navigationTitle("Arkadaşlar")
         .navigationDestination(isPresented: $openChat) {
             if let chatTarget { ChatView(target: chatTarget) }
+        }
+        .navigationDestination(isPresented: $openProfile) {
+            if let profileId { UserProfileView(userId: profileId) }
         }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
