@@ -5,6 +5,8 @@ import com.paperaxis.papermap.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -80,6 +82,33 @@ class ApiClient(private val session: SessionStore) {
 
     suspend fun me(): User = get<UserResponse>("/api/auth/me").user
 
+    // SSO (docs/SSO.md)
+    suspend fun ssoProviders(): List<String> =
+        get<SsoProvidersResponse>("/api/auth/sso/providers").providers
+
+    suspend fun ssoExchange(code: String): SsoExchangeResponse =
+        AppJson.decodeFromString(
+            call("POST", "/api/auth/sso/exchange", buildJsonObject { put("code", code) }),
+        )
+
+    suspend fun linkTicket(provider: String): String =
+        AppJson.decodeFromString<LinkTicketResponse>(
+            call("POST", "/api/auth/sso/link-ticket", buildJsonObject { put("provider", provider) }),
+        ).ticket
+
+    suspend fun identities(): IdentitiesResponse = get("/api/auth/identities")
+
+    suspend fun unlinkIdentity(provider: String) {
+        call("DELETE", "/api/auth/identities/$provider")
+    }
+
+    /** Browser URL that starts the server-side SSO flow. */
+    fun ssoStartUrl(provider: String, mode: String, ticket: String? = null): String {
+        val q = StringBuilder("client=android&mode=").append(mode)
+        if (ticket != null) q.append("&ticket=").append(java.net.URLEncoder.encode(ticket, "UTF-8"))
+        return "$base/api/sso/$provider/start?$q"
+    }
+
     suspend fun updateDisplayName(name: String): User =
         AppJson.decodeFromString<UserResponse>(
             call("PATCH", "/api/auth/profile", buildJsonObject { put("displayName", name) }),
@@ -131,5 +160,48 @@ class ApiClient(private val session: SessionStore) {
 
     suspend fun leaveFamily(id: String) {
         call("DELETE", "/api/families/$id/leave")
+    }
+
+    // Chat
+    suspend fun conversations(): List<Conversation> =
+        get<ConversationsResponse>("/api/conversations").conversations
+
+    suspend fun openDirect(userId: String): String =
+        AppJson.decodeFromString<ConversationIdResponse>(
+            call("POST", "/api/conversations/direct", buildJsonObject { put("userId", userId) }),
+        ).conversationId
+
+    suspend fun createGroup(name: String, memberIds: List<String>): String =
+        AppJson.decodeFromString<ConversationIdResponse>(
+            call("POST", "/api/conversations/group", buildJsonObject {
+                put("name", name)
+                put("memberIds", JsonArray(memberIds.map { JsonPrimitive(it) }))
+            }),
+        ).conversationId
+
+    suspend fun messages(conversationId: String): List<ChatMessage> =
+        get<MessagesResponse>("/api/conversations/$conversationId/messages").messages
+
+    suspend fun sendMessage(conversationId: String, body: String): ChatMessage =
+        AppJson.decodeFromString<MessageResponse>(
+            call("POST", "/api/conversations/$conversationId/messages", buildJsonObject { put("body", body) }),
+        ).message
+
+    suspend fun markConversationRead(conversationId: String) {
+        call("POST", "/api/conversations/$conversationId/read")
+    }
+
+    // Notifications
+    suspend fun notifications(): NotificationsResponse = get("/api/notifications")
+
+    suspend fun markNotificationsRead() {
+        call("POST", "/api/notifications/read")
+    }
+
+    suspend fun registerPushToken(token: String) {
+        call("POST", "/api/notifications/token", buildJsonObject {
+            put("token", token)
+            put("platform", "android")
+        })
     }
 }

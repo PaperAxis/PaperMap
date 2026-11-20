@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { api, getToken, setToken } from './api.js';
+import { api, getToken, setToken, setRememberedLogin } from './api.js';
 import { applyAppearance } from './appearance/index.js';
 
 const AuthContext = createContext(null);
@@ -24,13 +24,20 @@ export function AuthProvider({ children }) {
     applyAppearance(user?.theme, user?.fontPref, user?.iconStyle);
   }, [user?.theme, user?.fontPref, user?.iconStyle]);
 
-  async function login(loginId, password) {
+  async function login(loginId, password, remember = true) {
     const d = await api('/api/auth/login', {
       method: 'POST',
       body: { login: loginId, password },
     });
-    setToken(d.token);
+    setToken(d.token, remember);
+    setRememberedLogin(remember ? loginId.trim() : '');
     setUser(d.user);
+  }
+
+  // Session from Google / PaperApp sign-in (persisted like "Beni hatırla").
+  function loginWithToken(token, nextUser) {
+    setToken(token, true);
+    setUser(nextUser);
   }
 
   async function register(displayName, username, email, password) {
@@ -48,7 +55,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, setUser, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, setUser, loading, login, loginWithToken, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -296,19 +296,28 @@ router.patch('/profile', requireAuth, async (req, res) => {
 // Şifre değiştirme
 router.post('/password', requireAuth, async (req, res) => {
   const { currentPassword, newPassword } = req.body || {};
-  if (!currentPassword || !newPassword) {
-    return res.status(400).json({ error: 'currentPassword ve newPassword zorunlu' });
+  if (!newPassword) {
+    return res.status(400).json({ error: 'newPassword zorunlu' });
   }
   if (String(newPassword).length < 8) {
     return res.status(400).json({ error: 'Yeni şifre en az 8 karakter olmalı' });
   }
   const user = await prisma.user.findUnique({ where: { id: req.userId } });
-  if (!(await verifyPassword(currentPassword, user.passwordHash))) {
-    return res.status(401).json({ error: 'Mevcut şifre hatalı' });
+  if (!user) {
+    return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
+  }
+  // Google/PaperApp ile acilan hesap ilk sifresini mevcut sifre sormadan belirler.
+  if (user.hasPassword) {
+    if (!currentPassword) {
+      return res.status(400).json({ error: 'currentPassword ve newPassword zorunlu' });
+    }
+    if (!(await verifyPassword(currentPassword, user.passwordHash))) {
+      return res.status(401).json({ error: 'Mevcut şifre hatalı' });
+    }
   }
   await prisma.user.update({
     where: { id: req.userId },
-    data: { passwordHash: await hashPassword(newPassword) },
+    data: { passwordHash: await hashPassword(newPassword), hasPassword: true },
   });
   res.json({ ok: true });
 });

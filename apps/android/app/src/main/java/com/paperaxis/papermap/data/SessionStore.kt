@@ -16,14 +16,30 @@ private val Context.dataStore by preferencesDataStore(name = "papermap")
 class SessionStore(private val context: Context) {
     private val tokenKey = stringPreferencesKey("token")
     private val updateCheckedKey = longPreferencesKey("update_checked_at")
+    private val loginKey = stringPreferencesKey("remembered_login")
 
-    val tokenFlow: Flow<String?> = context.dataStore.data.map { it[tokenKey] }
+    // "Beni hatirla" off: the token lives only in this process and is gone
+    // when the app process ends.
+    @Volatile private var memoryToken: String? = null
 
-    suspend fun token(): String? = tokenFlow.first()
+    val tokenFlow: Flow<String?> = context.dataStore.data.map { memoryToken ?: it[tokenKey] }
 
-    suspend fun setToken(token: String?) {
+    suspend fun token(): String? = memoryToken ?: context.dataStore.data.map { it[tokenKey] }.first()
+
+    suspend fun setToken(token: String?, remember: Boolean = true) {
+        memoryToken = if (token != null && !remember) token else null
         context.dataStore.edit { prefs ->
-            if (token == null) prefs.remove(tokenKey) else prefs[tokenKey] = token
+            if (token == null || !remember) prefs.remove(tokenKey) else prefs[tokenKey] = token
+        }
+    }
+
+    /** Login name to prefill the login form; empty when not remembered. */
+    suspend fun rememberedLogin(): String =
+        context.dataStore.data.map { it[loginKey] ?: "" }.first()
+
+    suspend fun setRememberedLogin(login: String?) {
+        context.dataStore.edit { prefs ->
+            if (login.isNullOrBlank()) prefs.remove(loginKey) else prefs[loginKey] = login
         }
     }
 

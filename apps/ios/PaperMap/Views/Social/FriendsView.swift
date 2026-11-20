@@ -5,6 +5,9 @@ import SwiftUI
 struct FriendsView: View {
     @EnvironmentObject private var session: Session
     @EnvironmentObject private var realtime: RealtimeService
+    @EnvironmentObject private var chats: ChatStore
+    @State private var chatTarget: ChatTarget?
+    @State private var openChat = false
     @State private var data = FriendsResponse(friends: [], incoming: [], outgoing: [])
     @State private var loaded = false
     @State private var error: String?
@@ -40,10 +43,19 @@ struct FriendsView: View {
                         .font(.subheadline).foregroundColor(Pa.muted)
                 }
                 ForEach(data.friends) { entry in
-                    PersonRow(person: entry.user)
-                        .swipeActions {
-                            Button("Sil", role: .destructive) { Task { await remove(entry) } }
+                    HStack {
+                        PersonRow(person: entry.user)
+                        Spacer()
+                        Button {
+                            Task { await message(entry) }
+                        } label: {
+                            Label("Mesaj", systemImage: "bubble.left")
                         }
+                        .buttonStyle(.bordered)
+                    }
+                    .swipeActions {
+                        Button("Sil", role: .destructive) { Task { await remove(entry) } }
+                    }
                 }
             }
             if !data.outgoing.isEmpty {
@@ -58,6 +70,9 @@ struct FriendsView: View {
             }
         }
         .navigationTitle("Arkadaşlar")
+        .navigationDestination(isPresented: $openChat) {
+            if let chatTarget { ChatView(target: chatTarget) }
+        }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
@@ -102,6 +117,17 @@ struct FriendsView: View {
             let _: EmptyResponse = try await session.api("POST", "/api/friends", body: Body(username: name))
             notice = "Arkadaşlık isteği gönderildi."
             await load()
+        } catch {
+            self.error = error.localizedDescription
+        }
+    }
+
+    @MainActor
+    private func message(_ entry: FriendEntry) async {
+        do {
+            chatTarget = try await chats.openDirect(with: entry.user.id, title: entry.user.displayName)
+            openChat = true
+            error = nil
         } catch {
             self.error = error.localizedDescription
         }

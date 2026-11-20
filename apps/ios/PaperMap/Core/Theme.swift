@@ -66,22 +66,42 @@ struct LabeledField: View {
     var secure = false
     var contentType: UITextContentType? = nil
     var keyboard: UIKeyboardType = .default
+    /// Secure fields only: show/hide toggle inside the field, trailing edge.
+    @State private var revealed = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label).font(.subheadline.weight(.medium)).foregroundColor(Pa.text)
-            Group {
+            HStack(spacing: 0) {
+                Group {
+                    if secure && !revealed {
+                        SecureField("", text: $text)
+                    } else {
+                        TextField("", text: $text)
+                            .keyboardType(secure ? .default : keyboard)
+                    }
+                }
+                .textContentType(contentType)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .accessibilityLabel(label)
+                .padding(.leading, 12)
+                .padding(.trailing, secure ? 0 : 12)
+
                 if secure {
-                    SecureField("", text: $text)
-                } else {
-                    TextField("", text: $text)
-                        .keyboardType(keyboard)
+                    Button {
+                        revealed.toggle()
+                    } label: {
+                        Image(systemName: revealed ? "eye.slash" : "eye")
+                            .font(.body)
+                            .foregroundColor(Pa.muted)
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(revealed ? "Şifreyi gizle" : "Şifreyi göster")
                 }
             }
-            .textContentType(contentType)
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
-            .padding(.horizontal, 12)
             .frame(minHeight: 44)
             .background(Color(uiColor: .systemBackground))
             .overlay(

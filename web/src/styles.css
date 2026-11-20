@@ -302,6 +302,100 @@ input[type='checkbox'] {
   accent-color: var(--accent);
 }
 
+.sso {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 4px 0 14px;
+}
+
+.sso .secondary {
+  width: 100%;
+}
+
+.sso-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.sso-divider::before,
+.sso-divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--border);
+}
+
+.sso-back {
+  margin-top: 16px;
+}
+
+.linked-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+}
+
+.linked-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.linked-text .muted {
+  overflow-wrap: anywhere;
+}
+
+.password-field {
+  position: relative;
+  width: 100%;
+}
+
+.password-field input {
+  padding-right: 48px;
+}
+
+/* Icon button inside the field, right edge; 44px tap target. */
+.password-field .password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  width: 44px;
+  min-height: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  --btn-bg: transparent;
+  --btn-bg-hover: transparent;
+  background: transparent;
+  color: var(--muted);
+  justify-content: center;
+}
+
+.password-field .password-toggle:hover {
+  color: var(--text);
+}
+
+.password-field .password-toggle:active:not(:disabled) {
+  transform: translateY(-50%);
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 15px;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+}
+
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {

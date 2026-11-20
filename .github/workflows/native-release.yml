@@ -2,9 +2,9 @@ name: Native Sürüm (APK + IPA)
 
 # apps/android (Kotlin/Compose) ve apps/ios (SwiftUI) native uygulamalarını
 # GitHub'ın runner'larında derler.
-#  - Çalışma dallarında (ccr-*, dev): yalnızca derleme denetimi.
-#  - main, "v*" etiketi ya da elle çalıştırma: GitHub Release + PaperUpdates
-#    (papermap-android) + AltStore kaynağı.
+#  - main ve çalışma dallarında (ccr-*, dev): yalnızca derleme denetimi.
+#  - "v*" etiketi ya da elle çalıştırma (Actions > Run workflow): GitHub Release
+#    + PaperUpdates (papermap-android) + AltStore kaynağı.
 # Sürüm 2.0.<çalıştırma no>; Android versionCode 200 + çalıştırma no.
 
 on:
@@ -26,7 +26,7 @@ permissions:
 
 env:
   APP_VERSION: 2.0.${{ github.run_number }}
-  PUBLISH: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
+  PUBLISH: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
   TAG: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('native-{0}', github.run_number) }}
 
 jobs:
@@ -70,6 +70,25 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.14.3'
+
+      - name: Firebase (FCM push) yapılandır
+        env:
+          GOOGLE_SERVICES_B64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          if [ -z "$GOOGLE_SERVICES_B64" ]; then
+            echo "::warning::GOOGLE_SERVICES_JSON_BASE64 yok — uygulama kapalıyken push gelmez (derleme sürer)."
+            exit 0
+          fi
+          F=apps/android/app/google-services.json
+          echo "$GOOGLE_SERVICES_B64" | base64 -d > "$F" 2>/dev/null || true
+          if node -e 'const j=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));
+                      const ok=(j.client||[]).some(c=>c.client_info?.android_client_info?.package_name==="com.paperaxis.papermap");
+                      process.exit(ok?0:1)' "$F"; then
+            echo "Firebase yapılandırıldı."
+          else
+            echo "::warning::google-services.json geçersiz ya da com.paperaxis.papermap içermiyor — push devre dışı."
+            rm -f "$F"
+          fi
 
       - name: Keystore hazırla
         env:

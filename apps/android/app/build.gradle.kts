@@ -8,6 +8,11 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization")
 }
 
+// FCM push is optional: CI drops google-services.json here when the secret exists.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 // Overridable from the command line: -PversionCode=201 -PversionName=2.0.1 -PapiBase=https://...
 val appVersionCode = (project.findProperty("versionCode") as String?)?.toIntOrNull() ?: 200
 val appVersionName = (project.findProperty("versionName") as String?) ?: "2.0.0"
@@ -116,6 +121,9 @@ dependencies {
 
     implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation("org.maplibre.gl:android-sdk:11.5.2")
+    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+    implementation("com.google.firebase:firebase-messaging")
+
     implementation("io.socket:socket.io-client:2.1.1") {
         // Android ships org.json; the jar copy would clash.
         exclude(group = "org.json", module = "json")

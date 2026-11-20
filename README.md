@@ -20,7 +20,8 @@ Android (Kotlin + Jetpack Compose) ve iOS (SwiftUI) native uygulamaları
 `apps/` altındadır; aynı sunucuya bağlanır. Ayrıntı, kapsam ve API sözleşmesi:
 [apps/README.md](apps/README.md). Derleme ve yayın:
 `.github/workflows/native-release.yml` (APK → PaperUpdates `papermap-android`
-ve GitHub Release, IPA → AltStore kaynağı). Capacitor ile paketlenen eski web
+ve GitHub Release, IPA → AltStore kaynağı; yalnızca `v*` etiketi ya da elle
+çalıştırmada — `main`'e push yalnızca derler). Capacitor ile paketlenen eski web
 kabuğu (`mobile-release.yml`) yalnızca elle çalışır.
 
 ## Teknolojiler
@@ -237,6 +238,26 @@ server {
 > **Nginx Proxy Manager** kullanıyorsanız: NPM konteynerini `papermap-net` ağına
 > ekleyin, sonra **Proxy Host** oluşturun → Forward Hostname `papermap-web`,
 > Forward Port `80`, **Websockets Support: AÇIK**. Custom location gerekmez.
+
+## Google ve PaperApp ile giriş
+
+Giriş ve kayıt ekranında "Google ile devam et" ve "PaperApp ile devam et"
+düğmeleri, Profil'de "Bağlı hesaplar" kartı vardır. Düğmeler yalnız sunucuda
+yapılandırılmış sağlayıcılar için görünür. Akış, hesap eşleme kuralları ve
+uçlar: [docs/SSO.md](docs/SSO.md).
+
+Kurulum (`.env`, sonra `docker compose up -d server`):
+
+1. **Google:** Google Cloud Console > APIs & Services > Credentials > OAuth
+   client ID, tür **Web application**, yetkili dönüş adresi
+   `https://maps.paperaxis.com/api/sso/google/callback`. `GOOGLE_CLIENT_ID` ve
+   `GOOGLE_CLIENT_SECRET` doldurulur.
+2. **PaperApp:** PaperApp'te `papermap` istemcisi tanımlanır (PaperApp
+   `docs/OIDC.md`, dönüş adresi `https://maps.paperaxis.com/api/sso/paperapp/callback`),
+   aynı sır burada `PAPERAPP_CLIENT_SECRET` olur; `PAPERAPP_ISSUER` PaperApp'teki
+   `OIDC_ISSUER` ile birebir aynıdır.
+
+`APP_URL` https olmalıdır; dönüş adresleri ondan kurulur.
 
 ## Push Bildirimleri (FCM — uygulama kapalıyken)
 

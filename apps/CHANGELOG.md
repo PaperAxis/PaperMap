@@ -14,3 +14,10 @@
 - Arkadaşlar, aileler, profil ve Hakkında ekranları.
 - Android: PaperUpdates ile uygulama içi güncelleme (`papermap-android`).
 - Yeni PaperMap ikonu.
+- Sohbet: birebir, grup ve aile sohbetleri; canlı mesaj; konum mesajı kartı;
+  arkadaş listesinden mesaj başlatma; yeni grup.
+- Bildirimler: liste, tümünü okundu sayma, gelen bildirim için sistem bildirimi.
+- Android: Firebase yapılandırılmışsa uygulama kapalıyken push.
+- Giriş: şifre alanında göster/gizle düğmesi (alanın içinde, sağda) ve
+  "Beni hatırla". İşaretsizken oturum yalnızca uygulama açıkken sürer;
+  işaretliyken kullanıcı adı bir sonraki girişte hazır gelir.

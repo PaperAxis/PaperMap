@@ -89,6 +89,9 @@ fun FriendsScreen(vm: AppViewModel) {
             }
             items(data.friends, key = { "f-" + it.friendshipId }) { entry ->
                 PersonRow(entry.user.displayName, entry.user.username?.let { "@$it" }, entry.user.avatarColor) {
+                    TextButton(onClick = { vm.messageFriend(entry.user.id, entry.user.displayName) }, enabled = !busy) {
+                        Text("Mesaj")
+                    }
                     TextButton(onClick = { removing = entry }) { Text("Çıkar") }
                 }
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)

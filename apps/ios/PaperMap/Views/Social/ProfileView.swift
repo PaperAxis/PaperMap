@@ -50,6 +50,10 @@ struct ProfileView: View {
                 ProgressView()
             }
 
+            if session.user != nil {
+                LinkedAccountsSection()
+            }
+
             Section("Hakkında") {
                 HStack(spacing: 12) {
                     Image("LaunchLogo").resizable().frame(width: 40, height: 40).accessibilityHidden(true)
@@ -102,5 +106,103 @@ struct ProfileView: View {
         } catch {
             self.error = error.localizedDescription
         }
+    }
+}
+
+/// "Bağlı hesaplar": link or unlink Google / PaperApp (docs/SSO.md).
+struct LinkedAccountsSection: View {
+    @EnvironmentObject private var session: Session
+    @State private var enabled: [SSOProvider] = []
+    @State private var identities: [SSOIdentity] = []
+    @State private var hasPassword = true
+    @State private var busy: SSOProvider?
+    @State private var error: String?
+
+    var body: some View {
+        Section {
+            if enabled.isEmpty {
+                Text("Bağlanabilecek hesap yok.").foregroundColor(Pa.muted)
+            }
+            ForEach(enabled) { provider in
+                let identity = identities.first(where: { $0.provider == provider.rawValue })
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(provider.title).foregroundColor(Pa.text)
+                        if let identity {
+                            Text(identity.email ?? "Bağlı").font(.caption).foregroundColor(Pa.muted)
+                        } else {
+                            Text("Bağlı değil").font(.caption).foregroundColor(Pa.muted)
+                        }
+                    }
+                    Spacer()
+                    if busy == provider {
+                        ProgressView()
+                    } else if identity != nil {
+                        Button("Kaldır", role: .destructive) { Task { await unlink(provider) } }
+                            .buttonStyle(.borderless)
+                            .disabled(busy != nil)
+                    } else {
+                        Button("Bağla") { Task { await link(provider) } }
+                            .buttonStyle(.borderless)
+                            .disabled(busy != nil)
+                    }
+                }
+                .frame(minHeight: 44)
+            }
+        } header: {
+            Text("Bağlı hesaplar")
+        } footer: {
+            VStack(alignment: .leading, spacing: 6) {
+                if !hasPassword {
+                    Text("Şifren yok; giriş için bağlı hesabını kullan.")
+                }
+                if let error { ErrorText(message: error) }
+            }
+        }
+        .task { await reload() }
+    }
+
+    @MainActor
+    private func reload() async {
+        enabled = await session.ssoProviders()
+        do {
+            let res = try await session.identities()
+            identities = res.identities
+            hasPassword = res.hasPassword ?? (session.user?.passwordSet ?? true)
+        } catch {
+            self.error = error.localizedDescription
+        }
+    }
+
+    @MainActor
+    private func link(_ provider: SSOProvider) async {
+        busy = provider
+        defer { busy = nil }
+        do {
+            try await session.linkProvider(provider)
+            error = nil
+        } catch SSOError.cancelled {
+            // Sheet closed by the user.
+        } catch {
+            self.error = error.localizedDescription
+        }
+        await reload()
+    }
+
+    @MainActor
+    private func unlink(_ provider: SSOProvider) async {
+        busy = provider
+        defer { busy = nil }
+        do {
+            try await session.unlinkProvider(provider)
+            error = nil
+        } catch let err as APIError where err.status == 409 {
+            error = err.message.isEmpty
+                ? "Bu bağlantı kaldırılamaz: hesabının şifresi yok ve başka bağlı hesabı kalmıyor."
+                : err.message
+        } catch {
+            self.error = error.localizedDescription
+        }
+        await reload()
     }
 }

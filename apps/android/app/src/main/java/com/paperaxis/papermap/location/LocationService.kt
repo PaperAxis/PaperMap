@@ -88,6 +88,10 @@ class LocationService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
+        // A sticky restart recreates the process without any screen; reconnect the
+        // socket here so messages and notifications keep arriving.
+        val app = PaperMapApp.instance
+        scope.launch { app.session.token()?.let { app.realtime.connect(it) } }
         val request = LocationRequest.Builder(Priority.PRIORITY_BALANCED_POWER_ACCURACY, 60_000L)
             .setMinUpdateDistanceMeters(50f)
             .setMinUpdateIntervalMillis(30_000L)

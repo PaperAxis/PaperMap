@@ -17,9 +17,17 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -28,12 +36,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.paperaxis.papermap.R
 import com.paperaxis.papermap.ui.theme.Pa
@@ -41,11 +52,16 @@ import com.paperaxis.papermap.ui.theme.Pa
 @Composable
 fun AuthScreen(
     busy: Boolean,
-    onLogin: (login: String, password: String) -> Unit,
+    initialLogin: String,
+    ssoProviders: List<String>,
+    onLogin: (login: String, password: String, remember: Boolean) -> Unit,
     onRegister: (email: String, username: String, displayName: String, password: String) -> Unit,
+    onSso: (provider: String) -> Unit,
 ) {
     var registering by rememberSaveable { mutableStateOf(false) }
-    var login by rememberSaveable { mutableStateOf("") }
+    var login by rememberSaveable(initialLogin) { mutableStateOf(initialLogin) }
+    var rememberMe by rememberSaveable { mutableStateOf(true) }
+    var showPassword by rememberSaveable { mutableStateOf(false) }
     var email by rememberSaveable { mutableStateOf("") }
     var username by rememberSaveable { mutableStateOf("") }
     var displayName by rememberSaveable { mutableStateOf("") }
@@ -110,11 +126,33 @@ fun AuthScreen(
         OutlinedTextField(
             value = password, onValueChange = { password = it },
             label = { Text("Şifre") }, singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
+            visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = {
+                IconButton(onClick = { showPassword = !showPassword }) {
+                    Icon(
+                        painter = painterResource(if (showPassword) R.drawable.ic_eye_off else R.drawable.ic_eye),
+                        contentDescription = if (showPassword) "Şifreyi gizle" else "Şifreyi göster",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
             supportingText = { if (registering) Text("En az 8 karakter") },
             modifier = Modifier.fillMaxWidth(),
         )
+        if (!registering) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp)
+                    .toggleable(value = rememberMe, role = Role.Checkbox, onValueChange = { rememberMe = it }),
+            ) {
+                Checkbox(checked = rememberMe, onCheckedChange = null)
+                Spacer(Modifier.size(8.dp))
+                Text("Beni hatırla", style = MaterialTheme.typography.bodyLarge)
+            }
+        }
         localError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
 
         Button(
@@ -129,7 +167,7 @@ fun AuthScreen(
                     }
                 } else {
                     if (login.isBlank() || password.isBlank()) localError = "Giriş bilgilerini gir"
-                    else onLogin(login, password)
+                    else onLogin(login, password, rememberMe)
                 }
             },
             enabled = !busy,
@@ -143,6 +181,31 @@ fun AuthScreen(
                 )
             } else {
                 Text(if (registering) "Hesap oluştur" else "Giriş yap")
+            }
+        }
+        // Google / PaperApp (docs/SSO.md); only providers the server has configured.
+        val sso = listOf("google" to "Google ile devam et", "paperapp" to "PaperApp ile devam et")
+            .filter { it.first in ssoProviders }
+        if (sso.isNotEmpty()) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                HorizontalDivider(Modifier.weight(1f), color = MaterialTheme.colorScheme.outlineVariant)
+                Text(
+                    "ya da",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                )
+                HorizontalDivider(Modifier.weight(1f), color = MaterialTheme.colorScheme.outlineVariant)
+            }
+            sso.forEach { (provider, label) ->
+                OutlinedButton(
+                    onClick = { onSso(provider) },
+                    enabled = !busy,
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                ) { Text(label) }
             }
         }
         TextButton(onClick = { registering = !registering; localError = null }) {

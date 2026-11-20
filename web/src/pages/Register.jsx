@@ -3,6 +3,8 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth.jsx';
 import Brand from '../components/Brand.jsx';
 import Credit from '../components/Credit.jsx';
+import SsoButtons from '../components/SsoButtons.jsx';
+import PasswordInput from '../components/PasswordInput.jsx';
 
 export default function Register() {
   const { user, register } = useAuth();
@@ -61,8 +63,8 @@ export default function Register() {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-          <input
-            type="password"
+          <PasswordInput
+            autoComplete="new-password"
             placeholder="Şifre (en az 8 karakter)"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -74,6 +76,7 @@ export default function Register() {
             {busy ? 'Oluşturuluyor…' : 'Kayıt Ol'}
           </button>
         </form>
+        <SsoButtons />
         <p className="muted">
           Zaten hesabın var mı? <Link to="/login">Giriş yap</Link>
         </p>

@@ -21,6 +21,10 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -93,6 +97,7 @@ fun MapScreen(vm: AppViewModel, user: User) {
     val peers by vm.peers.collectAsStateWithLifecycle()
     val me by vm.myLocation.collectAsStateWithLifecycle()
     val busy by vm.busy.collectAsStateWithLifecycle()
+    val unreadNotifications by vm.unreadNotifications.collectAsStateWithLifecycle()
 
     var map by remember { mutableStateOf<MapLibreMap?>(null) }
     var style by remember { mutableStateOf<Style?>(null) }
@@ -229,24 +234,30 @@ fun MapScreen(vm: AppViewModel, user: User) {
             modifier = Modifier.fillMaxWidth().statusBarsPadding().padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            SharingCard(
-                enabled = user.sharingEnabled,
-                busy = busy,
-                onToggle = { on ->
-                    if (on && !permissionGranted) {
-                        permissionLauncher.launch(
-                            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
-                        )
-                    }
-                    if (on && Build.VERSION.SDK_INT >= 33 &&
-                        ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
-                        android.content.pm.PackageManager.PERMISSION_GRANTED
-                    ) {
-                        notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                    }
-                    vm.setSharing(on)
-                },
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(modifier = Modifier.weight(1f)) {
+                    SharingCard(
+                        enabled = user.sharingEnabled,
+                        busy = busy,
+                        onToggle = { on ->
+                            if (on && !permissionGranted) {
+                                permissionLauncher.launch(
+                                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
+                                )
+                            }
+                            if (on && Build.VERSION.SDK_INT >= 33 &&
+                                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+                                android.content.pm.PackageManager.PERMISSION_GRANTED
+                            ) {
+                                notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            }
+                            vm.setSharing(on)
+                        },
+                    )
+                }
+                Spacer(Modifier.width(8.dp))
+                NotificationBell(unreadNotifications) { vm.openNotifications() }
+            }
             if (!permissionGranted) {
                 InfoCard(
                     text = "Haritada kendini görmek ve konum paylaşmak için konum izni gerekli.",
@@ -317,6 +328,25 @@ private fun SharingCard(enabled: Boolean, busy: Boolean, onToggle: (Boolean) -> 
                 )
             }
             Switch(checked = enabled, onCheckedChange = onToggle, enabled = !busy)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun NotificationBell(unread: Int, onClick: () -> Unit) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
+        IconButton(onClick = onClick) {
+            if (unread > 0) {
+                BadgedBox(badge = { Badge() }) {
+                    Icon(Icons.Filled.Notifications, contentDescription = "Bildirimler, $unread okunmamış")
+                }
+            } else {
+                Icon(Icons.Filled.Notifications, contentDescription = "Bildirimler")
+            }
         }
     }
 }

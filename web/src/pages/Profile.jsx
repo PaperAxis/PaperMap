@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Wrench, Star } from 'lucide-react';
 import { api, apiUpload, API_BASE } from '../lib/api.js';
 import { useAuth } from '../lib/auth.jsx';
@@ -8,6 +8,9 @@ import { ICON_STYLES } from '../lib/iconStyles.js';
 import Avatar from '../components/Avatar.jsx';
 import ThemePicker from '../components/ThemePicker.jsx';
 import Credit from '../components/Credit.jsx';
+import PasswordInput from '../components/PasswordInput.jsx';
+import LinkedAccounts from '../components/LinkedAccounts.jsx';
+import { SSO_LABELS } from '../lib/sso.js';
 
 const STATUS_PRESETS = ['Evdeyim', 'Yoldayım', 'İşteyim', 'Müsait değilim'];
 
@@ -86,6 +89,15 @@ export default function Profile() {
       fail(err);
     }
   }
+
+  // Return from linking Google / PaperApp (SsoReturn -> /profile?linked=…)
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const linked = searchParams.get('linked');
+    if (!linked) return;
+    setInfo(`${SSO_LABELS[linked] || 'Hesap'} bağlandı.`);
+    setSearchParams({}, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   function flash(msg) {
     setInfo(msg);
@@ -213,11 +225,12 @@ export default function Profile() {
     try {
       await api('/api/auth/password', {
         method: 'POST',
-        body: { currentPassword, newPassword },
+        body: user.hasPassword === false ? { newPassword } : { currentPassword, newPassword },
       });
       setCurrentPassword('');
       setNewPassword('');
-      flash('Şifre değiştirildi.');
+      if (user.hasPassword === false) setUser({ ...user, hasPassword: true });
+      flash(user.hasPassword === false ? 'Şifre belirlendi.' : 'Şifre değiştirildi.');
     } catch (err) {
       fail(err);
     } finally {
@@ -562,21 +575,30 @@ export default function Profile() {
         )}
       </div>
 
+      <LinkedAccounts onError={fail} onInfo={flash} />
+
       <form className="card" onSubmit={changePassword}>
-        <h3>Şifre değiştir</h3>
-        <div className="field">
-          <label>Mevcut şifre</label>
-          <input
-            type="password"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            required
-          />
-        </div>
+        <h3>{user.hasPassword === false ? 'Şifre belirle' : 'Şifre değiştir'}</h3>
+        {user.hasPassword === false ? (
+          <p className="muted">
+            Hesabını Google ya da PaperApp ile açtın. Şifre belirlersen kullanıcı adınla da
+            giriş yapabilirsin.
+          </p>
+        ) : (
+          <div className="field">
+            <label>Mevcut şifre</label>
+            <PasswordInput
+              autoComplete="current-password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              required
+            />
+          </div>
+        )}
         <div className="field">
           <label>Yeni şifre (en az 8 karakter)</label>
-          <input
-            type="password"
+          <PasswordInput
+            autoComplete="new-password"
             value={newPassword}
             minLength={8}
             onChange={(e) => setNewPassword(e.target.value)}
@@ -584,7 +606,7 @@ export default function Profile() {
           />
         </div>
         <button type="submit" disabled={busy}>
-          Şifreyi değiştir
+          {user.hasPassword === false ? 'Şifreyi belirle' : 'Şifreyi değiştir'}
         </button>
       </form>
       <Credit />

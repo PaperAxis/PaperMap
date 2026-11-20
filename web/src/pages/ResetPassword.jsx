@@ -3,6 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api.js';
 import Brand from '../components/Brand.jsx';
 import Credit from '../components/Credit.jsx';
+import PasswordInput from '../components/PasswordInput.jsx';
 
 export default function ResetPassword() {
   const { token } = useParams();
@@ -46,8 +47,8 @@ export default function ResetPassword() {
         ) : (
           <>
             <form onSubmit={onSubmit}>
-              <input
-                type="password"
+              <PasswordInput
+                autoComplete="new-password"
                 placeholder="Yeni şifre (en az 8 karakter)"
                 value={newPassword}
                 minLength={8}

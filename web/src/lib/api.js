@@ -1,17 +1,37 @@
 export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4015';
 
 const TOKEN_KEY = 'papermap_token';
+const LOGIN_KEY = 'papermap_login';
 
-export function getToken() {
-  return localStorage.getItem(TOKEN_KEY);
+// Storage can be unavailable (private mode, blocked site data).
+function store(kind) {
+  try {
+    return kind === 'local' ? window.localStorage : window.sessionStorage;
+  } catch {
+    return null;
+  }
 }
 
-export function setToken(token) {
-  if (token) {
-    localStorage.setItem(TOKEN_KEY, token);
-  } else {
-    localStorage.removeItem(TOKEN_KEY);
-  }
+// "Beni hatirla" on: token in localStorage (survives closing the browser).
+// Off: sessionStorage only, cleared when the tab/app closes.
+export function getToken() {
+  return store('local')?.getItem(TOKEN_KEY) || store('session')?.getItem(TOKEN_KEY) || null;
+}
+
+export function setToken(token, remember = true) {
+  store('local')?.removeItem(TOKEN_KEY);
+  store('session')?.removeItem(TOKEN_KEY);
+  if (token) store(remember ? 'local' : 'session')?.setItem(TOKEN_KEY, token);
+}
+
+// Remembered login name (username or e-mail) to prefill the login form.
+export function getRememberedLogin() {
+  return store('local')?.getItem(LOGIN_KEY) || '';
+}
+
+export function setRememberedLogin(login) {
+  if (login) store('local')?.setItem(LOGIN_KEY, login);
+  else store('local')?.removeItem(LOGIN_KEY);
 }
 
 export async function api(path, { method = 'GET', body } = {}) {
