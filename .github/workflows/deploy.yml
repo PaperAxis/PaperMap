@@ -1,0 +1,51 @@
+name: Sunucuya Dağıt
+
+# main'e her itmede kodu sunucudaki kalıcı klasöre (varsayılan /opt/papermap)
+# kurar ve docker compose ile yeniden derler. Runner PaperMap sunucusunun
+# kendisinde (self-hosted) çalışır.
+#
+# Repo değişkenleri (Settings → Secrets and variables → Actions → Variables):
+#   RUNNER_LINUX  — runner etiketleri (JSON), varsayılan ["self-hosted","linux","x64"]
+#   PAPERMAP_DIR  — kurulum klasörü, varsayılan /opt/papermap
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'branding/**'
+      - '.github/workflows/mobile-release.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: maps.paperaxis.com
+    runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '["self-hosted","linux","x64"]') }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Betikleri ve compose dosyasını denetle
+        run: |
+          bash -n scripts/deploy.sh scripts/backup-db.sh scripts/restore-db.sh
+          docker compose -f docker-compose.yml config --quiet --no-interpolate
+
+      - name: Güncellemeden önce veritabanı yedeği
+        working-directory: ${{ vars.PAPERMAP_DIR || '/opt/papermap' }}
+        run: |
+          if [ -x scripts/backup-db.sh ] && docker compose ps --status running --services 2>/dev/null | grep -qx db; then
+            ./scripts/backup-db.sh
+          else
+            echo "db çalışmıyor — yedek atlandı."
+          fi
+
+      - name: Kur, derle ve yeniden başlat
+        run: ./scripts/deploy.sh "${{ vars.PAPERMAP_DIR || '/opt/papermap' }}"

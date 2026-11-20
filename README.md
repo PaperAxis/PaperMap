@@ -50,7 +50,6 @@ curl -fsSL https://get.docker.com | sh
 
 # 2) Projeyi al
 git clone <repo-url> papermap && cd papermap
-git checkout claude/papermap-location-app-4bIAf
 
 # 3) Ortam dosyasini olustur ve duzenle
 cp .env.example .env
@@ -80,6 +79,38 @@ git pull && docker compose up -d --build
 `server` ve `web` konteynerlerinde **healthcheck** vardır; `docker compose ps`
 çıktısında durumları `healthy` görünmelidir. `web`, `server` sağlıklı olana
 kadar başlamayı bekler.
+
+### Otomatik dağıtım (self-hosted runner)
+
+`.github/workflows/deploy.yml`, `main`'e her itmede sunucudaki self-hosted
+runner'da çalışır: önce veritabanı yedeği alır, sonra `scripts/deploy.sh` ile
+git'te izlenen dosyaları `/opt/papermap`'e kopyalar ve
+`docker compose up -d --build --wait` ile yeniden derler. `.env`, `tiles/`,
+`fcm/` ve `backups/` korunur; `.env` yoksa iş durur.
+
+Sunucuda bir kez:
+
+- Runner'ı organizasyona ya da bu depoya kaydedin (etiketler
+  `self-hosted,linux,x64`; farklıysa repo değişkeni `RUNNER_LINUX`, ör.
+  `["self-hosted","papermap"]`). Runner kullanıcısı `docker` grubunda olmalı.
+- Kurulum klasörü runner kullanıcısına yazılabilir olmalı:
+  `sudo chown -R <runner kullanıcısı> /opt/papermap`.
+  Farklı klasör için repo değişkeni `PAPERMAP_DIR`.
+
+### Uygulama güncellemeleri (PaperUpdates)
+
+Mobil sürüm iş akışı Android APK'yı self-hosted runner'da derler ve
+`updates.paperaxis.com/papermap/` altına yayınlar (`releases.android.json` +
+`PaperMap-<sürüm>.apk`). `versionCode` iş akışının çalıştırma numarasıdır.
+Uygulama açılışta günde en fazla bir kez bu dosyayı okur; daha yeni sürüm varsa
+altta "İndir ve kur" bandı çıkar, kurulum kullanıcının onayıyla yapılır.
+
+Gerekenler:
+
+- PaperUpdates yönetim uygulamasında `papermap` ürünü ve yayın anahtarı
+  (`pup_…`) → repo secret'ı `PAPERAXIS_PUBLISH_TOKEN`.
+- Kalıcı keystore secret'ları (aşağıda). Geçici anahtarla imzalanan APK
+  kurulu uygulamanın üstüne kurulamadığı için o derlemede yayın atlanır.
 
 ### Veritabanı yedekleme
 
