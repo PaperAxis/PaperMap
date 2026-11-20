@@ -43,6 +43,22 @@ class SessionStore(private val context: Context) {
         }
     }
 
+    private val themeKey = stringPreferencesKey("theme")
+    private val fontKey = stringPreferencesKey("font")
+    private val iconKey = stringPreferencesKey("icon_style")
+
+    /** Last applied theme, font and icon style (cache of the server profile). */
+    suspend fun appearance(): Triple<String?, String?, String?> =
+        context.dataStore.data.map { Triple(it[themeKey], it[fontKey], it[iconKey]) }.first()
+
+    suspend fun setAppearance(theme: String?, font: String?, iconStyle: String?) {
+        context.dataStore.edit { prefs ->
+            if (theme == null) prefs.remove(themeKey) else prefs[themeKey] = theme
+            if (font == null) prefs.remove(fontKey) else prefs[fontKey] = font
+            if (iconStyle == null) prefs.remove(iconKey) else prefs[iconKey] = iconStyle
+        }
+    }
+
     suspend fun updateCheckedAt(): Long =
         context.dataStore.data.map { it[updateCheckedKey] ?: 0L }.first()
 

@@ -227,11 +227,6 @@ class ApiClient(private val session: SessionStore) {
         return "$base/api/sso/$provider/start?$q"
     }
 
-    suspend fun updateDisplayName(name: String): User =
-        AppJson.decodeFromString<UserResponse>(
-            call("PATCH", "/api/auth/profile", buildJsonObject { put("displayName", name) }),
-        ).user
-
     // Location
     /** durationMinutes null: unlimited sharing. */
     suspend fun setSharing(enabled: Boolean, durationMinutes: Int? = null): User =

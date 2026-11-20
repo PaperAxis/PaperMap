@@ -43,7 +43,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.foundation.isSystemInDarkTheme
+import com.paperaxis.papermap.ui.theme.LocalDarkTheme
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -93,7 +93,7 @@ private fun loadStyleJson(context: Context, dark: Boolean): String =
 @Composable
 fun MapScreen(vm: AppViewModel, user: User) {
     val context = LocalContext.current
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     val peers by vm.peers.collectAsStateWithLifecycle()
     val me by vm.myLocation.collectAsStateWithLifecycle()
     val busy by vm.busy.collectAsStateWithLifecycle()
