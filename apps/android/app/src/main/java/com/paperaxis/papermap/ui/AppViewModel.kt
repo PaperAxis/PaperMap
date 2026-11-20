@@ -44,6 +44,9 @@ sealed interface Overlay {
     data class UserProfile(val userId: String) : Overlay
 }
 
+/** A point the map tab should fly to (chat place messages). */
+data class MapFocus(val lat: Double, val lng: Double)
+
 /** Theme id, font id and icon style; applied by PaperMapTheme. */
 data class Appearance(val theme: String? = null, val font: String? = null, val iconStyle: String? = null)
 
@@ -142,6 +145,12 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _privacyPeople = MutableStateFlow<List<PrivacyPerson>>(emptyList())
     val privacyPeople: StateFlow<List<PrivacyPerson>> = _privacyPeople.asStateFlow()
+
+    private val _mapFocus = MutableStateFlow<MapFocus?>(null)
+    val mapFocus: StateFlow<MapFocus?> = _mapFocus.asStateFlow()
+
+    /** API or socket unreachable for a few seconds (web components/OfflineBanner.jsx). */
+    val socketConnected: StateFlow<Boolean> = realtime.connected
 
     private val _shareLinks = MutableStateFlow<List<ShareLink>>(emptyList())
     val shareLinks: StateFlow<List<ShareLink>> = _shareLinks.asStateFlow()
@@ -562,6 +571,20 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         _viewedProfile.value = null
     }
 
+    /** Closes full-screen pages and shows [lat],[lng] on the in-app map. */
+    fun focusOnMap(lat: Double, lng: Double) {
+        _openChat.value = null
+        _chatMessages.value = emptyList()
+        _showNotifications.value = false
+        _overlay.value = null
+        _mapFocus.value = MapFocus(lat, lng)
+        refreshConversations()
+    }
+
+    fun consumeMapFocus() {
+        _mapFocus.value = null
+    }
+
     fun requestLocation(userId: String) = launchAction {
         api.requestLocation(userId)
         _message.value = "Konum isteği gönderildi."
@@ -684,6 +707,16 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
+
+    /** Sends a location message: the current position or a saved place. */
+    fun sendPlace(lat: Double, lng: Double, label: String, onDone: () -> Unit) = launchAction {
+        val chat = _openChat.value ?: return@launchAction
+        appendMessage(api.sendPlace(chat.id, lat, lng, label))
+        refreshConversations()
+        onDone()
+    }
+
+    suspend fun savedPlaces(): List<com.paperaxis.papermap.data.Place> = api.places()
 
     // The sender also receives its own message over the socket; dedupe by id.
     private fun appendMessage(m: ChatMessage) {
