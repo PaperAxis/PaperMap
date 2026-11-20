@@ -328,6 +328,10 @@ input[type='checkbox'] {
   border-top: 1px solid var(--border);
 }
 
+.sso-back {
+  margin-top: 16px;
+}
+
 .linked-row {
   display: flex;
   align-items: center;

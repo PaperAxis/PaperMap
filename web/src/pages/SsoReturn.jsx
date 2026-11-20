@@ -46,7 +46,7 @@ export default function SsoReturn() {
         {error ? (
           <>
             <div className="error" role="alert">{error}</div>
-            <p className="muted">
+            <p className="muted sso-back">
               <Link to={user ? '/profile' : '/login'}>{user ? 'Profile dön' : 'Girişe dön'}</Link>
             </p>
           </>

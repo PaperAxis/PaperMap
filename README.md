@@ -238,6 +238,26 @@ server {
 > ekleyin, sonra **Proxy Host** oluşturun → Forward Hostname `papermap-web`,
 > Forward Port `80`, **Websockets Support: AÇIK**. Custom location gerekmez.
 
+## Google ve PaperApp ile giriş
+
+Giriş ve kayıt ekranında "Google ile devam et" ve "PaperApp ile devam et"
+düğmeleri, Profil'de "Bağlı hesaplar" kartı vardır. Düğmeler yalnız sunucuda
+yapılandırılmış sağlayıcılar için görünür. Akış, hesap eşleme kuralları ve
+uçlar: [docs/SSO.md](docs/SSO.md).
+
+Kurulum (`.env`, sonra `docker compose up -d server`):
+
+1. **Google:** Google Cloud Console > APIs & Services > Credentials > OAuth
+   client ID, tür **Web application**, yetkili dönüş adresi
+   `https://maps.paperaxis.com/api/sso/google/callback`. `GOOGLE_CLIENT_ID` ve
+   `GOOGLE_CLIENT_SECRET` doldurulur.
+2. **PaperApp:** PaperApp'te `papermap` istemcisi tanımlanır (PaperApp
+   `docs/OIDC.md`, dönüş adresi `https://maps.paperaxis.com/api/sso/paperapp/callback`),
+   aynı sır burada `PAPERAPP_CLIENT_SECRET` olur; `PAPERAPP_ISSUER` PaperApp'teki
+   `OIDC_ISSUER` ile birebir aynıdır.
+
+`APP_URL` https olmalıdır; dönüş adresleri ondan kurulur.
+
 ## Push Bildirimleri (FCM — uygulama kapalıyken)
 
 Alan giriş/çıkış bildirimleri, uygulama açık/arka plandayken Socket.IO ile gelir.
