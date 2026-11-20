@@ -36,3 +36,6 @@ fcm/
 .DS_Store
 .idea/
 .vscode/
+
+# Firebase yapılandırması — CI secret GOOGLE_SERVICES_JSON_BASE64 olarak tutulur
+google-services.json
