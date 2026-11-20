@@ -194,6 +194,12 @@ sunar. Dolayısıyla dış reverse proxy'nizin **tek yapması gereken**
 > `web` yaygın olduğundan başka projelerle karışmasın diye). Konteyner adı
 > `papermap-web-1` de çözülür ama proje adına bağlıdır; `papermap-web` sabittir.
 
+**`general` ağı:** `web` konteyneri sunucudaki ortak `general` ağına da
+bağlıdır (`docker-compose.yml`, harici ağ). Bu ağdaki Nginx Proxy Manager
+`papermap-web:80` adresine doğrudan ulaşır; ek `docker network connect` gerekmez.
+Ağ önceden var olmalıdır (`docker network create general`); farklı adlıysa
+`.env`'de `PAPERMAP_PROXY_NETWORK` ile verilir.
+
 **Proxy doğrudan VDS host'unda ise:** `proxy_pass http://127.0.0.1:8080;`
 
 **Proxy bir Docker konteynerinde ise:** proxy'yi `papermap-net` ağına bağlayın

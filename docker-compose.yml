@@ -74,6 +74,11 @@ services:
         # "web" yaygin oldugu icin baska projelerle cakismasin diye).
         aliases:
           - papermap-web
+      # Nginx Proxy Manager'in bagli oldugu ortak ag; NPM papermap-web:80'e
+      # bu ag uzerinden ulasir. Yalnizca web (tek giris noktasi) baglanir.
+      general:
+        aliases:
+          - papermap-web
     ports:
       - "${BIND_HOST:-127.0.0.1}:${WEB_HOST_PORT:-8080}:80"
 
@@ -99,3 +104,8 @@ networks:
   # "external" olarak baglanip server:4015 / web:80 adreslerine erisebilir.
   default:
     name: papermap-net
+  # Sunucudaki ortak reverse proxy agi (onceden olusturulmus olmali:
+  # docker network create general). Adi PAPERMAP_PROXY_NETWORK ile degisir.
+  general:
+    external: true
+    name: ${PAPERMAP_PROXY_NETWORK:-general}
