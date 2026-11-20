@@ -17,8 +17,8 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 target="${1:-/opt/papermap}"
 
 case "$target" in
-  /opt/?*) ;;
-  *) echo "Hedef /opt altinda olmali: $target" >&2; exit 1 ;;
+  /?*/?*) ;;
+  *) echo "Hedef en az iki seviyeli mutlak bir yol olmali: $target" >&2; exit 1 ;;
 esac
 
 if [ ! -d "$target" ] || [ ! -w "$target" ]; then

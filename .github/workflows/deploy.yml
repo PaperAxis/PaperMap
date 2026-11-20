@@ -6,7 +6,8 @@ name: Sunucuya Dağıt
 #
 # Repo değişkenleri (Settings → Secrets and variables → Actions → Variables):
 #   RUNNER_LINUX  — runner etiketleri (JSON), varsayılan ["self-hosted","linux","x64"]
-#   PAPERMAP_DIR  — kurulum klasörü, varsayılan /opt/papermap
+#   PAPERMAP_DIR  — kurulum klasörü; boşsa /opt/papermap ya da çalışan
+#                   "papermap" compose projesinin klasörü kullanılır
 
 on:
   push:
@@ -33,13 +34,41 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - name: Betikleri ve compose dosyasını denetle
         run: |
           bash -n scripts/deploy.sh scripts/backup-db.sh scripts/restore-db.sh
           docker compose -f docker-compose.yml config --quiet --no-interpolate
 
+      - name: Kurulum klasörünü bul
+        id: dir
+        env:
+          VAR_DIR: ${{ vars.PAPERMAP_DIR }}
+        run: |
+          DIR="$VAR_DIR"
+          if [ -z "$DIR" ] && [ -f /opt/papermap/.env ]; then DIR=/opt/papermap; fi
+          if [ -z "$DIR" ]; then
+            # Çalışan "papermap" compose projesinin klasörü (docker compose ls).
+            DIR=$(docker compose ls -a --format json | node -e '
+              const list = JSON.parse(require("fs").readFileSync(0, "utf8") || "[]");
+              const p = list.find((x) => x.Name === "papermap");
+              if (p) console.log(require("path").dirname(p.ConfigFiles.split(",")[0]));
+            ')
+          fi
+          if [ -z "$DIR" ] || [ ! -f "$DIR/.env" ]; then
+            echo "::error::PaperMap kurulumu bu runner'da bulunamadı ($(hostname)). Compose projeleri:"
+            docker compose ls -a || true
+            echo "Kurulum klasörünü repo değişkeni PAPERMAP_DIR ile verin ya da runner'ı PaperMap sunucusuna kurun."
+            exit 1
+          fi
+          echo "dir=$DIR" >> "$GITHUB_OUTPUT"
+          echo "Kurulum klasörü: $DIR"
+
       - name: Güncellemeden önce veritabanı yedeği
-        working-directory: ${{ vars.PAPERMAP_DIR || '/opt/papermap' }}
+        working-directory: ${{ steps.dir.outputs.dir }}
         run: |
           if [ -x scripts/backup-db.sh ] && docker compose ps --status running --services 2>/dev/null | grep -qx db; then
             ./scripts/backup-db.sh
@@ -48,4 +77,4 @@ jobs:
           fi
 
       - name: Kur, derle ve yeniden başlat
-        run: ./scripts/deploy.sh "${{ vars.PAPERMAP_DIR || '/opt/papermap' }}"
+        run: ./scripts/deploy.sh "${{ steps.dir.outputs.dir }}"
