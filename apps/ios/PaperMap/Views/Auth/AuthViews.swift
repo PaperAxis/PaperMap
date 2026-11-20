@@ -55,6 +55,8 @@ struct LoginView: View {
                     Text("Hesap oluştur")
                 }
                 .buttonStyle(PaSecondaryButtonStyle())
+
+                SSOButtons(error: $error)
             }
             .padding(24)
         }
@@ -109,6 +111,8 @@ struct RegisterView: View {
                 .buttonStyle(PaPrimaryButtonStyle())
                 .disabled(busy || !valid)
                 .padding(.top, 8)
+
+                SSOButtons(error: $error)
             }
             .padding(24)
         }
@@ -123,6 +127,57 @@ struct RegisterView: View {
         defer { busy = false }
         do {
             try await session.register(email: email, username: username, displayName: displayName, password: password)
+        } catch {
+            self.error = error.localizedDescription
+        }
+    }
+}
+
+/// "ya da" divider and one button per configured external provider (docs/SSO.md).
+struct SSOButtons: View {
+    @EnvironmentObject private var session: Session
+    @Binding var error: String?
+    @State private var providers: [SSOProvider] = []
+    @State private var busyProvider: SSOProvider?
+
+    var body: some View {
+        Group {
+            if !providers.isEmpty {
+                VStack(spacing: 12) {
+                    HStack(spacing: 12) {
+                        Rectangle().fill(Pa.muted.opacity(0.4)).frame(height: 1)
+                        Text("ya da").font(.subheadline).foregroundColor(Pa.muted)
+                        Rectangle().fill(Pa.muted.opacity(0.4)).frame(height: 1)
+                    }
+                    .accessibilityHidden(true)
+                    ForEach(providers) { provider in
+                        Button {
+                            Task { await start(provider) }
+                        } label: {
+                            if busyProvider == provider {
+                                ProgressView()
+                            } else {
+                                Text(provider.continueLabel)
+                            }
+                        }
+                        .buttonStyle(PaSecondaryButtonStyle())
+                        .disabled(busyProvider != nil)
+                    }
+                }
+            }
+        }
+        .task { providers = await session.ssoProviders() }
+    }
+
+    @MainActor
+    private func start(_ provider: SSOProvider) async {
+        busyProvider = provider
+        defer { busyProvider = nil }
+        do {
+            try await session.loginWithProvider(provider)
+            error = nil
+        } catch SSOError.cancelled {
+            // User closed the sign-in sheet; nothing to report.
         } catch {
             self.error = error.localizedDescription
         }

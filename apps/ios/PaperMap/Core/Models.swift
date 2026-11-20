@@ -15,6 +15,10 @@ struct User: Codable, Identifiable, Equatable {
     var statusText: String?
     var emailVerified: Bool?
     var isAdmin: Bool?
+    /// False for accounts created through Google/PaperApp sign-in; absent means true.
+    var hasPassword: Bool?
+
+    var passwordSet: Bool { hasPassword ?? true }
 }
 
 struct AuthResponse: Decodable {

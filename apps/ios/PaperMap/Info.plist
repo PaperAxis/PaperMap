@@ -22,6 +22,17 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.paperaxis.papermap.sso</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>papermap</string>
+			</array>
+		</dict>
+	</array>
 	<key>API_BASE</key>
 	<string>https://maps.paperaxis.com</string>
 	<key>ITSAppUsesNonExemptEncryption</key>

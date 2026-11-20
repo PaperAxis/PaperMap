@@ -25,7 +25,9 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -51,8 +53,10 @@ import com.paperaxis.papermap.ui.theme.Pa
 fun AuthScreen(
     busy: Boolean,
     initialLogin: String,
+    ssoProviders: List<String>,
     onLogin: (login: String, password: String, remember: Boolean) -> Unit,
     onRegister: (email: String, username: String, displayName: String, password: String) -> Unit,
+    onSso: (provider: String) -> Unit,
 ) {
     var registering by rememberSaveable { mutableStateOf(false) }
     var login by rememberSaveable(initialLogin) { mutableStateOf(initialLogin) }
@@ -177,6 +181,31 @@ fun AuthScreen(
                 )
             } else {
                 Text(if (registering) "Hesap oluştur" else "Giriş yap")
+            }
+        }
+        // Google / PaperApp (docs/SSO.md); only providers the server has configured.
+        val sso = listOf("google" to "Google ile devam et", "paperapp" to "PaperApp ile devam et")
+            .filter { it.first in ssoProviders }
+        if (sso.isNotEmpty()) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                HorizontalDivider(Modifier.weight(1f), color = MaterialTheme.colorScheme.outlineVariant)
+                Text(
+                    "ya da",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                )
+                HorizontalDivider(Modifier.weight(1f), color = MaterialTheme.colorScheme.outlineVariant)
+            }
+            sso.forEach { (provider, label) ->
+                OutlinedButton(
+                    onClick = { onSso(provider) },
+                    enabled = !busy,
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                ) { Text(label) }
             }
         }
         TextButton(onClick = { registering = !registering; localError = null }) {

@@ -34,9 +34,16 @@ class MainActivity : ComponentActivity() {
         handleOpen(intent)
     }
 
-    // Tapping a system notification opens the notifications page.
+    // Tapping a system notification opens the notifications page; SSO returns land here too.
     private fun handleOpen(intent: Intent?) {
         val i = intent ?: return
+        // SSO return: papermap://sso?code=… (docs/SSO.md)
+        val data = i.data
+        if (i.action == Intent.ACTION_VIEW && data != null && data.scheme == "papermap" && data.host == "sso") {
+            i.data = null
+            vm.handleSsoReturn(data)
+            return
+        }
         if (i.getStringExtra(Notifier.EXTRA_OPEN) == Notifier.OPEN_NOTIFICATIONS) {
             i.removeExtra(Notifier.EXTRA_OPEN)
             vm.openNotifications()

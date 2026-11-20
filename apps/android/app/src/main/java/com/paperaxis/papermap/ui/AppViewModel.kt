@@ -13,6 +13,7 @@ import com.paperaxis.papermap.data.Conversation
 import com.paperaxis.papermap.data.FamilyDetail
 import com.paperaxis.papermap.data.FamilySummary
 import com.paperaxis.papermap.data.FriendsResponse
+import com.paperaxis.papermap.data.IdentitiesResponse
 import com.paperaxis.papermap.data.Peer
 import com.paperaxis.papermap.data.User
 import com.paperaxis.papermap.location.LocationService
@@ -87,6 +88,18 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val _showNotifications = MutableStateFlow(false)
     val showNotifications: StateFlow<Boolean> = _showNotifications.asStateFlow()
 
+    // SSO (docs/SSO.md)
+    /** Providers the server has configured: "google", "paperapp". */
+    private val _ssoProviders = MutableStateFlow<List<String>>(emptyList())
+    val ssoProviders: StateFlow<List<String>> = _ssoProviders.asStateFlow()
+
+    private val _identities = MutableStateFlow<IdentitiesResponse?>(null)
+    val identities: StateFlow<IdentitiesResponse?> = _identities.asStateFlow()
+
+    /** A browser URL the UI should open (SSO start); consumed with [consumeOpenUrl]. */
+    private val _openUrl = MutableStateFlow<String?>(null)
+    val openUrl: StateFlow<String?> = _openUrl.asStateFlow()
+
     init {
         viewModelScope.launch {
             _rememberedLogin.value = app.session.rememberedLogin()
@@ -108,6 +121,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             runCatching { updater.check() }.getOrNull()?.let { _update.value = it }
         }
+        refreshSsoProviders()
         viewModelScope.launch {
             realtime.messages.collect { event ->
                 val open = _openChat.value
@@ -192,12 +206,83 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             _notifications.value = emptyList()
             _unreadNotifications.value = 0
             _showNotifications.value = false
+            _identities.value = null
             app.onSignedOut()
             _session.value = SessionState.SignedOut
         }
     }
 
     private fun currentUser(): User? = (session.value as? SessionState.SignedIn)?.user
+
+    // SSO: Google / PaperApp via the server-side flow (docs/SSO.md).
+    fun refreshSsoProviders() {
+        viewModelScope.launch {
+            runCatching { api.ssoProviders() }.onSuccess { _ssoProviders.value = it }
+        }
+    }
+
+    fun startSsoLogin(provider: String) {
+        _openUrl.value = api.ssoStartUrl(provider, "login")
+    }
+
+    fun linkProvider(provider: String) = launchAction {
+        val ticket = api.linkTicket(provider)
+        _openUrl.value = api.ssoStartUrl(provider, "link", ticket)
+    }
+
+    fun unlinkProvider(provider: String) = launchAction {
+        api.unlinkIdentity(provider)
+        _identities.value = api.identities()
+        _message.value = "Bağlantı kaldırıldı"
+    }
+
+    fun refreshIdentities() {
+        viewModelScope.launch { runCatching { api.identities() }.onSuccess { _identities.value = it } }
+    }
+
+    fun consumeOpenUrl() {
+        _openUrl.value = null
+    }
+
+    fun showMessage(text: String) {
+        _message.value = text
+    }
+
+    /** Handles papermap://sso?code=…&mode=…&provider=… or ?error=… */
+    fun handleSsoReturn(uri: android.net.Uri) {
+        val error = uri.getQueryParameter("error")
+        if (error != null) {
+            _message.value = ssoErrorMessage(error)
+            return
+        }
+        val code = uri.getQueryParameter("code") ?: return
+        val mode = uri.getQueryParameter("mode") ?: "login"
+        launchAction {
+            val res = api.ssoExchange(code)
+            if (mode == "link" || res.linked) {
+                res.user?.let { _session.value = SessionState.SignedIn(it) }
+                _identities.value = api.identities()
+                _message.value = "Hesap bağlandı"
+            } else {
+                val token = res.token ?: throw IllegalStateException("Giriş tamamlanamadı")
+                val user = res.user ?: api.me()
+                app.session.setToken(token, true)
+                signedIn(token, user)
+            }
+        }
+    }
+
+    private fun ssoErrorMessage(code: String): String = when (code) {
+        "access_denied" -> "Giriş iptal edildi."
+        "invalid_state" -> "Oturumun süresi doldu. Yeniden dene."
+        "email_missing" -> "Hesaptan e-posta adresi alınamadı."
+        "email_in_use" ->
+            "Bu e-postayla bir PaperMap hesabı var. Şifrenle giriş yapıp Profil > Bağlı hesaplar'dan bağla."
+        "identity_in_use" -> "Bu hesap başka bir PaperMap hesabına bağlı."
+        "account_disabled" -> "Bu hesap devre dışı bırakılmış."
+        "not_configured" -> "Bu giriş yöntemi şu an kullanılamıyor."
+        else -> "Giriş tamamlanamadı. Yeniden dene."
+    }
 
     fun setSharing(enabled: Boolean) = launchAction {
         val user = api.setSharing(enabled)

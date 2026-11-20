@@ -2,6 +2,9 @@
 package com.paperaxis.papermap.ui
 
 import android.Manifest
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -68,6 +71,19 @@ fun PaperMapRoot(vm: AppViewModel) {
     val busy by vm.busy.collectAsStateWithLifecycle()
     val update by vm.update.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
+    val openUrl by vm.openUrl.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    // SSO start: hand the server URL to the browser; it returns via papermap://sso.
+    LaunchedEffect(openUrl) {
+        val url = openUrl ?: return@LaunchedEffect
+        vm.consumeOpenUrl()
+        try {
+            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        } catch (e: ActivityNotFoundException) {
+            vm.showMessage("Tarayıcı bulunamadı.")
+        }
+    }
 
     LaunchedEffect(message) {
         message?.let {
@@ -82,12 +98,17 @@ fun PaperMapRoot(vm: AppViewModel) {
                 SessionState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
-                SessionState.SignedOut -> AuthScreen(
-                    busy = busy,
-                    initialLogin = vm.rememberedLogin.collectAsState().value,
-                    onLogin = vm::login,
-                    onRegister = vm::register,
-                )
+                SessionState.SignedOut -> {
+                    LaunchedEffect(Unit) { vm.refreshSsoProviders() }
+                    AuthScreen(
+                        busy = busy,
+                        initialLogin = vm.rememberedLogin.collectAsState().value,
+                        ssoProviders = vm.ssoProviders.collectAsState().value,
+                        onLogin = vm::login,
+                        onRegister = vm::register,
+                        onSso = vm::startSsoLogin,
+                    )
+                }
                 is SessionState.SignedIn -> SignedInShell(vm, s.user)
             }
         }

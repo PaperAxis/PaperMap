@@ -16,6 +16,35 @@ data class User(
     val statusText: String? = null,
     val emailVerified: Boolean = false,
     val isAdmin: Boolean = false,
+    val hasPassword: Boolean = true,
+)
+
+@Serializable
+data class SsoProvidersResponse(val providers: List<String> = emptyList())
+
+/** Login: token + user. Link: linked = true, provider, user. */
+@Serializable
+data class SsoExchangeResponse(
+    val token: String? = null,
+    val user: User? = null,
+    val linked: Boolean = false,
+    val provider: String? = null,
+)
+
+@Serializable
+data class LinkTicketResponse(val ticket: String)
+
+@Serializable
+data class Identity(
+    val provider: String,
+    val email: String? = null,
+    val createdAt: String? = null,
+)
+
+@Serializable
+data class IdentitiesResponse(
+    val identities: List<Identity> = emptyList(),
+    val hasPassword: Boolean = true,
 )
 
 @Serializable

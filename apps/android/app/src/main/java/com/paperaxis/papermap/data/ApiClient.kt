@@ -82,6 +82,33 @@ class ApiClient(private val session: SessionStore) {
 
     suspend fun me(): User = get<UserResponse>("/api/auth/me").user
 
+    // SSO (docs/SSO.md)
+    suspend fun ssoProviders(): List<String> =
+        get<SsoProvidersResponse>("/api/auth/sso/providers").providers
+
+    suspend fun ssoExchange(code: String): SsoExchangeResponse =
+        AppJson.decodeFromString(
+            call("POST", "/api/auth/sso/exchange", buildJsonObject { put("code", code) }),
+        )
+
+    suspend fun linkTicket(provider: String): String =
+        AppJson.decodeFromString<LinkTicketResponse>(
+            call("POST", "/api/auth/sso/link-ticket", buildJsonObject { put("provider", provider) }),
+        ).ticket
+
+    suspend fun identities(): IdentitiesResponse = get("/api/auth/identities")
+
+    suspend fun unlinkIdentity(provider: String) {
+        call("DELETE", "/api/auth/identities/$provider")
+    }
+
+    /** Browser URL that starts the server-side SSO flow. */
+    fun ssoStartUrl(provider: String, mode: String, ticket: String? = null): String {
+        val q = StringBuilder("client=android&mode=").append(mode)
+        if (ticket != null) q.append("&ticket=").append(java.net.URLEncoder.encode(ticket, "UTF-8"))
+        return "$base/api/sso/$provider/start?$q"
+    }
+
     suspend fun updateDisplayName(name: String): User =
         AppJson.decodeFromString<UserResponse>(
             call("PATCH", "/api/auth/profile", buildJsonObject { put("displayName", name) }),

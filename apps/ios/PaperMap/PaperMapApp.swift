@@ -48,6 +48,11 @@ struct RootView: View {
             }
         }
         .task(id: session.token) { await onTokenChange() }
+        .onOpenURL { url in
+            // papermap://sso is normally delivered to ASWebAuthenticationSession;
+            // a stray callback (session already closed) is ignored, as is any other URL.
+            guard url.scheme == SSOFlow.callbackScheme else { return }
+        }
         .onChange(of: scenePhase) { phase in
             if phase == .active, let token = session.token {
                 realtime.connect(token: token)
