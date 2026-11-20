@@ -1,45 +1,40 @@
 #!/usr/bin/env python3
-"""PaperMap ikon/favicon ureticisi.
+"""PaperMap icon and favicon generator.
 
-Tek kaynak (branding/logo.png) -> tum uygulama ikonlari ve web favicon'lari.
-Logo degistiginde SADECE branding/logo.png'yi degistirip bu betigi calistirin;
-Android/iOS native ikonlar CI'da (GitHub Actions) `@capacitor/assets` ile
-buradaki `web/assets/*` kaynaklarindan otomatik uretilir.
+Sources (branding/):
+  papermap-icon.png  full-bleed app icon (ink background)
+  papermap-mark.png  same mark on a transparent background
+Both are rendered from the matching .svg files. After changing an SVG, render
+it to a 1024 px PNG and run this script. CI builds the native Android/iOS icon
+sets from web/assets/* with @capacitor/assets.
 
-Gereksinim:  pip install Pillow
-Kullanim:    python3 scripts/generate-icons.py
+Requires: pip install Pillow
+Usage:    python3 scripts/generate-icons.py
 """
 import os
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC = os.path.join(ROOT, "branding", "logo.png")
-ASSETS = os.path.join(ROOT, "web", "assets")    # @capacitor/assets kaynaklari
-PUBLIC = os.path.join(ROOT, "web", "public")     # web favicon'lari
+BRAND = os.path.join(ROOT, "branding")
+ASSETS = os.path.join(ROOT, "web", "assets")    # @capacitor/assets sources
+PUBLIC = os.path.join(ROOT, "web", "public")     # web favicons
+NATIVE = os.path.join(ROOT, "apps", "assets")    # native app sources
 
-WHITE = (255, 255, 255, 255)
-DARK = (16, 19, 28, 255)  # uygulama koyu tema zemini (#10131c)
-
-
-def load_logo():
-    im = Image.open(SRC).convert("RGBA")
-    return im.crop(im.split()[3].getbbox())  # seffaf kenarlari kirp
+PAPER = (245, 243, 238, 255)  # #F5F3EE
+INK = (23, 25, 24, 255)       # #171918
 
 
-def white_version(mark):
-    """Siyah logoyu beyaza cevir (alfa maskesini koru) — koyu zeminler icin."""
-    w = Image.new("RGBA", mark.size, (255, 255, 255, 0))
-    w.putalpha(mark.split()[3])
-    return w
+def load(name):
+    return Image.open(os.path.join(BRAND, name)).convert("RGBA")
 
 
-def compose(canvas_px, frac_w, bg, mark):
-    """mark'i genisligi = frac_w*canvas olacak sekilde kareye ortala."""
-    tw = max(1, round(canvas_px * frac_w))
-    th = max(1, round(mark.height * (tw / mark.width)))
-    r = mark.resize((tw, th), Image.LANCZOS)
+def fit(mark, canvas_px, scale, bg):
+    """Centre the 1024 px mark on a square canvas, scaled to `scale` of it."""
+    size = max(1, round(canvas_px * scale))
+    r = mark.resize((size, size), Image.LANCZOS)
     c = Image.new("RGBA", (canvas_px, canvas_px), bg)
-    c.alpha_composite(r, ((canvas_px - tw) // 2, (canvas_px - th) // 2))
+    off = (canvas_px - size) // 2
+    c.alpha_composite(r, (off, off))
     return c
 
 
@@ -50,23 +45,24 @@ def save(img, path, **kw):
 
 
 def main():
-    logo = load_logo()
-    white_logo = white_version(logo)
+    icon = load("papermap-icon.png")
+    mark = load("papermap-mark.png")
+    clear = (0, 0, 0, 0)
 
-    # ---- @capacitor/assets kaynaklari (web/assets/) ----
-    save(compose(1024, 0.74, WHITE, logo), os.path.join(ASSETS, "icon-only.png"))
-    save(compose(1024, 0.60, (255, 255, 255, 0), logo), os.path.join(ASSETS, "icon-foreground.png"))
-    save(Image.new("RGBA", (1024, 1024), WHITE), os.path.join(ASSETS, "icon-background.png"))
-    save(compose(2732, 0.34, WHITE, logo), os.path.join(ASSETS, "splash.png"))
-    save(compose(2732, 0.34, DARK, white_logo), os.path.join(ASSETS, "splash-dark.png"))
+    # Adaptive icon: the mark must stay inside the 66% safe circle, hence 0.82.
+    for out in (ASSETS, NATIVE):
+        save(icon.resize((1024, 1024), Image.LANCZOS), os.path.join(out, "icon-only.png"))
+        save(fit(mark, 1024, 0.82, clear), os.path.join(out, "icon-foreground.png"))
+        save(Image.new("RGBA", (1024, 1024), INK), os.path.join(out, "icon-background.png"))
+        save(fit(mark, 2732, 0.40, PAPER), os.path.join(out, "splash.png"))
+        save(fit(mark, 2732, 0.40, INK), os.path.join(out, "splash-dark.png"))
 
-    # ---- Web favicon'lari (web/public/) ----
-    save(compose(180, 0.72, WHITE, logo), os.path.join(PUBLIC, "apple-touch-icon.png"))
-    save(compose(192, 0.74, WHITE, logo), os.path.join(PUBLIC, "icon-192.png"))
-    save(compose(512, 0.74, WHITE, logo), os.path.join(PUBLIC, "icon-512.png"))
-    save(compose(32, 0.86, WHITE, logo), os.path.join(PUBLIC, "favicon-32.png"))
-    save(compose(16, 0.88, WHITE, logo), os.path.join(PUBLIC, "favicon-16.png"))
-    compose(48, 0.86, WHITE, logo).save(
+    save(icon.resize((180, 180), Image.LANCZOS), os.path.join(PUBLIC, "apple-touch-icon.png"))
+    save(icon.resize((192, 192), Image.LANCZOS), os.path.join(PUBLIC, "icon-192.png"))
+    save(icon.resize((512, 512), Image.LANCZOS), os.path.join(PUBLIC, "icon-512.png"))
+    save(icon.resize((32, 32), Image.LANCZOS), os.path.join(PUBLIC, "favicon-32.png"))
+    save(icon.resize((16, 16), Image.LANCZOS), os.path.join(PUBLIC, "favicon-16.png"))
+    icon.resize((48, 48), Image.LANCZOS).save(
         os.path.join(PUBLIC, "favicon.ico"), sizes=[(16, 16), (32, 32), (48, 48)]
     )
     print("yazildi: web/public/favicon.ico")

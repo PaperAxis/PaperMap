@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <rect width="1024" height="1024" fill="#171918"/>
+  <g transform="translate(0 -27)">
+  <!-- PaperMap mark: a tri-fold paper map (fold geometry) with one Axis Blue pin. -->
+  <path d="M232 380 L429 336 L429 760 L232 804 Z" fill="#F5F3EE"/>
+  <path d="M429 336 L595 380 L595 804 L429 760 Z" fill="#CFCCC3"/>
+  <path d="M595 380 L792 336 L792 760 L595 804 Z" fill="#F5F3EE"/>
+  <path d="M512 640 C 452 560 382 482 382 404 A 130 130 0 0 1 642 404 C 642 482 572 560 512 640 Z"
+        fill="#315BDB" stroke="#171918" stroke-width="18" stroke-linejoin="round"/>
+  <circle cx="512" cy="404" r="50" fill="#F5F3EE"/>
+  </g>
+</svg>

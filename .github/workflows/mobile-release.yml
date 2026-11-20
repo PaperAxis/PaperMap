@@ -139,10 +139,10 @@ jobs:
         run: |
           npx --yes --package @capacitor/assets@3 -- capacitor-assets generate \
             --android \
-            --iconBackgroundColor '#ffffff' \
-            --iconBackgroundColorDark '#ffffff' \
-            --splashBackgroundColor '#ffffff' \
-            --splashBackgroundColorDark '#10131c'
+            --iconBackgroundColor '#171918' \
+            --iconBackgroundColorDark '#171918' \
+            --splashBackgroundColor '#F5F3EE' \
+            --splashBackgroundColorDark '#171918'
 
       - name: Firebase push yapılandır (varsa)
         working-directory: web
@@ -299,8 +299,8 @@ jobs:
         run: |
           npx --yes --package @capacitor/assets@3 -- capacitor-assets generate \
             --ios \
-            --splashBackgroundColor '#ffffff' \
-            --splashBackgroundColorDark '#10131c'
+            --splashBackgroundColor '#F5F3EE' \
+            --splashBackgroundColorDark '#171918'
 
       - name: İmzasız IPA derle
         working-directory: web/ios/App
