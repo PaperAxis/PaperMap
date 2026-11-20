@@ -1,12 +1,12 @@
 name: Sunucuya Dağıt
 
-# main'e her itmede kodu sunucudaki kalıcı klasöre (varsayılan /opt/papermap)
+# main'e her itmede kodu sunucudaki kalıcı klasöre (varsayılan /opt/PaperMap)
 # kurar ve docker compose ile yeniden derler. Runner PaperMap sunucusunun
 # kendisinde (self-hosted) çalışır.
 #
 # Repo değişkenleri (Settings → Secrets and variables → Actions → Variables):
 #   RUNNER_LINUX  — runner etiketleri (JSON), varsayılan ["self-hosted","linux","x64"]
-#   PAPERMAP_DIR  — kurulum klasörü; boşsa /opt/papermap ya da çalışan
+#   PAPERMAP_DIR  — kurulum klasörü; boşsa /opt/PaperMap ya da çalışan
 #                   "papermap" compose projesinin klasörü kullanılır
 
 on:
@@ -49,7 +49,7 @@ jobs:
           VAR_DIR: ${{ vars.PAPERMAP_DIR }}
         run: |
           DIR="$VAR_DIR"
-          if [ -z "$DIR" ] && [ -f /opt/papermap/.env ]; then DIR=/opt/papermap; fi
+          if [ -z "$DIR" ] && [ -f /opt/PaperMap/.env ]; then DIR=/opt/PaperMap; fi
           if [ -z "$DIR" ]; then
             # Çalışan "papermap" compose projesinin klasörü (docker compose ls).
             DIR=$(docker compose ls -a --format json | node -e '

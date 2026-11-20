@@ -84,7 +84,7 @@ kadar başlamayı bekler.
 
 `.github/workflows/deploy.yml`, `main`'e her itmede sunucudaki self-hosted
 runner'da çalışır: önce veritabanı yedeği alır, sonra `scripts/deploy.sh` ile
-git'te izlenen dosyaları `/opt/papermap`'e kopyalar ve
+git'te izlenen dosyaları `/opt/PaperMap`'e kopyalar ve
 `docker compose up -d --build --wait` ile yeniden derler. `.env`, `tiles/`,
 `fcm/` ve `backups/` korunur; `.env` yoksa iş durur.
 
@@ -94,7 +94,7 @@ Sunucuda bir kez:
   `self-hosted,linux,x64`; farklıysa repo değişkeni `RUNNER_LINUX`, ör.
   `["self-hosted","papermap"]`). Runner kullanıcısı `docker` grubunda olmalı.
 - Kurulum klasörü runner kullanıcısına yazılabilir olmalı:
-  `sudo chown -R <runner kullanıcısı> /opt/papermap`.
+  `sudo chown -R <runner kullanıcısı> /opt/PaperMap`.
   Farklı klasör için repo değişkeni `PAPERMAP_DIR`.
 
 ### Uygulama güncellemeleri (PaperUpdates)
@@ -130,7 +130,7 @@ Otomatik günlük yedek için cron'a ekleyin (yedekler 30 günden sonra silinir)
 ```bash
 crontab -e
 # Her gece 03:00:
-0 3 * * * cd /opt/papermap && scripts/backup-db.sh >> backups/backup.log 2>&1
+0 3 * * * cd /opt/PaperMap && scripts/backup-db.sh >> backups/backup.log 2>&1
 ```
 
 > Yedekleri ayrı bir makinede/depolamada da saklamanız önerilir — VDS
@@ -233,9 +233,9 @@ kapalı-uygulama push'u devre dışı kalır.
 
 1. [Firebase Console](https://console.firebase.google.com) → yeni proje.
 2. **Proje ayarları → Servis hesapları → Yeni özel anahtar üret** → JSON iner.
-3. Bu JSON'u VDS'te `/opt/papermap/fcm/service-account.json` olarak kaydedin:
+3. Bu JSON'u VDS'te `/opt/PaperMap/fcm/service-account.json` olarak kaydedin:
    ```bash
-   mkdir -p /opt/papermap/fcm
+   mkdir -p /opt/PaperMap/fcm
    # service-account.json dosyasini bu klasore koyun
    docker compose restart server
    ```

@@ -2,7 +2,7 @@
 # PaperMap veritabani yedegi alir — sIkIstIrIlmIs SQL dump.
 # Kullanim: scripts/backup-db.sh [yedek-dizini]   (varsayilan: ./backups)
 # Cron ornegi (her gece 03:00):
-#   0 3 * * * cd /opt/papermap && scripts/backup-db.sh >> backups/backup.log 2>&1
+#   0 3 * * * cd /opt/PaperMap && scripts/backup-db.sh >> backups/backup.log 2>&1
 set -e
 
 cd "$(dirname "$0")/.."
