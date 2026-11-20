@@ -5,8 +5,11 @@
 #
 #   scripts/deploy.sh [hedef]        # varsayilan: /opt/PaperMap
 #
-# - Yalnizca git'te izlenen dosyalar kopyalanir. Hedefteki .env, tiles/, fcm/,
-#   backups/ gibi depoda olmayan dosyalara dokunulmaz.
+# - Hedef bir git klonuysa (.git varsa) origin'den cekilip dagitilan commit'e
+#   'git reset --hard' yapilir; boylece klasor GitHub ile hep ayni kalir.
+#   Degilse eski yontemle izlenen dosyalar kopyalanir.
+# - Her iki yolda da .env, tiles/, fcm/, backups/ gibi depoda olmayan
+#   (ignore edilen) dosyalara dokunulmaz.
 # - docker compose hedef klasorde calisir; proje adi (ve dolayisiyla papermap_db
 #   veritabani birimi) mevcut kurulumla ayni kalir.
 # - Konteynerler saglikli olana kadar beklenir; olmazsa betik hata ile biter.
@@ -34,13 +37,33 @@ if [ ! -f "$target/.env" ]; then
   exit 1
 fi
 
-staging="$(mktemp -d)"
-trap 'rm -rf "$staging"' EXIT
-git -C "$root" archive --format=tar HEAD | tar -x -C "$staging"
-git -C "$root" rev-parse --short HEAD > "$staging/REVISION"
+# Commit being deployed: the one the runner checked out (GITHUB_SHA in CI).
+sha="${DEPLOY_SHA:-$(git -C "$root" rev-parse HEAD)}"
 
-# Izlenen dosyalari ustune yaz (silme yok: .env, tiles/, fcm/, backups/ korunur).
-cp -a "$staging"/. "$target"/
+if [ -d "$target/.git" ]; then
+  # Update the install folder through git so its history matches GitHub.
+  git -C "$target" fetch --prune origin
+  git -C "$target" fetch origin "$sha"
+  if [ -n "$(git -C "$target" status --porcelain --untracked-files=no)" ] \
+     || ! git -C "$target" merge-base --is-ancestor HEAD "$sha"; then
+    backup_ref="refs/deploy-backup/$(date +%Y%m%d-%H%M%S)"
+    git -C "$target" stash push --quiet --message "deploy $sha" || true
+    git -C "$target" update-ref "$backup_ref" HEAD
+    echo "::warning::$target icinde yerel degisiklik/commit vardi; $backup_ref ve git stash'e yedeklendi."
+  fi
+  branch="$(git -C "$target" symbolic-ref --short -q HEAD || echo main)"
+  git -C "$target" checkout --quiet -B "$branch" "$sha"
+  git -C "$target" reset --hard --quiet "$sha"
+  git -C "$target" rev-parse --short HEAD > "$target/REVISION"
+else
+  echo "::warning::$target bir git klonu degil; dosyalar kopyalanarak kuruluyor."
+  staging="$(mktemp -d)"
+  trap 'rm -rf "$staging"' EXIT
+  git -C "$root" archive --format=tar "$sha" | tar -x -C "$staging"
+  git -C "$root" rev-parse --short "$sha" > "$staging/REVISION"
+  # Overwrite tracked files only (no deletes: .env, tiles/, fcm/, backups/ stay).
+  cp -a "$staging"/. "$target"/
+fi
 echo "Kuruldu: $target ($(cat "$target/REVISION"))"
 
 if [ ! -f "$target/tiles/turkey.mbtiles" ]; then
