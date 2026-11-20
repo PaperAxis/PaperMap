@@ -71,6 +71,25 @@ jobs:
         with:
           gradle-version: '8.14.3'
 
+      - name: Firebase (FCM push) yapılandır
+        env:
+          GOOGLE_SERVICES_B64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          if [ -z "$GOOGLE_SERVICES_B64" ]; then
+            echo "::warning::GOOGLE_SERVICES_JSON_BASE64 yok — uygulama kapalıyken push gelmez (derleme sürer)."
+            exit 0
+          fi
+          F=apps/android/app/google-services.json
+          echo "$GOOGLE_SERVICES_B64" | base64 -d > "$F" 2>/dev/null || true
+          if node -e 'const j=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));
+                      const ok=(j.client||[]).some(c=>c.client_info?.android_client_info?.package_name==="com.paperaxis.papermap");
+                      process.exit(ok?0:1)' "$F"; then
+            echo "Firebase yapılandırıldı."
+          else
+            echo "::warning::google-services.json geçersiz ya da com.paperaxis.papermap içermiyor — push devre dışı."
+            rm -f "$F"
+          fi
+
       - name: Keystore hazırla
         env:
           KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}

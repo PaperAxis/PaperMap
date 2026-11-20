@@ -43,7 +43,13 @@ gönderme, arkadaşlar (liste, istek gönder/kabul et/sil), aileler (liste, üye
 oluştur, davet koduyla katıl, ayrıl), profil (görünen ad, oturumu kapat, Hakkında).
 Android'de PaperUpdates ile uygulama içi güncelleme.
 
-Sonraki sürümlere kalanlar: sohbet, bildirimler ve push, alanlar (geofence), yerler,
+**2.1:** sohbet (birebir, grup, aile; konum mesajı gösterimi; canlı mesaj),
+bildirimler (liste, okundu, sistem bildirimi). Android'de uygulama kapalıyken
+FCM push (`google-services.json` varsa). iOS'ta push yok: sunucu yalnızca FCM
+gönderir, imzasız (AltStore) IPA'da APNs kullanılamaz; bildirim soket + yerel
+bildirimle gelir (arka plan konum modu açıkken uygulama canlı kalır).
+
+Sonraki sürümlere kalanlar: alanlar (geofence), yerler,
 buluşmalar, yolculuk/ETA, SOS, konum geçmişi, paylaşım bağlantıları, profil
 fotoğrafı yükleme, temalar, yönetim.
 
@@ -69,6 +75,20 @@ Tüm istekler `Authorization: Bearer <token>`; hata gövdesi `{ "error": "..." }
 | Katıl | `POST /api/families/join` `{inviteCode}` | 201 `{id, name}` |
 | Ayrıl | `DELETE /api/families/:id/leave` | `{ok}` |
 
+| Sohbetler | `GET /api/conversations` | `{conversations:[{id, type: direct\|group\|family, title, otherUser:{id, avatarColor, avatarPath}\|null, memberCount, lastMessage:{body, createdAt, senderName}\|null, updatedAt, unread}]}` |
+| Birebir aç | `POST /api/conversations/direct` `{userId}` | `{conversationId}` |
+| Grup aç | `POST /api/conversations/group` `{name, memberIds}` | 201 `{conversationId}` |
+| Mesajlar | `GET /api/conversations/:id/messages` (son 200, eskiden yeniye) | `{conversation, messages:[message]}` |
+| Gönder | `POST /api/conversations/:id/messages` `{body}` ya da `{placeLat, placeLng, placeLabel}` | 201 `{message}` |
+| Okundu | `POST /api/conversations/:id/read` | `{ok}` |
+| Bildirimler | `GET /api/notifications` (son 100) | `{notifications:[{id, title, body, createdAt, readAt}], unread}` |
+| Tümü okundu | `POST /api/notifications/read` | `{ok}` |
+| Push token | `POST /api/notifications/token` `{token, platform: "android"}` | `{ok}` |
+
+`message`: `{id, conversationId, body, placeLat, placeLng, placeLabel, createdAt,
+senderId, senderName, senderAvatarColor, senderAvatarPath}`. Konum mesajında
+`placeLat`/`placeLng` doludur.
+
 `user`: `{id, email, username, displayName, sharingEnabled, sharingUntil, avatarColor,
 avatarPath, bannerPath, theme, statusText, emailVerified, isAdmin}`. `avatarPath`
 sunucuya göreli yoldur (`/uploads/...`).
@@ -83,6 +103,8 @@ sunucuya göreli yoldur (`/uploads/...`).
 | ← | `peer:location` | `peer` |
 | ← | `peer:offline` | `{userId}` |
 | ← | `peers:changed` | — (`refresh` gönder) |
+| ← | `message` | `{conversationId, message}` (gönderen dahil tüm üyelere) |
+| ← | `notification` | `{id, title, body, createdAt}` (yeni mesaj, alan, pil vb.) |
 
 `peer`: `{userId, displayName, avatarColor, avatarPath, statusText, lat, lng,
 accuracy, battery, charging, updatedAt}`.
