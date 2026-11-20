@@ -6,7 +6,10 @@ import Foundation
 @MainActor
 final class Session: ObservableObject {
     @Published private(set) var token: String?
-    @Published var user: User?
+    @Published var user: User? {
+        // Remembered so the next launch starts in the right color scheme.
+        didSet { if user?.theme != oldValue?.theme { Appearance.cache(themeId: user?.theme) } }
+    }
 
     /// Login name saved by "Beni hatırla"; prefills the login form.
     @Published private(set) var rememberedLogin: String
@@ -71,19 +74,86 @@ final class Session: ObservableObject {
         }
     }
 
-    func updateDisplayName(_ name: String) async throws {
-        struct Body: Encodable { let displayName: String }
+
+    /// `durationMinutes` nil: unlimited. Only used when enabling.
+    func setSharing(_ enabled: Bool, durationMinutes: Int? = nil) async throws {
+        struct Body: Encodable { let enabled: Bool; let durationMinutes: Int? }
         let res: UserResponse = try await api(
-            "PATCH", "/api/auth/profile",
-            body: Body(displayName: name.trimmingCharacters(in: .whitespaces))
+            "PATCH", "/api/location/sharing",
+            body: Body(enabled: enabled, durationMinutes: enabled ? durationMinutes : nil)
         )
         user = res.user
     }
 
-    func setSharing(_ enabled: Bool) async throws {
-        struct Body: Encodable { let enabled: Bool }
-        let res: UserResponse = try await api("PATCH", "/api/location/sharing", body: Body(enabled: enabled))
+    /// PATCH /api/auth/profile with only the non-nil fields. An empty statusText clears it.
+    func updateProfile(_ patch: ProfilePatch) async throws {
+        let res: UserResponse = try await api("PATCH", "/api/auth/profile", body: patch)
         user = res.user
+    }
+
+    func changePassword(current: String?, new newPassword: String) async throws {
+        struct Body: Encodable { let currentPassword: String?; let newPassword: String }
+        // Not through api(): a wrong current password answers 401, which must not sign out.
+        let _: EmptyResponse = try await APIClient.send(
+            "POST", "/api/auth/password",
+            body: Body(currentPassword: user?.passwordSet == false ? nil : current, newPassword: newPassword),
+            token: token
+        )
+        if user?.passwordSet == false { user?.hasPassword = true }
+    }
+
+    func resendVerification() async throws {
+        let _: EmptyResponse = try await api("POST", "/api/auth/verify/resend")
+    }
+
+    /// Uploads a photo already prepared by ImageUpload (JPEG).
+    func uploadProfileImage(_ kind: UploadKind, jpeg: Data) async throws {
+        let res: UserResponse = try await upload(kind, data: jpeg)
+        user = res.user
+    }
+
+    func removeProfileImage(_ kind: UploadKind) async throws {
+        let res: UserResponse = try await api("DELETE", kind.path)
+        user = res.user
+    }
+
+    /// Authenticated multipart upload; a 401 ends the session.
+    func upload<T: Decodable>(_ kind: UploadKind, data: Data, png: Bool = false) async throws -> T {
+        do {
+            return try await APIClient.upload(
+                kind.path, field: kind.field, data: data,
+                filename: "\(kind.field).\(png ? "png" : "jpg")",
+                mimeType: png ? "image/png" : "image/jpeg", token: token
+            )
+        } catch let err as APIError where err.isUnauthorized {
+            logout()
+            throw err
+        }
+    }
+
+    // MARK: Signed-out account flows
+
+    /// Same response whether or not the address is registered.
+    func requestPasswordReset(email: String) async throws {
+        struct Body: Encodable { let email: String }
+        let _: EmptyResponse = try await APIClient.send(
+            "POST", "/api/auth/forgot",
+            body: Body(email: email.trimmingCharacters(in: .whitespaces)),
+            token: nil
+        )
+    }
+
+    func resetPassword(token resetToken: String, newPassword: String) async throws {
+        struct Body: Encodable { let token: String; let newPassword: String }
+        let _: EmptyResponse = try await APIClient.send(
+            "POST", "/api/auth/reset", body: Body(token: resetToken, newPassword: newPassword), token: nil
+        )
+    }
+
+    func verifyEmail(token verifyToken: String) async throws {
+        let escaped = verifyToken.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? verifyToken
+        let _: EmptyResponse = try await APIClient.send("GET", "/api/auth/verify/\(escaped)", token: nil)
+        if isSignedIn { await refreshMe() }
     }
 
     /// Authenticated request; a 401 ends the session.
@@ -155,4 +225,15 @@ final class Session: ObservableObject {
         token = res.token
         user = res.user
     }
+}
+
+/// Body for PATCH /api/auth/profile; nil fields are left out of the JSON.
+struct ProfilePatch: Encodable {
+    var displayName: String?
+    var username: String?
+    var avatarColor: String?
+    var statusText: String?
+    var theme: String?
+    var fontPref: String?
+    var iconStyle: String?
 }

@@ -21,24 +21,23 @@ struct LoginView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Image("LaunchLogo")
-                        .resizable()
-                        .frame(width: 72, height: 72)
-                        .accessibilityHidden(true)
-                    Text("PaperMap")
-                        .font(.largeTitle.weight(.bold))
-                        .foregroundColor(Pa.text)
-                    Text("Ailen ve arkadaşlarınla konumunu paylaş.")
-                        .foregroundColor(Pa.muted)
-                }
+                BrandHeader(subtitle: "Ailen ve arkadaşlarınla konumunu paylaş.")
                 VStack(spacing: 16) {
                     LabeledField(label: "E-posta ya da kullanıcı adı", text: $login, contentType: .username, keyboard: .emailAddress)
                     LabeledField(label: "Şifre", text: $password, secure: true, contentType: .password)
-                    Toggle(isOn: $rememberMe) {
-                        Text("Beni hatırla").foregroundColor(Pa.text)
+                    HStack {
+                        Toggle(isOn: $rememberMe) {
+                            Text("Beni hatırla").foregroundColor(Pa.text)
+                        }
+                        .toggleStyle(CheckboxToggleStyle())
+                        NavigationLink {
+                            ForgotPasswordView()
+                        } label: {
+                            Text("Şifreni mi unuttun?")
+                                .font(.subheadline)
+                                .frame(minHeight: 44)
+                        }
                     }
-                    .toggleStyle(CheckboxToggleStyle())
                 }
                 if let error { ErrorText(message: error) }
                 Button {
