@@ -3,7 +3,7 @@
 # Self-hosted runner'in calisma klasoru her iste silinebilir; sunucu oradan degil,
 # buradan calisir.
 #
-#   scripts/deploy.sh [hedef]        # varsayilan: /opt/papermap
+#   scripts/deploy.sh [hedef]        # varsayilan: /opt/PaperMap
 #
 # - Yalnizca git'te izlenen dosyalar kopyalanir. Hedefteki .env, tiles/, fcm/,
 #   backups/ gibi depoda olmayan dosyalara dokunulmaz.
@@ -14,7 +14,7 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-target="${1:-/opt/papermap}"
+target="${1:-/opt/PaperMap}"
 
 case "$target" in
   /?*/?*) ;;
