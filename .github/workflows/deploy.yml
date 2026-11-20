@@ -59,8 +59,12 @@ jobs:
             ')
           fi
           if [ -z "$DIR" ] || [ ! -f "$DIR/.env" ]; then
-            echo "::error::PaperMap kurulumu bu runner'da bulunamadı ($(hostname)). Compose projeleri:"
-            docker compose ls -a || true
+            echo "::error::PaperMap kurulumu bu runner'da bulunamadı ($(hostname), kullanıcı $(id -un))."
+            for d in /opt/PaperMap /opt/papermap; do
+              echo "--- $d"; ls -la "$d" 2>&1 | head -20 || true
+            done
+            echo "--- Adı 'map' içeren konteynerler"
+            docker ps -a --format '{{.Names}}\t{{.Status}}\t{{.Label "com.docker.compose.project.working_dir"}}' | grep -i map || echo "(yok)"
             echo "Kurulum klasörünü repo değişkeni PAPERMAP_DIR ile verin ya da runner'ı PaperMap sunucusuna kurun."
             exit 1
           fi
