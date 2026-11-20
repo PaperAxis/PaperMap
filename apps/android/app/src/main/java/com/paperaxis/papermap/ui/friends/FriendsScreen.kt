@@ -1,6 +1,7 @@
 // Copyright (c) 2026 PaperAxis. All rights reserved.
 package com.paperaxis.papermap.ui.friends
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -88,7 +89,13 @@ fun FriendsScreen(vm: AppViewModel) {
                 }
             }
             items(data.friends, key = { "f-" + it.friendshipId }) { entry ->
-                PersonRow(entry.user.displayName, entry.user.username?.let { "@$it" }, entry.user.avatarColor, avatarPath = entry.user.avatarPath) {
+                PersonRow(
+                    entry.user.displayName,
+                    entry.user.username?.let { "@$it" },
+                    entry.user.avatarColor,
+                    modifier = Modifier.clickable { vm.openUserProfile(entry.user.id) },
+                    avatarPath = entry.user.avatarPath,
+                ) {
                     TextButton(onClick = { vm.messageFriend(entry.user.id, entry.user.displayName) }, enabled = !busy) {
                         Text("Mesaj")
                     }

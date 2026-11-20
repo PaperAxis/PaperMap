@@ -46,6 +46,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.paperaxis.papermap.data.User
 import com.paperaxis.papermap.notify.Notifier
+import com.paperaxis.papermap.ui.admin.AdminScreen
 import com.paperaxis.papermap.ui.auth.AuthScreen
 import com.paperaxis.papermap.ui.auth.ForgotPasswordScreen
 import com.paperaxis.papermap.ui.auth.ResetPasswordScreen
@@ -57,6 +58,7 @@ import com.paperaxis.papermap.ui.friends.FriendsScreen
 import com.paperaxis.papermap.ui.map.MapScreen
 import com.paperaxis.papermap.ui.notifications.NotificationsScreen
 import com.paperaxis.papermap.ui.profile.ProfileScreen
+import com.paperaxis.papermap.ui.profile.UserProfileScreen
 
 private data class Tab(val label: String, val icon: ImageVector)
 
@@ -169,6 +171,7 @@ private fun SignedInShell(vm: AppViewModel, user: User) {
     val conversations by vm.conversations.collectAsStateWithLifecycle()
     val openChat by vm.openChat.collectAsStateWithLifecycle()
     val showNotifications by vm.showNotifications.collectAsStateWithLifecycle()
+    val overlay by vm.overlay.collectAsStateWithLifecycle()
     val chatUnread = conversations.sumOf { it.unread }
     val context = LocalContext.current
 
@@ -190,6 +193,17 @@ private fun SignedInShell(vm: AppViewModel, user: User) {
     if (showNotifications) {
         NotificationsScreen(vm)
         return
+    }
+    when (val page = overlay) {
+        Overlay.Admin -> {
+            AdminScreen(vm)
+            return
+        }
+        is Overlay.UserProfile -> {
+            UserProfileScreen(vm, page.userId)
+            return
+        }
+        null -> Unit
     }
 
     Scaffold(
