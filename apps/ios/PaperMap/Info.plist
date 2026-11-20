@@ -49,7 +49,5 @@
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
-	<key>MLNMapboxMetricsEnabledSettingShownInApp</key>
-	<true/>
 </dict>
 </plist>
