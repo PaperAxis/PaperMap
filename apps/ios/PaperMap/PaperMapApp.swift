@@ -16,6 +16,7 @@ struct PaperMapApp: App {
     @StateObject private var router = AppRouter()
     @StateObject private var network = NetworkMonitor()
     @StateObject private var branding = Branding()
+    @StateObject private var mapStore = MapStore()
 
     init() {
         UNUserNotificationCenter.current().delegate = NotificationDelegate.shared
@@ -32,6 +33,7 @@ struct PaperMapApp: App {
                 .environmentObject(router)
                 .environmentObject(network)
                 .environmentObject(branding)
+                .environmentObject(mapStore)
                 .tint(Pa.primary)
         }
     }
@@ -46,6 +48,7 @@ struct RootView: View {
     @EnvironmentObject private var router: AppRouter
     @EnvironmentObject private var network: NetworkMonitor
     @EnvironmentObject private var branding: Branding
+    @EnvironmentObject private var mapStore: MapStore
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -93,26 +96,46 @@ struct RootView: View {
             realtime.onMessage = nil
             realtime.onNotification = nil
             realtime.onConnect = nil
+            realtime.onSOS = nil
+            realtime.onLocationRequest = nil
+            realtime.onTripUpdate = nil
+            realtime.onTripEnded = nil
             realtime.disconnect()
             location.stop()
             location.onLocation = nil
             chats.reset()
             notifications.reset()
+            mapStore.reset()
+            router.tab = .map
             return
         }
         chats.session = session
         notifications.session = session
-        let c = chats, n = notifications, sess = session
+        mapStore.session = session
+        let c = chats, n = notifications, sess = session, m = mapStore
         realtime.onMessage = { [weak c, weak sess] event in
             c?.handle(event, myId: sess?.user?.id)
         }
         realtime.onNotification = { [weak n] item in
             n?.handle(item)
         }
-        realtime.onConnect = { [weak c, weak n] in
+        realtime.onSOS = { [weak m] event in
+            m?.sosAlert = event
+        }
+        realtime.onLocationRequest = { [weak m] event in
+            m?.locationRequest = event
+        }
+        realtime.onTripUpdate = { [weak m, weak sess] trip in
+            m?.handleTripUpdate(trip, myId: sess?.user?.id)
+        }
+        realtime.onTripEnded = { [weak m, weak sess] userId in
+            m?.handleTripEnded(userId, myId: sess?.user?.id)
+        }
+        realtime.onConnect = { [weak c, weak n, weak m] in
             Task {
                 await c?.loadConversations()
                 await n?.load()
+                await m?.loadAll()
             }
         }
         let s = session, r = realtime, l = location
@@ -126,6 +149,7 @@ struct RootView: View {
         notifications.requestAuthorization()
         await chats.loadConversations()
         await notifications.load()
+        await mapStore.loadAll()
     }
 }
 
@@ -133,7 +157,7 @@ struct RootView: View {
 /// Nothing is sent while sharing is off.
 @MainActor
 private func upload(_ loc: CLLocation, session: Session, realtime: RealtimeService, location: LocationService) {
-    guard session.user?.sharingEnabled == true else { return }
+    guard session.user?.sharingActive == true else { return }
     let payload = LocationPayload(
         lat: loc.coordinate.latitude,
         lng: loc.coordinate.longitude,
