@@ -134,3 +134,104 @@ enum Format {
         return letters.isEmpty ? "?" : letters.joined()
     }
 }
+
+// MARK: - Chat
+
+struct ConversationOtherUser: Codable, Hashable {
+    let id: String
+    var avatarColor: String?
+    var avatarPath: String?
+}
+
+struct ConversationLastMessage: Codable, Hashable {
+    var body: String?
+    var createdAt: String?
+    var senderName: String?
+}
+
+struct ConversationSummary: Codable, Identifiable, Hashable {
+    let id: String
+    var type: String
+    var title: String
+    var otherUser: ConversationOtherUser?
+    var memberCount: Int?
+    var lastMessage: ConversationLastMessage?
+    var updatedAt: String?
+    var unread: Int
+
+    enum CodingKeys: String, CodingKey {
+        case id, type, title, otherUser, memberCount, lastMessage, updatedAt, unread
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        type = (try? c.decode(String.self, forKey: .type)) ?? "direct"
+        title = (try? c.decode(String.self, forKey: .title)) ?? "Sohbet"
+        otherUser = try? c.decodeIfPresent(ConversationOtherUser.self, forKey: .otherUser)
+        memberCount = try? c.decodeIfPresent(Int.self, forKey: .memberCount)
+        lastMessage = try? c.decodeIfPresent(ConversationLastMessage.self, forKey: .lastMessage)
+        updatedAt = try? c.decodeIfPresent(String.self, forKey: .updatedAt)
+        unread = (try? c.decodeIfPresent(Int.self, forKey: .unread)) ?? 0
+    }
+}
+
+struct ConversationsResponse: Decodable {
+    let conversations: [ConversationSummary]
+}
+
+struct ChatMessage: Codable, Identifiable, Hashable {
+    let id: String
+    let conversationId: String
+    var body: String?
+    var placeLat: Double?
+    var placeLng: Double?
+    var placeLabel: String?
+    var createdAt: String?
+    var senderId: String?
+    var senderName: String?
+    var senderAvatarColor: String?
+    var senderAvatarPath: String?
+
+    var isPlace: Bool { placeLat != nil && placeLng != nil }
+}
+
+struct MessagesResponse: Decodable {
+    let messages: [ChatMessage]
+}
+
+struct SentMessageResponse: Decodable {
+    let message: ChatMessage
+}
+
+struct ConversationIdResponse: Decodable {
+    let conversationId: String
+}
+
+/// Socket `message` event payload.
+struct MessageEvent: Decodable {
+    let conversationId: String
+    let message: ChatMessage
+}
+
+/// Destination for opening a chat screen.
+struct ChatTarget: Identifiable, Hashable {
+    let id: String
+    var title: String
+    var type: String
+}
+
+// MARK: - Notifications
+
+struct NotificationItem: Codable, Identifiable, Hashable {
+    let id: String
+    var title: String
+    var body: String
+    var createdAt: String?
+    var readAt: String?
+}
+
+struct NotificationsResponse: Decodable {
+    let notifications: [NotificationItem]
+    let unread: Int?
+}

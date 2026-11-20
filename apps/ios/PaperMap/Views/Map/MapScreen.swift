@@ -6,7 +6,9 @@ struct MapScreen: View {
     @EnvironmentObject private var session: Session
     @EnvironmentObject private var realtime: RealtimeService
     @EnvironmentObject private var location: LocationService
+    @EnvironmentObject private var notifications: NotificationStore
     @Environment(\.colorScheme) private var colorScheme
+    @State private var showNotifications = false
 
     @State private var selected: Peer?
     @State private var recenter = 0
@@ -29,7 +31,10 @@ struct MapScreen: View {
             .ignoresSafeArea(edges: .top)
 
             VStack(spacing: 8) {
-                sharingBar
+                HStack(alignment: .top, spacing: 8) {
+                    sharingBar
+                    bellButton
+                }
                 if let error { ErrorText(message: error).padding(10).background(Pa.bg).clipShape(RoundedRectangle(cornerRadius: Pa.radiusSm)) }
                 if location.authorization == .denied || location.authorization == .restricted {
                     Label("Konum izni kapalı. Ayarlar'dan PaperMap için konuma izin ver.", systemImage: "location.slash")
@@ -57,6 +62,9 @@ struct MapScreen: View {
         .sheet(item: $selected) { peer in
             PeerDetailSheet(peer: peer)
                 .presentationDetents([.medium])
+        }
+        .sheet(isPresented: $showNotifications) {
+            NotificationsView()
         }
         .sheet(isPresented: $showPeople) {
             PeopleSheet(peers: realtime.sortedPeers) { peer in
@@ -91,6 +99,31 @@ struct MapScreen: View {
         .background(Pa.bg)
         .clipShape(RoundedRectangle(cornerRadius: Pa.radiusMd))
         .shadow(color: .black.opacity(0.08), radius: 6, y: 2)
+    }
+
+    private var bellButton: some View {
+        Button { showNotifications = true } label: {
+            Image(systemName: "bell")
+                .font(.system(size: 18, weight: .medium))
+                .foregroundColor(Pa.text)
+                .frame(width: 48, height: 48)
+                .background(Pa.bg)
+                .clipShape(RoundedRectangle(cornerRadius: Pa.radiusMd))
+                .overlay(alignment: .topTrailing) {
+                    if notifications.unread > 0 {
+                        Circle()
+                            .fill(Pa.danger)
+                            .frame(width: 10, height: 10)
+                            .padding(10)
+                    }
+                }
+                .shadow(color: .black.opacity(0.08), radius: 6, y: 2)
+        }
+        .accessibilityLabel(Text(bellLabel))
+    }
+
+    private var bellLabel: String {
+        notifications.unread > 0 ? "Bildirimler, \(notifications.unread) okunmamış" : "Bildirimler"
     }
 
     private func mapButton(_ icon: String, label: String, action: @escaping () -> Void) -> some View {

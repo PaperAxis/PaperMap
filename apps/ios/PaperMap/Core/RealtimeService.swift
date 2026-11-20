@@ -20,6 +20,12 @@ final class RealtimeService: ObservableObject {
     private var socket: SocketIOClient?
     private var currentToken: String?
 
+    /// Called on the main actor for each `message` / `notification` event.
+    var onMessage: (@MainActor (MessageEvent) -> Void)?
+    var onNotification: (@MainActor (NotificationItem) -> Void)?
+    /// Called on the main actor after every (re)connect.
+    var onConnect: (@MainActor () -> Void)?
+
     var sortedPeers: [Peer] {
         peers.values.sorted { $0.displayName.localizedCompare($1.displayName) == .orderedAscending }
     }
@@ -36,7 +42,10 @@ final class RealtimeService: ObservableObject {
         let socket = manager.defaultSocket
 
         socket.on(clientEvent: .connect) { [weak self] _, _ in
-            Task { @MainActor in self?.isConnected = true }
+            Task { @MainActor in
+                self?.isConnected = true
+                self?.onConnect?()
+            }
         }
         socket.on(clientEvent: .disconnect) { [weak self] _, _ in
             Task { @MainActor in self?.isConnected = false }
@@ -57,6 +66,14 @@ final class RealtimeService: ObservableObject {
         }
         socket.on("peers:changed") { [weak self] _, _ in
             Task { @MainActor in self?.refresh() }
+        }
+        socket.on("message") { [weak self] data, _ in
+            guard let event = decodePayload(data.first, as: MessageEvent.self) else { return }
+            Task { @MainActor in self?.onMessage?(event) }
+        }
+        socket.on("notification") { [weak self] data, _ in
+            guard let item = decodePayload(data.first, as: NotificationItem.self) else { return }
+            Task { @MainActor in self?.onNotification?(item) }
         }
 
         self.manager = manager

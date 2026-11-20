@@ -4,12 +4,19 @@
 import CoreLocation
 import SwiftUI
 import UIKit
+import UserNotifications
 
 @main
 struct PaperMapApp: App {
     @StateObject private var session = Session()
     @StateObject private var realtime = RealtimeService()
     @StateObject private var location = LocationService()
+    @StateObject private var chats = ChatStore()
+    @StateObject private var notifications = NotificationStore()
+
+    init() {
+        UNUserNotificationCenter.current().delegate = NotificationDelegate.shared
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -17,6 +24,8 @@ struct PaperMapApp: App {
                 .environmentObject(session)
                 .environmentObject(realtime)
                 .environmentObject(location)
+                .environmentObject(chats)
+                .environmentObject(notifications)
                 .tint(Pa.primary)
         }
     }
@@ -26,6 +35,8 @@ struct RootView: View {
     @EnvironmentObject private var session: Session
     @EnvironmentObject private var realtime: RealtimeService
     @EnvironmentObject private var location: LocationService
+    @EnvironmentObject private var chats: ChatStore
+    @EnvironmentObject private var notifications: NotificationStore
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -41,6 +52,10 @@ struct RootView: View {
             if phase == .active, let token = session.token {
                 realtime.connect(token: token)
                 realtime.refresh()
+                Task {
+                    await chats.loadConversations()
+                    await notifications.load()
+                }
             }
         }
     }
@@ -48,10 +63,30 @@ struct RootView: View {
     @MainActor
     private func onTokenChange() async {
         guard let token = session.token else {
+            realtime.onMessage = nil
+            realtime.onNotification = nil
+            realtime.onConnect = nil
             realtime.disconnect()
             location.stop()
             location.onLocation = nil
+            chats.reset()
+            notifications.reset()
             return
+        }
+        chats.session = session
+        notifications.session = session
+        let c = chats, n = notifications, sess = session
+        realtime.onMessage = { [weak c, weak sess] event in
+            c?.handle(event, myId: sess?.user?.id)
+        }
+        realtime.onNotification = { [weak n] item in
+            n?.handle(item)
+        }
+        realtime.onConnect = { [weak c, weak n] in
+            Task {
+                await c?.loadConversations()
+                await n?.load()
+            }
         }
         let s = session, r = realtime, l = location
         location.onLocation = { [weak s, weak r, weak l] loc in
@@ -61,6 +96,9 @@ struct RootView: View {
         realtime.connect(token: token)
         await session.refreshMe()
         location.start()
+        notifications.requestAuthorization()
+        await chats.loadConversations()
+        await notifications.load()
     }
 }
 
@@ -87,10 +125,15 @@ private func upload(_ loc: CLLocation, session: Session, realtime: RealtimeServi
 }
 
 struct MainTabView: View {
+    @EnvironmentObject private var chats: ChatStore
+
     var body: some View {
         TabView {
             MapScreen()
                 .tabItem { Label("Harita", systemImage: "map") }
+            NavigationStack { ConversationListView() }
+                .tabItem { Label("Sohbet", systemImage: "bubble.left.and.bubble.right") }
+                .badge(chats.unreadTotal)
             NavigationStack { FriendsView() }
                 .tabItem { Label("Arkadaşlar", systemImage: "person.2") }
             NavigationStack { FamilyListView() }
