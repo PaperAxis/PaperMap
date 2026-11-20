@@ -36,3 +36,6 @@ fcm/
 .DS_Store
 .idea/
 .vscode/
+
+# Deployed commit (scripts/deploy.sh)
+REVISION
