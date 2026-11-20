@@ -4,8 +4,8 @@ import { API_BASE } from './api.js';
 const TILES = `${API_BASE}/tiles`;
 
 // build-turkey-tiles.sh icindeki TILE_MAXZOOM ile ayni olmali.
-// z15 tile'lar client tarafinda z16+ icin buyutulerek (overzoom) gosterilir.
-const SOURCE_MAXZOOM = 15;
+// z16 tilelar client tarafinda z17+ icin buyutulerek (overzoom) gosterilir.
+const SOURCE_MAXZOOM = 16;
 
 // Acik/koyu tema renk paletleri — harita gorunumu tema ile birlikte degisir.
 // Zengin OpenMapTiles semasi: arazi, POI, havalimani, sinirlar vb.
