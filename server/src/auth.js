@@ -40,6 +40,7 @@ export function publicUser(u) {
     iconStyle: u.iconStyle,
     statusText: u.statusText,
     emailVerified: u.emailVerified,
+    hasPassword: u.hasPassword !== false,
     isAdmin: u.isAdmin,
   };
 }

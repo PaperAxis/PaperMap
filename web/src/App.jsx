@@ -27,6 +27,7 @@ const SharePage = lazy(() => import('./pages/SharePage.jsx'));
 const Forgot = lazy(() => import('./pages/Forgot.jsx'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword.jsx'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail.jsx'));
+const SsoReturn = lazy(() => import('./pages/SsoReturn.jsx'));
 
 function Shell({ children }) {
   return (
@@ -61,6 +62,7 @@ export default function App() {
               <Route path="/forgot" element={<Forgot />} />
               <Route path="/reset/:token" element={<ResetPassword />} />
               <Route path="/verify/:token" element={<VerifyEmail />} />
+              <Route path="/sso" element={<SsoReturn />} />
               <Route path="/" element={<Protected><MapView /></Protected>} />
               <Route path="/friends" element={<Protected><Friends /></Protected>} />
               <Route path="/family" element={<Protected><Family /></Protected>} />

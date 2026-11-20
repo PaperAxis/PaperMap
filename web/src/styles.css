@@ -302,6 +302,50 @@ input[type='checkbox'] {
   accent-color: var(--accent);
 }
 
+.sso {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 4px 0 14px;
+}
+
+.sso .secondary {
+  width: 100%;
+}
+
+.sso-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.sso-divider::before,
+.sso-divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--border);
+}
+
+.linked-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+}
+
+.linked-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.linked-text .muted {
+  overflow-wrap: anywhere;
+}
+
 .password-field {
   position: relative;
   width: 100%;

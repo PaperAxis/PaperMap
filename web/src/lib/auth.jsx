@@ -34,6 +34,12 @@ export function AuthProvider({ children }) {
     setUser(d.user);
   }
 
+  // Session from Google / PaperApp sign-in (persisted like "Beni hatırla").
+  function loginWithToken(token, nextUser) {
+    setToken(token, true);
+    setUser(nextUser);
+  }
+
   async function register(displayName, username, email, password) {
     const d = await api('/api/auth/register', {
       method: 'POST',
@@ -49,7 +55,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, setUser, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, setUser, loading, login, loginWithToken, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

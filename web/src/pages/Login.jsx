@@ -4,6 +4,7 @@ import { useAuth } from '../lib/auth.jsx';
 import { getRememberedLogin } from '../lib/api.js';
 import Brand from '../components/Brand.jsx';
 import Credit from '../components/Credit.jsx';
+import SsoButtons from '../components/SsoButtons.jsx';
 import PasswordInput from '../components/PasswordInput.jsx';
 
 export default function Login() {
@@ -67,6 +68,7 @@ export default function Login() {
             {busy ? 'Giriş yapılıyor…' : 'Giriş Yap'}
           </button>
         </form>
+        <SsoButtons />
         <p className="muted">
           Hesabın yok mu? <Link to="/register">Kayıt ol</Link>
         </p>

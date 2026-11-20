@@ -36,6 +36,11 @@ services:
       SMTP_FROM: ${SMTP_FROM:-}
       SMTP_ALLOW_SELF_SIGNED: ${SMTP_ALLOW_SELF_SIGNED:-false}
       APP_URL: ${APP_URL:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      PAPERAPP_ISSUER: ${PAPERAPP_ISSUER:-}
+      PAPERAPP_CLIENT_ID: ${PAPERAPP_CLIENT_ID:-papermap}
+      PAPERAPP_CLIENT_SECRET: ${PAPERAPP_CLIENT_SECRET:-}
     volumes:
       - papermap_uploads:/app/uploads
       # FCM push icin: ./fcm/service-account.json koyun (yoksa push devre disi)

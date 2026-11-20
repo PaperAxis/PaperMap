@@ -25,6 +25,8 @@ model User {
   emailVerified  Boolean  @default(false)
   isAdmin        Boolean  @default(false)
   disabled       Boolean  @default(false)
+  // false: account created through Google/PaperApp sign-in, no password chosen yet
+  hasPassword    Boolean  @default(true)
   createdAt      DateTime @default(now())
 
   sentRequests      Friendship[]    @relation("requester")
@@ -47,6 +49,7 @@ model User {
   meetings           Meeting[]       @relation("meetingOwner")
   meetingMemberships MeetingMember[] @relation("meetingMember")
   authTokens         AuthToken[]
+  identities         AuthIdentity[]
 }
 
 // Tek kullanimlik token: sifre sifirlama (reset) / e-posta dogrulama (verify)
@@ -313,4 +316,20 @@ model LocationHistory {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, recordedAt])
+}
+
+// External sign-in identity (Google, PaperApp). Keyed on (provider, subject):
+// the provider's stable user id, never the e-mail.
+model AuthIdentity {
+  id        String   @id @default(cuid())
+  userId    String
+  provider  String // google | paperapp
+  subject   String
+  email     String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, subject])
+  @@index([userId])
 }

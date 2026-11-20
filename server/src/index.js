@@ -6,6 +6,7 @@ import { config, isAllowedOrigin } from './config.js';
 import { prisma } from './prisma.js';
 import { initSocket, broadcastSharingChange } from './socket.js';
 import authRoutes from './routes/auth.js';
+import { ssoRouter, ssoAuthRouter } from './routes/sso.js';
 import usersRoutes from './routes/users.js';
 import friendsRoutes from './routes/friends.js';
 import familiesRoutes from './routes/families.js';
@@ -67,6 +68,20 @@ app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/forgot', authLimiter);
 app.use('/api/auth/reset', authLimiter);
+
+// Google / PaperApp girisi: yonlendirme ve kod takasi da ayni sinirla
+const ssoLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Çok fazla deneme. Lütfen birkaç dakika sonra tekrar deneyin.' },
+  validate: { trustProxy: false },
+});
+app.use('/api/sso', ssoLimiter);
+app.use('/api/auth/sso/exchange', ssoLimiter);
+app.use('/api/sso', ssoRouter);
+app.use('/api/auth', ssoAuthRouter);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
