@@ -34,7 +34,7 @@ import com.paperaxis.papermap.ui.common.relativeTime
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationsScreen(vm: AppViewModel) {
-    val items by vm.notifications.collectAsStateWithLifecycle()
+    val list by vm.notifications.collectAsStateWithLifecycle()
     val unread by vm.unreadNotifications.collectAsStateWithLifecycle()
     val busy by vm.busy.collectAsStateWithLifecycle()
 
@@ -66,7 +66,7 @@ fun NotificationsScreen(vm: AppViewModel) {
         },
     ) { padding ->
         LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
-            if (items.isEmpty()) {
+            if (list.isEmpty()) {
                 item {
                     EmptyState(
                         "Bildirim yok",
@@ -74,7 +74,7 @@ fun NotificationsScreen(vm: AppViewModel) {
                     )
                 }
             }
-            items(items, key = { it.id }) { n ->
+            items(list, key = { it.id }) { n ->
                 val isUnread = n.readAt == null
                 Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
                     Text(
