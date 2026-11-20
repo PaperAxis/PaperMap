@@ -13,6 +13,10 @@ data class User(
     val sharingUntil: String? = null,
     val avatarColor: String? = null,
     val avatarPath: String? = null,
+    val bannerPath: String? = null,
+    val theme: String? = null,
+    val fontPref: String? = null,
+    val iconStyle: String? = null,
     val statusText: String? = null,
     val emailVerified: Boolean = false,
     val isAdmin: Boolean = false,
@@ -201,3 +205,243 @@ data class NotificationsResponse(
     val notifications: List<AppNotification> = emptyList(),
     val unread: Int = 0,
 )
+
+@Serializable
+data class OkResponse(val ok: Boolean = true)
+
+// Profile of a friend or family member (GET /api/users/:id)
+
+@Serializable
+data class PublicProfile(
+    val id: String,
+    val displayName: String = "",
+    val username: String? = null,
+    val avatarColor: String? = null,
+    val avatarPath: String? = null,
+    val bannerPath: String? = null,
+)
+
+@Serializable
+data class PublicProfileResponse(val user: PublicProfile)
+
+// Privacy and share links
+
+@Serializable
+data class PrivacyPerson(
+    val id: String,
+    val displayName: String = "",
+    val avatarColor: String? = null,
+    val avatarPath: String? = null,
+    val hidden: Boolean = false,
+)
+
+@Serializable
+data class PrivacyPeopleResponse(val people: List<PrivacyPerson> = emptyList())
+
+@Serializable
+data class ShareLink(
+    val id: String,
+    val token: String,
+    val label: String? = null,
+    val expiresAt: String? = null,
+    val createdAt: String? = null,
+)
+
+@Serializable
+data class ShareLinksResponse(val links: List<ShareLink> = emptyList())
+
+@Serializable
+data class ShareLinkResponse(val link: ShareLink)
+
+// Server branding and admin
+
+@Serializable
+data class AppSettings(val appName: String = "PaperMap", val logoPath: String? = null)
+
+@Serializable
+data class AppSettingsResponse(val settings: AppSettings)
+
+@Serializable
+data class AdminStats(
+    val users: Int = 0,
+    val families: Int = 0,
+    val conversations: Int = 0,
+    val messages: Int = 0,
+)
+
+@Serializable
+data class AdminStatsResponse(val stats: AdminStats)
+
+@Serializable
+data class AdminUser(
+    val id: String,
+    val email: String? = null,
+    val username: String? = null,
+    val displayName: String = "",
+    val avatarColor: String? = null,
+    val avatarPath: String? = null,
+    val isAdmin: Boolean = false,
+    val disabled: Boolean = false,
+    val createdAt: String? = null,
+)
+
+@Serializable
+data class AdminUsersResponse(val users: List<AdminUser> = emptyList())
+
+@Serializable
+data class AdminUserResponse(val user: AdminUser)
+
+// Map features
+
+@Serializable
+data class HistoryPoint(
+    val lat: Double,
+    val lng: Double,
+    val accuracy: Double? = null,
+    val recordedAt: String? = null,
+)
+
+@Serializable
+data class HistoryResponse(val points: List<HistoryPoint> = emptyList())
+
+@Serializable
+data class GeofenceWatch(
+    val userId: String,
+    val displayName: String = "",
+    val avatarColor: String? = null,
+    val avatarPath: String? = null,
+    val inside: Boolean? = null,
+)
+
+@Serializable
+data class Geofence(
+    val id: String,
+    val name: String = "",
+    val lat: Double,
+    val lng: Double,
+    val radius: Double = 300.0,
+    val notifyOnEnter: Boolean = true,
+    val notifyOnExit: Boolean = true,
+    val watches: List<GeofenceWatch> = emptyList(),
+)
+
+@Serializable
+data class GeofencesResponse(val geofences: List<Geofence> = emptyList())
+
+@Serializable
+data class GeofenceResponse(val geofence: Geofence)
+
+@Serializable
+data class CandidatePerson(
+    val id: String,
+    val displayName: String = "",
+    val avatarColor: String? = null,
+    val avatarPath: String? = null,
+)
+
+@Serializable
+data class CandidateFamily(
+    val id: String,
+    val name: String = "",
+    val members: List<CandidatePerson> = emptyList(),
+)
+
+/** Friends plus (optional) family members: who can be watched or invited. */
+@Serializable
+data class Candidates(
+    val friends: List<CandidatePerson> = emptyList(),
+    val family: CandidateFamily? = null,
+)
+
+@Serializable
+data class Place(
+    val id: String,
+    val name: String = "",
+    val lat: Double,
+    val lng: Double,
+    val color: String = "#7c3aed",
+)
+
+@Serializable
+data class PlacesResponse(val places: List<Place> = emptyList())
+
+@Serializable
+data class PlaceResponse(val place: Place)
+
+@Serializable
+data class Trip(
+    val destLat: Double,
+    val destLng: Double,
+    val destLabel: String = "",
+    val startedAt: String? = null,
+)
+
+@Serializable
+data class TripResponse(val trip: Trip? = null)
+
+/** Payload of the socket `trip:update` event. */
+@Serializable
+data class TripUpdate(
+    val userId: String,
+    val displayName: String = "",
+    val destLat: Double? = null,
+    val destLng: Double? = null,
+    val destLabel: String = "",
+    val distanceMeters: Double? = null,
+    val etaMinutes: Int? = null,
+)
+
+@Serializable
+data class Meeting(
+    val id: String,
+    val label: String = "",
+    val lat: Double,
+    val lng: Double,
+    val isOwner: Boolean = false,
+    val memberCount: Int = 0,
+    val createdAt: String? = null,
+)
+
+@Serializable
+data class MeetingsResponse(val meetings: List<Meeting> = emptyList())
+
+@Serializable
+data class MeetingMember(
+    val userId: String,
+    val displayName: String = "",
+    val avatarColor: String? = null,
+    val avatarPath: String? = null,
+    val isOwner: Boolean = false,
+    val distanceMeters: Double? = null,
+    val etaMinutes: Int? = null,
+    val arrived: Boolean = false,
+    val locationOff: Boolean = false,
+    val updatedAt: String? = null,
+)
+
+@Serializable
+data class MeetingDetail(val meeting: Meeting, val members: List<MeetingMember> = emptyList())
+
+@Serializable
+data class SosResponse(val ok: Boolean = true, val notified: Int = 0)
+
+/** Payload of the socket `sos` event. */
+@Serializable
+data class SosEvent(
+    val userId: String,
+    val displayName: String = "",
+    val avatarColor: String? = null,
+    val avatarPath: String? = null,
+    val lat: Double? = null,
+    val lng: Double? = null,
+    val message: String? = null,
+    val at: String? = null,
+)
+
+/** Payload of the socket `location:request` event. */
+@Serializable
+data class LocationRequestEvent(val fromId: String = "", val fromName: String = "")
+
+/** Payload of the socket `trip:ended` event. */
+@Serializable
+data class TripEndedEvent(val userId: String)

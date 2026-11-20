@@ -3,8 +3,12 @@ package com.paperaxis.papermap.realtime
 
 import com.paperaxis.papermap.data.AppJson
 import com.paperaxis.papermap.data.AppNotification
+import com.paperaxis.papermap.data.LocationRequestEvent
 import com.paperaxis.papermap.data.MessageEvent
 import com.paperaxis.papermap.data.Peer
+import com.paperaxis.papermap.data.SosEvent
+import com.paperaxis.papermap.data.TripEndedEvent
+import com.paperaxis.papermap.data.TripUpdate
 import io.socket.client.IO
 import io.socket.client.Socket
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -19,7 +23,8 @@ import org.json.JSONObject
 /**
  * Process-wide Socket.IO connection (owned by PaperMapApp): keeps the latest
  * location of every visible peer and relays chat messages and notifications.
- * Events follow server/src/socket.js, routes/conversations.js and notify.js.
+ * Events follow server/src/socket.js, routes/conversations.js, notify.js,
+ * routes/sos.js and routes/location.js.
  */
 class RealtimeClient(private val baseUrl: String) {
     private var socket: Socket? = null
@@ -35,6 +40,18 @@ class RealtimeClient(private val baseUrl: String) {
 
     private val _notifications = MutableSharedFlow<AppNotification>(extraBufferCapacity = 64)
     val notifications: SharedFlow<AppNotification> = _notifications.asSharedFlow()
+
+    private val _sos = MutableSharedFlow<SosEvent>(extraBufferCapacity = 16)
+    val sos: SharedFlow<SosEvent> = _sos.asSharedFlow()
+
+    private val _locationRequests = MutableSharedFlow<LocationRequestEvent>(extraBufferCapacity = 16)
+    val locationRequests: SharedFlow<LocationRequestEvent> = _locationRequests.asSharedFlow()
+
+    private val _tripUpdates = MutableSharedFlow<TripUpdate>(extraBufferCapacity = 64)
+    val tripUpdates: SharedFlow<TripUpdate> = _tripUpdates.asSharedFlow()
+
+    private val _tripEnded = MutableSharedFlow<TripEndedEvent>(extraBufferCapacity = 64)
+    val tripEnded: SharedFlow<TripEndedEvent> = _tripEnded.asSharedFlow()
 
     @Synchronized
     fun connect(token: String) {
@@ -75,8 +92,26 @@ class RealtimeClient(private val baseUrl: String) {
             } ?: return@on
             _notifications.tryEmit(n)
         }
+        s.relay("sos", SosEvent.serializer(), _sos)
+        s.relay("location:request", LocationRequestEvent.serializer(), _locationRequests)
+        s.relay("trip:update", TripUpdate.serializer(), _tripUpdates)
+        s.relay("trip:ended", TripEndedEvent.serializer(), _tripEnded)
         socket = s
         s.connect()
+    }
+
+    /** Decodes the first argument of [event] and forwards it to [target]. */
+    private fun <T> Socket.relay(
+        event: String,
+        serializer: kotlinx.serialization.KSerializer<T>,
+        target: MutableSharedFlow<T>,
+    ) {
+        on(event) { args ->
+            val value = args.firstOrNull()?.toString()?.let {
+                runCatching { AppJson.decodeFromString(serializer, it) }.getOrNull()
+            } ?: return@on
+            target.tryEmit(value)
+        }
     }
 
     fun refresh() {
