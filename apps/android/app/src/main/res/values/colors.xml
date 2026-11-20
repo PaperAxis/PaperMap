@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- PaperAxis tokens -->
+    <color name="pa_paper">#F5F3EE</color>
+    <color name="pa_ink">#171918</color>
+    <color name="pa_blue">#315BDB</color>
+    <color name="ic_launcher_background">#171918</color>
+</resources>

@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 
 // PaperUpdates istemcisi (yalnizca Android APK).
-// Acilista gunde en fazla bir kez updates.paperaxis.com/papermap/releases.android.json
+// Acilista gunde en fazla bir kez updates.paperaxis.com/papermap-android/releases.android.json
 // okunur; versionCode bu derlemeninkinden buyukse ust kisimda bir bant gosterilir.
 // Indirme ve kurulum kullanicinin onayiyla, sistem tarayicisi + Android paket
 // yukleyicisi uzerinden yapilir.
-const FEED = 'https://updates.paperaxis.com/papermap/';
+const FEED = 'https://updates.paperaxis.com/papermap-android/';
 const BUILD = Number(import.meta.env.VITE_APP_BUILD || 0);
 const CHECKED_KEY = 'papermap.update.checkedAt';
 const DISMISSED_KEY = 'papermap.update.dismissed';

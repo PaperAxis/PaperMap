@@ -14,6 +14,15 @@ Aile ve arkadaşlarla karşılıklı **konum paylaşımı** yapılan bir harita 
   kayıtlıdır, tüm cihazlarda senkron. Ayrıntı: `docs/DESIGN_SYSTEM.md`.
 - **Mobil**: Capacitor ile Android uygulamasına paketlenir.
 
+## Native uygulamalar (2.0)
+
+Android (Kotlin + Jetpack Compose) ve iOS (SwiftUI) native uygulamaları
+`apps/` altındadır; aynı sunucuya bağlanır. Ayrıntı, kapsam ve API sözleşmesi:
+[apps/README.md](apps/README.md). Derleme ve yayın:
+`.github/workflows/native-release.yml` (APK → PaperUpdates `papermap-android`
+ve GitHub Release, IPA → AltStore kaynağı). Capacitor ile paketlenen eski web
+kabuğu (`mobile-release.yml`) yalnızca elle çalışır.
+
 ## Teknolojiler
 
 | Katman      | Teknoloji                             |
@@ -100,7 +109,7 @@ Sunucuda bir kez:
 ### Uygulama güncellemeleri (PaperUpdates)
 
 Mobil sürüm iş akışı Android APK'yı GitHub'ın runner'ında derler ve
-`updates.paperaxis.com/papermap/` altına yayınlar (`releases.android.json` +
+`updates.paperaxis.com/papermap-android/` altına yayınlar (`releases.android.json` +
 `PaperMap-<sürüm>.apk`). `versionCode` iş akışının çalıştırma numarasıdır.
 Uygulama açılışta günde en fazla bir kez bu dosyayı okur; daha yeni sürüm varsa
 altta "İndir ve kur" bandı çıkar, kurulum kullanıcının onayıyla yapılır.
@@ -108,7 +117,8 @@ altta "İndir ve kur" bandı çıkar, kurulum kullanıcının onayıyla yapılı
 Gerekenler:
 
 - PaperUpdates yönetim uygulamasında `papermap` ürünü ve yayın anahtarı
-  (`pup_…`) → repo secret'ı `PAPERAXIS_PUBLISH_TOKEN`.
+  (`pup_…`) → repo secret'ı `PAPERAXIS_PUBLISH_TOKEN`. Ürün anahtarı
+  `papermap-android`; uygulama bu klasörü okur.
 - Kalıcı keystore secret'ları (aşağıda). Geçici anahtarla imzalanan APK
   kurulu uygulamanın üstüne kurulamadığı için o derlemede yayın atlanır.
 
