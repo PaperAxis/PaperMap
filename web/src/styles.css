@@ -302,6 +302,52 @@ input[type='checkbox'] {
   accent-color: var(--accent);
 }
 
+.password-field {
+  position: relative;
+  width: 100%;
+}
+
+.password-field input {
+  padding-right: 48px;
+}
+
+/* Icon button inside the field, right edge; 44px tap target. */
+.password-field .password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  width: 44px;
+  min-height: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  --btn-bg: transparent;
+  --btn-bg-hover: transparent;
+  background: transparent;
+  color: var(--muted);
+  justify-content: center;
+}
+
+.password-field .password-toggle:hover {
+  color: var(--text);
+}
+
+.password-field .password-toggle:active:not(:disabled) {
+  transform: translateY(-50%);
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 15px;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+}
+
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {

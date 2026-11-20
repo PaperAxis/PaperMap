@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { api, getToken, setToken } from './api.js';
+import { api, getToken, setToken, setRememberedLogin } from './api.js';
 import { applyAppearance } from './appearance/index.js';
 
 const AuthContext = createContext(null);
@@ -24,12 +24,13 @@ export function AuthProvider({ children }) {
     applyAppearance(user?.theme, user?.fontPref, user?.iconStyle);
   }, [user?.theme, user?.fontPref, user?.iconStyle]);
 
-  async function login(loginId, password) {
+  async function login(loginId, password, remember = true) {
     const d = await api('/api/auth/login', {
       method: 'POST',
       body: { login: loginId, password },
     });
-    setToken(d.token);
+    setToken(d.token, remember);
+    setRememberedLogin(remember ? loginId.trim() : '');
     setUser(d.user);
   }
 

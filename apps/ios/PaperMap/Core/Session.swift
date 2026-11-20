@@ -8,20 +8,35 @@ final class Session: ObservableObject {
     @Published private(set) var token: String?
     @Published var user: User?
 
+    /// Login name saved by "Beni hatırla"; prefills the login form.
+    @Published private(set) var rememberedLogin: String
+
+    private static let loginKey = "papermap.rememberedLogin"
+
     init() {
         token = Keychain.load()
+        rememberedLogin = UserDefaults.standard.string(forKey: Self.loginKey) ?? ""
     }
 
     var isSignedIn: Bool { token != nil }
 
-    func login(login: String, password: String) async throws {
+    /// `remember` false: token is kept in memory only and is gone when the app quits.
+    func login(login: String, password: String, remember: Bool = true) async throws {
         struct Body: Encodable { let login: String; let password: String }
         let res: AuthResponse = try await APIClient.send(
             "POST", "/api/auth/login",
             body: Body(login: login.trimmingCharacters(in: .whitespaces), password: password),
             token: nil
         )
-        signIn(res)
+        let name = login.trimmingCharacters(in: .whitespaces)
+        if remember {
+            UserDefaults.standard.set(name, forKey: Self.loginKey)
+            rememberedLogin = name
+        } else {
+            UserDefaults.standard.removeObject(forKey: Self.loginKey)
+            rememberedLogin = ""
+        }
+        signIn(res, persist: remember)
     }
 
     func register(email: String, username: String, displayName: String, password: String) async throws {
@@ -81,8 +96,8 @@ final class Session: ObservableObject {
         }
     }
 
-    private func signIn(_ res: AuthResponse) {
-        Keychain.save(res.token)
+    private func signIn(_ res: AuthResponse, persist: Bool = true) {
+        if persist { Keychain.save(res.token) } else { Keychain.delete() }
         token = res.token
         user = res.user
     }

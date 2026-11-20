@@ -8,6 +8,7 @@ import { ICON_STYLES } from '../lib/iconStyles.js';
 import Avatar from '../components/Avatar.jsx';
 import ThemePicker from '../components/ThemePicker.jsx';
 import Credit from '../components/Credit.jsx';
+import PasswordInput from '../components/PasswordInput.jsx';
 
 const STATUS_PRESETS = ['Evdeyim', 'Yoldayım', 'İşteyim', 'Müsait değilim'];
 
@@ -566,8 +567,8 @@ export default function Profile() {
         <h3>Şifre değiştir</h3>
         <div className="field">
           <label>Mevcut şifre</label>
-          <input
-            type="password"
+          <PasswordInput
+            autoComplete="current-password"
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             required
@@ -575,8 +576,8 @@ export default function Profile() {
         </div>
         <div className="field">
           <label>Yeni şifre (en az 8 karakter)</label>
-          <input
-            type="password"
+          <PasswordInput
+            autoComplete="new-password"
             value={newPassword}
             minLength={8}
             onChange={(e) => setNewPassword(e.target.value)}

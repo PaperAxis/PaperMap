@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth.jsx';
 import Brand from '../components/Brand.jsx';
 import Credit from '../components/Credit.jsx';
+import PasswordInput from '../components/PasswordInput.jsx';
 
 export default function Register() {
   const { user, register } = useAuth();
@@ -61,8 +62,8 @@ export default function Register() {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-          <input
-            type="password"
+          <PasswordInput
+            autoComplete="new-password"
             placeholder="Şifre (en az 8 karakter)"
             value={password}
             onChange={(e) => setPassword(e.target.value)}

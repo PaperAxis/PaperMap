@@ -53,6 +53,10 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message.asStateFlow()
 
+    /** Login name saved by "Beni hatırla"; prefills the login form. */
+    private val _rememberedLogin = MutableStateFlow("")
+    val rememberedLogin: StateFlow<String> = _rememberedLogin.asStateFlow()
+
     private val _busy = MutableStateFlow(false)
     val busy: StateFlow<Boolean> = _busy.asStateFlow()
 
@@ -85,6 +89,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         viewModelScope.launch {
+            _rememberedLogin.value = app.session.rememberedLogin()
             val token = app.session.token()
             if (token == null) {
                 _session.value = SessionState.SignedOut
@@ -159,9 +164,11 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun login(login: String, password: String) = launchAction {
+    fun login(login: String, password: String, remember: Boolean) = launchAction {
         val res = api.login(login.trim(), password)
-        app.session.setToken(res.token)
+        app.session.setToken(res.token, remember)
+        app.session.setRememberedLogin(if (remember) login.trim() else null)
+        _rememberedLogin.value = if (remember) login.trim() else ""
         signedIn(res.token, res.user)
     }
 
