@@ -5,6 +5,8 @@ import com.paperaxis.papermap.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -131,5 +133,48 @@ class ApiClient(private val session: SessionStore) {
 
     suspend fun leaveFamily(id: String) {
         call("DELETE", "/api/families/$id/leave")
+    }
+
+    // Chat
+    suspend fun conversations(): List<Conversation> =
+        get<ConversationsResponse>("/api/conversations").conversations
+
+    suspend fun openDirect(userId: String): String =
+        AppJson.decodeFromString<ConversationIdResponse>(
+            call("POST", "/api/conversations/direct", buildJsonObject { put("userId", userId) }),
+        ).conversationId
+
+    suspend fun createGroup(name: String, memberIds: List<String>): String =
+        AppJson.decodeFromString<ConversationIdResponse>(
+            call("POST", "/api/conversations/group", buildJsonObject {
+                put("name", name)
+                put("memberIds", JsonArray(memberIds.map { JsonPrimitive(it) }))
+            }),
+        ).conversationId
+
+    suspend fun messages(conversationId: String): List<ChatMessage> =
+        get<MessagesResponse>("/api/conversations/$conversationId/messages").messages
+
+    suspend fun sendMessage(conversationId: String, body: String): ChatMessage =
+        AppJson.decodeFromString<MessageResponse>(
+            call("POST", "/api/conversations/$conversationId/messages", buildJsonObject { put("body", body) }),
+        ).message
+
+    suspend fun markConversationRead(conversationId: String) {
+        call("POST", "/api/conversations/$conversationId/read")
+    }
+
+    // Notifications
+    suspend fun notifications(): NotificationsResponse = get("/api/notifications")
+
+    suspend fun markNotificationsRead() {
+        call("POST", "/api/notifications/read")
+    }
+
+    suspend fun registerPushToken(token: String) {
+        call("POST", "/api/notifications/token", buildJsonObject {
+            put("token", token)
+            put("platform", "android")
+        })
     }
 }

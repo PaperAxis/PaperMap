@@ -7,6 +7,9 @@ import androidx.lifecycle.viewModelScope
 import com.paperaxis.papermap.PaperMapApp
 import com.paperaxis.papermap.data.AndroidRelease
 import com.paperaxis.papermap.data.ApiException
+import com.paperaxis.papermap.data.AppNotification
+import com.paperaxis.papermap.data.ChatMessage
+import com.paperaxis.papermap.data.Conversation
 import com.paperaxis.papermap.data.FamilyDetail
 import com.paperaxis.papermap.data.FamilySummary
 import com.paperaxis.papermap.data.FriendsResponse
@@ -56,6 +59,30 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val _update = MutableStateFlow<AndroidRelease?>(null)
     val update: StateFlow<AndroidRelease?> = _update.asStateFlow()
 
+    // Chat
+    private val _conversations = MutableStateFlow<List<Conversation>>(emptyList())
+    val conversations: StateFlow<List<Conversation>> = _conversations.asStateFlow()
+
+    /** The chat shown full screen, or null. */
+    private val _openChat = MutableStateFlow<Conversation?>(null)
+    val openChat: StateFlow<Conversation?> = _openChat.asStateFlow()
+
+    private val _chatMessages = MutableStateFlow<List<ChatMessage>>(emptyList())
+    val chatMessages: StateFlow<List<ChatMessage>> = _chatMessages.asStateFlow()
+
+    private val _chatLoading = MutableStateFlow(false)
+    val chatLoading: StateFlow<Boolean> = _chatLoading.asStateFlow()
+
+    // Notifications
+    private val _notifications = MutableStateFlow<List<AppNotification>>(emptyList())
+    val notifications: StateFlow<List<AppNotification>> = _notifications.asStateFlow()
+
+    private val _unreadNotifications = MutableStateFlow(0)
+    val unreadNotifications: StateFlow<Int> = _unreadNotifications.asStateFlow()
+
+    private val _showNotifications = MutableStateFlow(false)
+    val showNotifications: StateFlow<Boolean> = _showNotifications.asStateFlow()
+
     init {
         viewModelScope.launch {
             val token = app.session.token()
@@ -76,6 +103,28 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             runCatching { updater.check() }.getOrNull()?.let { _update.value = it }
         }
+        viewModelScope.launch {
+            realtime.messages.collect { event ->
+                val open = _openChat.value
+                if (open != null && open.id == event.conversationId) {
+                    appendMessage(event.message)
+                    runCatching { api.markConversationRead(open.id) }
+                }
+                refreshConversations()
+            }
+        }
+        viewModelScope.launch {
+            realtime.notifications.collect { n ->
+                if (_notifications.value.none { it.id == n.id }) {
+                    _notifications.value = listOf(n) + _notifications.value
+                }
+                if (_showNotifications.value) {
+                    runCatching { api.markNotificationsRead() }
+                } else {
+                    _unreadNotifications.value = _unreadNotifications.value + 1
+                }
+            }
+        }
     }
 
     private fun signedIn(token: String, user: User) {
@@ -84,6 +133,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         syncLocationService(user)
         refreshFriends()
         refreshFamilies()
+        refreshConversations()
+        refreshNotifications()
+        app.registerPush()
     }
 
     private fun syncLocationService(user: User) {
@@ -127,6 +179,13 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             _friends.value = FriendsResponse()
             _families.value = emptyList()
             _family.value = null
+            _conversations.value = emptyList()
+            _openChat.value = null
+            _chatMessages.value = emptyList()
+            _notifications.value = emptyList()
+            _unreadNotifications.value = 0
+            _showNotifications.value = false
+            app.onSignedOut()
             _session.value = SessionState.SignedOut
         }
     }
@@ -216,6 +275,103 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         _family.value = null
         _families.value = api.families()
         realtime.refresh()
+    }
+
+    // Chat
+    fun refreshConversations() {
+        viewModelScope.launch {
+            runCatching { api.conversations() }.onSuccess { _conversations.value = it }
+        }
+    }
+
+    fun openChat(conversation: Conversation) {
+        _openChat.value = conversation
+        _chatMessages.value = emptyList()
+        _chatLoading.value = true
+        viewModelScope.launch {
+            try {
+                _chatMessages.value = api.messages(conversation.id)
+                api.markConversationRead(conversation.id)
+                _conversations.value = _conversations.value.map {
+                    if (it.id == conversation.id) it.copy(unread = 0) else it
+                }
+            } catch (e: Exception) {
+                _message.value = e.message ?: "Mesajlar yüklenemedi"
+            } finally {
+                _chatLoading.value = false
+            }
+        }
+    }
+
+    fun closeChat() {
+        _openChat.value = null
+        _chatMessages.value = emptyList()
+        refreshConversations()
+    }
+
+    /** Opens (or creates) the direct chat with a friend. */
+    fun messageFriend(userId: String, name: String) = launchAction {
+        val id = api.openDirect(userId)
+        openChat(_conversations.value.firstOrNull { it.id == id } ?: Conversation(id = id, title = name))
+        refreshConversations()
+    }
+
+    fun createGroup(name: String, memberIds: List<String>) = launchAction {
+        require(name.isNotBlank()) { "Grup adı gir" }
+        require(memberIds.isNotEmpty()) { "En az bir arkadaş seç" }
+        val id = api.createGroup(name.trim(), memberIds)
+        openChat(Conversation(id = id, type = "group", title = name.trim(), memberCount = memberIds.size + 1))
+        refreshConversations()
+    }
+
+    fun sendMessage(text: String) {
+        val chat = _openChat.value ?: return
+        val body = text.trim()
+        if (body.isEmpty()) return
+        viewModelScope.launch {
+            try {
+                appendMessage(api.sendMessage(chat.id, body))
+                refreshConversations()
+            } catch (e: Exception) {
+                _message.value = e.message ?: "Mesaj gönderilemedi"
+            }
+        }
+    }
+
+    // The sender also receives its own message over the socket; dedupe by id.
+    private fun appendMessage(m: ChatMessage) {
+        if (_chatMessages.value.none { it.id == m.id }) {
+            _chatMessages.value = _chatMessages.value + m
+        }
+    }
+
+    fun currentUserId(): String? = currentUser()?.id
+
+    // Notifications
+    fun refreshNotifications() {
+        viewModelScope.launch {
+            runCatching { api.notifications() }.onSuccess {
+                _notifications.value = it.notifications
+                _unreadNotifications.value = it.unread
+            }
+        }
+    }
+
+    fun openNotifications() {
+        _openChat.value = null
+        _showNotifications.value = true
+        refreshNotifications()
+    }
+
+    fun closeNotifications() {
+        _showNotifications.value = false
+    }
+
+    fun markAllNotificationsRead() = launchAction {
+        api.markNotificationsRead()
+        _unreadNotifications.value = 0
+        val now = java.time.Instant.now().toString()
+        _notifications.value = _notifications.value.map { if (it.readAt == null) it.copy(readAt = now) else it }
     }
 
     // Updates

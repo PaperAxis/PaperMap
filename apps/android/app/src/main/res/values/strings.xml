@@ -3,5 +3,6 @@
     <string name="app_name">PaperMap</string>
     <string name="notif_channel_location">Konum paylaşımı</string>
     <string name="notif_location_title">Konumun paylaşılıyor</string>
+    <string name="notif_channel_general">Bildirimler</string>
     <string name="notif_location_text">Arkadaşların ve ailen seni haritada görebilir.</string>
 </resources>
