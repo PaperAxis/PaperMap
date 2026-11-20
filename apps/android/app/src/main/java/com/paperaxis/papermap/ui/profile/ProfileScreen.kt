@@ -62,7 +62,7 @@ fun ProfileScreen(vm: AppViewModel, user: User) {
                 modifier = Modifier.fillMaxWidth().padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Avatar(user.displayName, user.avatarColor, size = 64.dp)
+                Avatar(user.displayName, user.avatarColor, size = 64.dp, imagePath = user.avatarPath)
                 Spacer(Modifier.width(16.dp))
                 Column {
                     Text(user.displayName, style = MaterialTheme.typography.headlineSmall)

@@ -368,7 +368,7 @@ private fun InfoCard(text: String, action: String, onAction: () -> Unit) {
 private fun PeerDetail(peer: Peer, onFocus: () -> Unit) {
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 32.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Avatar(peer.displayName, peer.avatarColor, size = 52.dp)
+            Avatar(peer.displayName, peer.avatarColor, size = 52.dp, imagePath = peer.avatarPath)
             Spacer(Modifier.width(16.dp))
             Column {
                 Text(peer.displayName, style = MaterialTheme.typography.titleLarge)

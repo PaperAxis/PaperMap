@@ -203,6 +203,7 @@ private fun FamilyDetailContent(f: FamilyDetail, modifier: Modifier, onLeave: ()
                 listOfNotNull(m.username?.let { "@$it" }, if (m.role == "owner") "Yönetici" else null)
                     .joinToString(" · "),
                 m.avatarColor,
+                avatarPath = m.avatarPath,
             )
         }
         item {

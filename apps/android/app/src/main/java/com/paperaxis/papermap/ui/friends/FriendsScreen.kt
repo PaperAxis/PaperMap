@@ -71,7 +71,7 @@ fun FriendsScreen(vm: AppViewModel) {
             if (data.incoming.isNotEmpty()) {
                 item { SectionLabel("Gelen istekler") }
                 items(data.incoming, key = { "in-" + it.friendshipId }) { entry ->
-                    PersonRow(entry.user.displayName, entry.user.username?.let { "@$it" }, entry.user.avatarColor) {
+                    PersonRow(entry.user.displayName, entry.user.username?.let { "@$it" }, entry.user.avatarColor, avatarPath = entry.user.avatarPath) {
                         TextButton(onClick = { vm.removeFriend(entry.friendshipId) }) { Text("Reddet") }
                         TextButton(onClick = { vm.acceptFriend(entry.friendshipId) }) { Text("Kabul et") }
                     }
@@ -88,7 +88,7 @@ fun FriendsScreen(vm: AppViewModel) {
                 }
             }
             items(data.friends, key = { "f-" + it.friendshipId }) { entry ->
-                PersonRow(entry.user.displayName, entry.user.username?.let { "@$it" }, entry.user.avatarColor) {
+                PersonRow(entry.user.displayName, entry.user.username?.let { "@$it" }, entry.user.avatarColor, avatarPath = entry.user.avatarPath) {
                     TextButton(onClick = { vm.messageFriend(entry.user.id, entry.user.displayName) }, enabled = !busy) {
                         Text("Mesaj")
                     }
@@ -100,7 +100,7 @@ fun FriendsScreen(vm: AppViewModel) {
             if (data.outgoing.isNotEmpty()) {
                 item { SectionLabel("Gönderilen istekler") }
                 items(data.outgoing, key = { "out-" + it.friendshipId }) { entry ->
-                    PersonRow(entry.user.displayName, "Yanıt bekleniyor", entry.user.avatarColor) {
+                    PersonRow(entry.user.displayName, "Yanıt bekleniyor", entry.user.avatarColor, avatarPath = entry.user.avatarPath) {
                         TextButton(onClick = { vm.removeFriend(entry.friendshipId) }) { Text("Geri al") }
                     }
                 }
