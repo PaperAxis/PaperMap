@@ -336,6 +336,17 @@ keystore oluşturur (APK kurulur ama her derlemede anahtar değişir). Uygulamay
 önceki kurulum üzerine **güncelleyebilmek** için kalıcı bir keystore oluşturup
 aşağıdaki 4 secret'ı ekleyin (**Settings → Secrets and variables → Actions → Secrets**):
 
+En kolayı: kendi bilgisayarınızda (openssl + `gh auth login` gerekli) tek komut.
+Anahtarı openssl ile üretir, 4 secret'ı doğrudan yükler, parolayı ekrana basmaz;
+yedeği `~/.papermap-keystore` altına koyar — **bu yedeği güvenli saklayın**,
+kaybolursa kurulu uygulamalar bir daha güncellenemez:
+
+```bash
+./scripts/setup-android-keystore.sh
+```
+
+Elle yapmak isterseniz:
+
 ```bash
 # 1) Keystore olustur (bir kez)
 keytool -genkeypair -v -keystore papermap.jks -alias papermap \
