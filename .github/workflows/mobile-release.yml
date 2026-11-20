@@ -1,12 +1,9 @@
-name: Mobil Sürüm (APK + IPA)
+name: Web Kabuğu Sürümü (Capacitor, elle)
 
 # Tek workflow — Android APK ve iOS IPA paralel derlenir, tek Release'e yüklenir.
-# Android APK ve iOS IPA GitHub'ın runner'larında derlenir; APK ayrıca PaperUpdates'e
-# (updates.paperaxis.com/papermap-android/) yayınlanır; uygulama oradan güncellenir.
-# Tetikleme:
-#  - main'e itme (web/ ya da marka değiştiyse)
-#  - Elle: Actions sekmesinden "Run workflow"
-#  - Etiket: "v*" formatinda bir tag (or. v1.0.0)
+# Native uygulamalar (apps/, native-release.yml) bunun yerini aldı. Bu iş akışı
+# yalnızca elle çalışır ve PaperUpdates'e yayın yapmaz: native 2.x sürümü
+# manifestte daha yüksektir, 1.0.x yayını geri gitme sayılıp reddedilir.
 on:
   workflow_dispatch:
     inputs:
@@ -14,14 +11,6 @@ on:
         description: 'Backend adresi (boş: repo değişkeni VITE_API_URL ya da varsayılan)'
         required: false
         default: ''
-  push:
-    branches: [main]
-    paths:
-      - 'web/**'
-      - 'branding/**'
-      - '.github/workflows/mobile-release.yml'
-    tags:
-      - 'v*'
 
 concurrency:
   group: mobile-release
@@ -206,46 +195,6 @@ jobs:
             app-aligned.apk
           "${BUILD_TOOLS}apksigner" verify --verbose "$GITHUB_WORKSPACE/papermap.apk"
           rm -f release.jks
-
-      - name: PaperUpdates'e yayınla
-        env:
-          PAPERAXIS_PUBLISH_TOKEN: ${{ secrets.PAPERAXIS_PUBLISH_TOKEN }}
-          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-        run: |
-          if [ -z "$PAPERAXIS_PUBLISH_TOKEN" ]; then
-            echo "::warning::PAPERAXIS_PUBLISH_TOKEN secret yok — PaperUpdates yayını atlandı."
-            exit 0
-          fi
-          if [ -z "$KEYSTORE_B64" ]; then
-            # Geçici anahtarla imzalı APK kurulu uygulamanın üstüne kurulamaz.
-            echo "::warning::Kalıcı keystore yok — uygulama içi güncelleme kurulamayacağı için PaperUpdates yayını atlandı."
-            exit 0
-          fi
-          OUT="$RUNNER_TEMP/paperupdates"
-          rm -rf "$OUT" && mkdir -p "$OUT"
-          PKG="PaperMap-$APP_VERSION.apk"
-          cp "$GITHUB_WORKSPACE/papermap.apk" "$OUT/$PKG"
-          MIN_SDK=$(sed -n 's/.*minSdkVersion *= *\([0-9]*\).*/\1/p' web/android/variables.gradle | head -1)
-          node -e '
-            const fs = require("fs"), crypto = require("crypto");
-            const [dir, pkg, version, code, minSdk] = process.argv.slice(1);
-            const buf = fs.readFileSync(`${dir}/${pkg}`);
-            const rel = {
-              name: "PaperMap",
-              id: "com.paperaxis.papermap",
-              version,
-              versionCode: Number(code),
-              package: pkg,
-              sha256: crypto.createHash("sha256").update(buf).digest("hex"),
-              size: buf.length,
-              minSdk: Number(minSdk) || 23,
-              date: new Date().toISOString().replace(/\.\d+Z$/, "Z"),
-            };
-            fs.writeFileSync(`${dir}/releases.android.json`, JSON.stringify(rel, null, 2) + "\n");
-            console.log(rel);
-          ' "$OUT" "$PKG" "$APP_VERSION" "$VERSION_CODE" "$MIN_SDK"
-          curl -fsSL https://updates.paperaxis.com/paperaxis-upload.sh -o "$RUNNER_TEMP/paperaxis-upload.sh"
-          bash "$RUNNER_TEMP/paperaxis-upload.sh" "$OUT" --version "$APP_VERSION"
 
       - name: APK'yı Release'e yükle
         uses: softprops/action-gh-release@v2

@@ -1,0 +1,235 @@
+name: Native Sürüm (APK + IPA)
+
+# apps/android (Kotlin/Compose) ve apps/ios (SwiftUI) native uygulamalarını
+# GitHub'ın runner'larında derler.
+#  - Çalışma dallarında (ccr-*, dev): yalnızca derleme denetimi.
+#  - main, "v*" etiketi ya da elle çalıştırma: GitHub Release + PaperUpdates
+#    (papermap-android) + AltStore kaynağı.
+# Sürüm 2.0.<çalıştırma no>; Android versionCode 200 + çalıştırma no.
+
+on:
+  push:
+    branches: [main, dev, 'ccr-**']
+    paths:
+      - 'apps/**'
+      - '.github/workflows/native-release.yml'
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+concurrency:
+  group: native-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  APP_VERSION: 2.0.${{ github.run_number }}
+  PUBLISH: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
+  TAG: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('native-{0}', github.run_number) }}
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - name: GitHub Release oluştur
+        if: env.PUBLISH == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          name: PaperMap ${{ env.APP_VERSION }} (native)
+          body: |
+            PaperMap native sürüm ${{ env.APP_VERSION }}.
+
+            **Android** — `PaperMap-${{ env.APP_VERSION }}.apk`. Kurulu PaperMap'in
+            üzerine güncelleme olarak kurulur; uygulama sonraki sürümleri kendisi bildirir.
+
+            **iOS (AltStore)** — AltStore/SideStore'da kaynak ekleyin:
+            `${{ github.server_url }}/${{ github.repository }}/releases/latest/download/altstore.json`
+            ya da `PaperMap-${{ env.APP_VERSION }}.ipa`'yı AltStore "My Apps > +" ile kurun.
+
+  android:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      VERSION_CODE: ${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+
+      - name: Keystore hazırla
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+          else
+            echo "::warning::ANDROID_KEYSTORE_BASE64 yok — APK imzasız derlenir, yayınlanmaz."
+          fi
+
+      - name: Release APK derle
+        working-directory: apps/android
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          gradle assembleRelease --no-daemon --stacktrace \
+            -PversionCode=$((200 + VERSION_CODE)) -PversionName="$APP_VERSION"
+          ls -la app/build/outputs/apk/release/
+
+      - name: İmzayı doğrula
+        if: env.KEYSTORE_FILE != ''
+        run: |
+          APK=apps/android/app/build/outputs/apk/release/app-release.apk
+          BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)
+          "${BUILD_TOOLS}apksigner" verify --print-certs "$APK" | head -3
+          cp "$APK" "$GITHUB_WORKSPACE/PaperMap-$APP_VERSION.apk"
+          rm -f "$KEYSTORE_FILE"
+
+      - name: PaperUpdates'e yayınla
+        if: env.PUBLISH == 'true' && env.KEYSTORE_FILE != ''
+        env:
+          PAPERAXIS_PUBLISH_TOKEN: ${{ secrets.PAPERAXIS_PUBLISH_TOKEN }}
+        run: |
+          if [ -z "$PAPERAXIS_PUBLISH_TOKEN" ]; then
+            echo "::warning::PAPERAXIS_PUBLISH_TOKEN yok — PaperUpdates yayını atlandı."
+            exit 0
+          fi
+          OUT="$RUNNER_TEMP/paperupdates"
+          rm -rf "$OUT" && mkdir -p "$OUT"
+          PKG="PaperMap-$APP_VERSION.apk"
+          cp "$GITHUB_WORKSPACE/$PKG" "$OUT/$PKG"
+          node -e '
+            const fs = require("fs"), crypto = require("crypto");
+            const [dir, pkg, version, code] = process.argv.slice(1);
+            const buf = fs.readFileSync(`${dir}/${pkg}`);
+            const rel = {
+              name: "PaperMap",
+              id: "com.paperaxis.papermap",
+              version,
+              versionCode: Number(code),
+              package: pkg,
+              sha256: crypto.createHash("sha256").update(buf).digest("hex"),
+              size: buf.length,
+              minSdk: 24,
+              date: new Date().toISOString().replace(/\.\d+Z$/, "Z"),
+            };
+            fs.writeFileSync(`${dir}/releases.android.json`, JSON.stringify(rel, null, 2) + "\n");
+            console.log(rel);
+          ' "$OUT" "$PKG" "$APP_VERSION" "$((200 + VERSION_CODE))"
+          curl -fsSL https://updates.paperaxis.com/paperaxis-upload.sh -o "$RUNNER_TEMP/paperaxis-upload.sh"
+          bash "$RUNNER_TEMP/paperaxis-upload.sh" "$OUT" --version "$APP_VERSION"
+
+      - name: APK'yı Release'e yükle
+        if: env.PUBLISH == 'true' && env.KEYSTORE_FILE != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          files: PaperMap-${{ env.APP_VERSION }}.apk
+          fail_on_unmatched_files: true
+
+  ios:
+    needs: prepare
+    runs-on: macos-latest
+    timeout-minutes: 45
+    env:
+      BUILD_NUMBER: ${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: XcodeGen kur ve projeyi üret
+        working-directory: apps/ios
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: İmzasız IPA derle
+        working-directory: apps/ios
+        run: |
+          xcodebuild -project PaperMap.xcodeproj -scheme PaperMap \
+            -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' \
+            -derivedDataPath build -skipPackagePluginValidation \
+            MARKETING_VERSION="$APP_VERSION" CURRENT_PROJECT_VERSION="$((200 + BUILD_NUMBER))" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build | tail -40
+          test -d build/Build/Products/Release-iphoneos/PaperMap.app
+          cd build/Build/Products/Release-iphoneos
+          rm -rf Payload && mkdir Payload && cp -R PaperMap.app Payload/
+          zip -qr "$GITHUB_WORKSPACE/PaperMap-$APP_VERSION.ipa" Payload
+          ls -lh "$GITHUB_WORKSPACE/PaperMap-$APP_VERSION.ipa"
+          cp "$GITHUB_WORKSPACE/apps/assets/icon-only.png" "$GITHUB_WORKSPACE/icon.png"
+
+      - name: AltStore kaynağı oluştur
+        if: env.PUBLISH == 'true'
+        env:
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          IPA="PaperMap-$APP_VERSION.ipa"
+          SIZE=$(wc -c < "$IPA" | tr -d ' ')
+          DATE=$(date -u +%Y-%m-%d)
+          DL="$REPO_URL/releases/download/$TAG/$IPA"
+          ICON="$REPO_URL/releases/download/$TAG/icon.png"
+          cat > altstore.json <<EOF
+          {
+            "name": "PaperMap",
+            "subtitle": "Aile ve arkadaşlarla konum paylaşımı",
+            "identifier": "com.paperaxis.papermap.source",
+            "iconURL": "$ICON",
+            "website": "$REPO_URL",
+            "apps": [
+              {
+                "name": "PaperMap",
+                "bundleIdentifier": "com.paperaxis.papermap",
+                "developerName": "PaperAxis",
+                "subtitle": "Aile ve arkadaşlarla konum paylaşımı",
+                "localizedDescription": "Aile ve arkadaşlarınızla karşılıklı konum paylaşımı ve harita üzerinde canlı takip.",
+                "iconURL": "$ICON",
+                "tintColor": "315BDB",
+                "category": "lifestyle",
+                "version": "$APP_VERSION",
+                "versionDate": "$DATE",
+                "versionDescription": "PaperMap $APP_VERSION (native)",
+                "downloadURL": "$DL",
+                "size": $SIZE,
+                "versions": [
+                  {
+                    "version": "$APP_VERSION",
+                    "date": "$DATE",
+                    "localizedDescription": "PaperMap $APP_VERSION (native)",
+                    "downloadURL": "$DL",
+                    "size": $SIZE,
+                    "minOSVersion": "16.0"
+                  }
+                ]
+              }
+            ]
+          }
+          EOF
+          python3 -m json.tool altstore.json > /dev/null
+
+      - name: IPA'yı Release'e yükle
+        if: env.PUBLISH == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          files: |
+            PaperMap-${{ env.APP_VERSION }}.ipa
+            icon.png
+            altstore.json
+          fail_on_unmatched_files: true
