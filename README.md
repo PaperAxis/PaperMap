@@ -20,7 +20,8 @@ Android (Kotlin + Jetpack Compose) ve iOS (SwiftUI) native uygulamaları
 `apps/` altındadır; aynı sunucuya bağlanır. Ayrıntı, kapsam ve API sözleşmesi:
 [apps/README.md](apps/README.md). Derleme ve yayın:
 `.github/workflows/native-release.yml` (APK → PaperUpdates `papermap-android`
-ve GitHub Release, IPA → AltStore kaynağı). Capacitor ile paketlenen eski web
+ve GitHub Release, IPA → AltStore kaynağı; yalnızca `v*` etiketi ya da elle
+çalıştırmada — `main`'e push yalnızca derler). Capacitor ile paketlenen eski web
 kabuğu (`mobile-release.yml`) yalnızca elle çalışır.
 
 ## Teknolojiler
