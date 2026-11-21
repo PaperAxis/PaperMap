@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../prisma.js';
 import { requireAuth } from '../middleware/auth.js';
-import { relatedUserIds } from '../visibility.js';
+import { peersWhoHidFrom, relatedUserIds } from '../visibility.js';
 import { createNotification } from '../notify.js';
 import { distanceMeters } from '../geofence.js';
 
@@ -96,13 +96,16 @@ router.get('/:id', requireAuth, async (req, res) => {
   if (!meeting || !meeting.members.some((m) => m.userId === req.userId)) {
     return res.status(404).json({ error: 'Buluşma bulunamadı' });
   }
+  // Konumunu izleyenden gizleyen uyelerin mesafe/ETA'si hesaplanmaz.
+  const hidFromMe = await peersWhoHidFrom(req.userId);
   const members = meeting.members.map((m) => {
     const u = m.user;
+    const visible = u.id === req.userId || !hidFromMe.has(u.id);
     let distance = null;
     let etaMinutes = null;
     let arrived = false;
     let locationOff = true;
-    if (u.location && sharingActive(u)) {
+    if (visible && u.location && sharingActive(u)) {
       locationOff = false;
       distance = Math.round(
         distanceMeters(u.location.lat, u.location.lng, meeting.lat, meeting.lng),

@@ -26,6 +26,8 @@ router.post('/read', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
+const PLATFORMS = new Set(['android', 'ios', 'web']);
+
 // FCM cihaz token'i kaydet (push bildirimleri icin)
 router.post('/token', requireAuth, async (req, res) => {
   const { token, platform } = req.body || {};
@@ -34,8 +36,8 @@ router.post('/token', requireAuth, async (req, res) => {
   }
   await prisma.deviceToken.upsert({
     where: { token },
-    create: { token, platform: platform === 'web' ? 'web' : 'android', userId: req.userId },
-    update: { userId: req.userId },
+    create: { token, platform: PLATFORMS.has(platform) ? platform : 'android', userId: req.userId },
+    update: { userId: req.userId, ...(PLATFORMS.has(platform) ? { platform } : {}) },
   });
   res.json({ ok: true });
 });

@@ -312,7 +312,8 @@ router.post('/password', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'currentPassword ve newPassword zorunlu' });
     }
     if (!(await verifyPassword(currentPassword, user.passwordHash))) {
-      return res.status(401).json({ error: 'Mevcut şifre hatalı' });
+      // 400: istemciler 401'i oturum sonu sayip cikis yaptiriyor.
+      return res.status(400).json({ error: 'Mevcut şifre hatalı' });
     }
   }
   await prisma.user.update({

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../prisma.js';
 import { requireAuth } from '../middleware/auth.js';
 import { publicUser } from '../auth.js';
-import { relatedUserIds } from '../visibility.js';
+import { peersWhoHidFrom, relatedUserIds } from '../visibility.js';
 import { broadcastSharingChange, handleLocationUpdate } from '../socket.js';
 import { emitToUser } from '../realtime.js';
 import { createNotification } from '../notify.js';
@@ -10,6 +10,15 @@ import { createNotification } from '../notify.js';
 const router = Router();
 
 const HISTORY_DAYS = 30;
+
+// Paylasim etkin mi — sureli paylasimda suresi gecmisse kapali sayilir
+function sharingActive(user) {
+  if (!user.sharingEnabled) return false;
+  if (user.sharingUntil && new Date(user.sharingUntil).getTime() <= Date.now()) {
+    return false;
+  }
+  return true;
+}
 
 // Konum guncellemesi (arka plan / HTTP — Socket.IO alternatifi)
 router.post('/', requireAuth, async (req, res) => {
@@ -29,8 +38,11 @@ router.get('/history/:userId', requireAuth, async (req, res) => {
         .status(403)
         .json({ error: 'Bu kullanıcının konum geçmişini göremezsiniz' });
     }
+    // Konumunu bu kisiden gizleyen ya da paylasimi kapali/suresi dolmus
+    // kullanicinin gecmisi de gorunmez (canli konumla ayni kural).
     const target = await prisma.user.findUnique({ where: { id: targetId } });
-    if (!target || !target.sharingEnabled) {
+    const hidFromMe = await peersWhoHidFrom(req.userId);
+    if (!target || !sharingActive(target) || hidFromMe.has(targetId)) {
       return res.json({ points: [] });
     }
   }

@@ -183,7 +183,7 @@ model DeviceToken {
   id        String   @id @default(cuid())
   userId    String
   token     String   @unique
-  platform  String // android | web
+  platform  String // android | ios | web
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
