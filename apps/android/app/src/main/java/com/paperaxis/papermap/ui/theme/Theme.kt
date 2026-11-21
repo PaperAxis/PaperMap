@@ -1,6 +1,7 @@
 // Copyright (c) 2026 PaperAxis. All rights reserved.
 package com.paperaxis.papermap.ui.theme
 
+import android.util.Log
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -13,12 +14,14 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.platform.LocalFontFamilyResolver
+import androidx.compose.ui.text.font.createFontFamilyResolver
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.CoroutineExceptionHandler
 
 // PaperAxis design tokens (apps/README.md).
 object Pa {
@@ -102,31 +105,39 @@ private val PaShapes = Shapes(
     large = RoundedCornerShape(20.dp),
 )
 
+/** A font download that fails (offline, no Play services) keeps the platform fallback face. */
+private val FontLoadErrorHandler = CoroutineExceptionHandler { _, e ->
+    Log.w("PaperMapFonts", "Font download failed; using the platform font", e)
+}
+
 /** True when the applied theme is dark (map style, status bar icons). */
 val LocalDarkTheme = staticCompositionLocalOf { false }
 
-private fun Typography.withFamily(family: FontFamily): Typography =
-    if (family == FontFamily.Default) {
-        this
-    } else {
-        Typography(
-            displayLarge = displayLarge.copy(fontFamily = family),
-            displayMedium = displayMedium.copy(fontFamily = family),
-            displaySmall = displaySmall.copy(fontFamily = family),
-            headlineLarge = headlineLarge.copy(fontFamily = family),
-            headlineMedium = headlineMedium.copy(fontFamily = family),
-            headlineSmall = headlineSmall.copy(fontFamily = family),
-            titleLarge = titleLarge.copy(fontFamily = family),
-            titleMedium = titleMedium.copy(fontFamily = family),
-            titleSmall = titleSmall.copy(fontFamily = family),
-            bodyLarge = bodyLarge.copy(fontFamily = family),
-            bodyMedium = bodyMedium.copy(fontFamily = family),
-            bodySmall = bodySmall.copy(fontFamily = family),
-            labelLarge = labelLarge.copy(fontFamily = family),
-            labelMedium = labelMedium.copy(fontFamily = family),
-            labelSmall = labelSmall.copy(fontFamily = family),
-        )
-    }
+/**
+ * Every Material text style in the chosen font: headline styles use the display
+ * family (Manrope for the default, as the web's --font-display), the rest the body family.
+ */
+private fun Typography.withFonts(fonts: FontPair): Typography {
+    val body = fonts.body
+    val display = fonts.display
+    return copy(
+        displayLarge = displayLarge.copy(fontFamily = display),
+        displayMedium = displayMedium.copy(fontFamily = display),
+        displaySmall = displaySmall.copy(fontFamily = display),
+        headlineLarge = headlineLarge.copy(fontFamily = display),
+        headlineMedium = headlineMedium.copy(fontFamily = display),
+        headlineSmall = headlineSmall.copy(fontFamily = display),
+        titleLarge = titleLarge.copy(fontFamily = display),
+        titleMedium = titleMedium.copy(fontFamily = body),
+        titleSmall = titleSmall.copy(fontFamily = body),
+        bodyLarge = bodyLarge.copy(fontFamily = body),
+        bodyMedium = bodyMedium.copy(fontFamily = body),
+        bodySmall = bodySmall.copy(fontFamily = body),
+        labelLarge = labelLarge.copy(fontFamily = body),
+        labelMedium = labelMedium.copy(fontFamily = body),
+        labelSmall = labelSmall.copy(fontFamily = body),
+    )
+}
 
 /**
  * Applies the profile theme (one of the web catalog ids, or "system" / unset to
@@ -139,8 +150,11 @@ fun PaperMapTheme(themeId: String? = null, fontId: String? = null, content: @Com
     val theme = remember(themeId, systemDark) { ThemeCatalog.get(context).resolve(themeId, systemDark) }
     val dark = theme?.dark ?: systemDark
     val scheme = remember(theme, dark) { theme?.colorScheme() ?: if (dark) Dark else Light }
-    val typography = remember(fontId) { PaTypography.withFamily(fontFamilyFor(fontId)) }
-    CompositionLocalProvider(LocalDarkTheme provides dark) {
+    // Recomputed when the profile font changes, so a new pick applies at once;
+    // downloadable faces swap in as soon as they arrive.
+    val typography = remember(fontId) { PaTypography.withFonts(fontPairFor(fontId)) }
+    val fontResolver = remember(context) { createFontFamilyResolver(context, FontLoadErrorHandler) }
+    CompositionLocalProvider(LocalDarkTheme provides dark, LocalFontFamilyResolver provides fontResolver) {
         MaterialTheme(
             colorScheme = scheme,
             typography = typography,
