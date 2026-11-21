@@ -24,8 +24,22 @@ APK, kurulu Capacitor uygulamasının üzerine güncelleme olarak kurulur.
 
 ## Sürüm
 
-`2.0.<çalıştırma no>`: native yeniden yazım büyük sürümdür. Android `versionCode`
-`200 + çalıştırma no`; Capacitor derlemelerinin (≤ 199) her zaman üstündedir.
+Sürüm adı **etiketten** gelir: `v3.0.0` etiketi atılınca Android `versionName` ve
+iOS `MARKETING_VERSION` `3.0.0` olur, GitHub Release, PaperUpdates ve AltStore
+kaynağı bu sürümle yayınlanır:
+
+```bash
+git tag v3.0.0 && git push origin v3.0.0
+```
+
+Etiket `vX.Y.Z` biçiminde olmalıdır; değilse iş akışı durur. Etiketsiz
+çalışmalarda (dal derlemeleri, elle çalıştırma) sürüm son `vX.Y.Z` etiketinin
+`X.Y`'si + çalıştırma numarasıdır (ör. `3.0.42`), böylece elle yayınlar etiketli
+sürümün gerisine düşmez. Bu yüzden elle yayından sonra yeni sürüm için ara
+sürümü artırın (`v3.1.0`); yama etiketi (`v3.0.1`) PaperUpdates'te daha eski
+sayılabilir. Android `versionCode` / iOS build numarası her zaman
+`200 + çalıştırma no`dur (hep artar; Capacitor derlemelerinin (≤ 199) üstünde).
+Ayrıntı: `.github/scripts/app-version.sh`.
 
 ## Ortak kaynaklar
 

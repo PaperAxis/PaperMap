@@ -29,6 +29,12 @@ targets:
         buildPhase: resources
       - path: ../shared/map-style-dark.json
         buildPhase: resources
+      - path: ../shared/map-style-terrain.json
+        buildPhase: resources
+      - path: ../shared/map-style-night.json
+        buildPhase: resources
+      - path: ../shared/map-style-satellite.json
+        buildPhase: resources
     dependencies:
       - package: MapLibre
         product: MapLibre

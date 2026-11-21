@@ -16,7 +16,6 @@ on:
       - '**.md'
       - 'docs/**'
       - 'branding/**'
-      - '.github/workflows/mobile-release.yml'
   workflow_dispatch:
 
 concurrency:

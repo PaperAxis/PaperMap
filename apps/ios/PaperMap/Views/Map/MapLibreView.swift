@@ -151,7 +151,12 @@ struct MapLibreView: UIViewRepresentable {
     var history: LocationHistory? = nil
     var playbackIndex: Int = 0
     var pin: MapPin? = nil
-    let dark: Bool
+    /// Style variant to draw (MapStyleChoice.variant): light, dark, terrain, night, satellite.
+    let styleVariant: String
+    /// Increment to turn the map back to north-up and flat (CompassButton).
+    var resetNorthRequest: Int = 0
+    /// Reports the map's bearing in degrees as it turns (for CompassButton).
+    var onBearingChange: ((Double) -> Void)? = nil
     /// Increment to fly to the user's own location.
     let recenterRequest: Int
     /// One-off camera move (peer, place, meeting, SOS, chat location).
@@ -164,17 +169,18 @@ struct MapLibreView: UIViewRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator(onSelect: onSelect) }
 
     func makeUIView(context: Context) -> MLNMapView {
-        let map = MLNMapView(frame: .zero, styleURL: Config.mapStyleURL(dark: dark))
+        let map = MLNMapView(frame: .zero, styleURL: Config.mapStyleURL(variant: styleVariant))
         map.delegate = context.coordinator
         map.showsUserLocation = true
-        map.compassViewPosition = .topRight
+        // The built-in compass is replaced by CompassButton next to the style picker.
+        map.compassView.compassVisibility = .hidden
         map.logoView.isHidden = true
         // z16 tiles are overzoomed up to z22 (web/src/lib/mapStyle.js MAP_MAX_ZOOM).
         map.maximumZoomLevel = 22
         map.attributionButtonPosition = .bottomRight
         // Türkiye overview until the first fix arrives.
         map.setCenter(CLLocationCoordinate2D(latitude: 39.0, longitude: 35.2), zoomLevel: 4.8, animated: false)
-        context.coordinator.dark = dark
+        context.coordinator.styleVariant = styleVariant
 
         let tap = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleTap(_:)))
         tap.delegate = context.coordinator
@@ -192,9 +198,17 @@ struct MapLibreView: UIViewRepresentable {
         c.onSelect = onSelect
         c.onTapMap = onTapMap
         c.placing = placing
-        if c.dark != dark {
-            c.dark = dark
-            map.styleURL = Config.mapStyleURL(dark: dark)
+        c.onBearingChange = onBearingChange
+        if c.styleVariant != styleVariant {
+            c.styleVariant = styleVariant
+            map.styleURL = Config.mapStyleURL(variant: styleVariant)
+        }
+        if resetNorthRequest != c.lastResetNorth {
+            c.lastResetNorth = resetNorthRequest
+            let camera = map.camera
+            camera.heading = 0
+            camera.pitch = 0
+            map.setCamera(camera, animated: true)
         }
         c.sync(peers: peers, on: map)
         c.sync(geofences: geofences, on: map)
@@ -223,7 +237,10 @@ struct MapLibreView: UIViewRepresentable {
         var onSelect: (Peer) -> Void
         var onTapMap: ((CLLocationCoordinate2D) -> Void)?
         var placing = false
-        var dark = false
+        var styleVariant = ""
+        var onBearingChange: ((Double) -> Void)?
+        var lastResetNorth = 0
+        private var lastBearing = 0.0
         var lastRecenter = 0
         var lastFocusId: UUID?
         var didCenterOnUser = false
@@ -416,6 +433,22 @@ struct MapLibreView: UIViewRepresentable {
 
         func mapView(_ mapView: MLNMapView, lineWidthForPolylineAnnotation annotation: MLNPolyline) -> CGFloat {
             3
+        }
+
+        func mapViewRegionIsChanging(_ mapView: MLNMapView) {
+            reportBearing(mapView)
+        }
+
+        func mapView(_ mapView: MLNMapView, regionDidChangeAnimated animated: Bool) {
+            reportBearing(mapView)
+        }
+
+        /// Sends the bearing to SwiftUI only when it really moved (avoids redraw storms).
+        private func reportBearing(_ mapView: MLNMapView) {
+            let bearing = mapView.direction
+            guard abs(bearing - lastBearing) >= 0.5 else { return }
+            lastBearing = bearing
+            onBearingChange?(bearing)
         }
 
         func mapView(_ mapView: MLNMapView, didUpdate userLocation: MLNUserLocation?) {

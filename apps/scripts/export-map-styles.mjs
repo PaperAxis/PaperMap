@@ -1,7 +1,8 @@
 // Exports the web map styles (web/src/lib/mapStyle.js) as static MapLibre style
 // JSON for the native apps, so web and native draw the same map.
 //   node apps/scripts/export-map-styles.mjs [apiBase]
-// Writes apps/shared/map-style-light.json and map-style-dark.json.
+// Writes apps/shared/map-style-<variant>.json for every STYLE_VARIANTS entry
+// (light, dark, terrain, night, satellite).
 import { readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -20,8 +21,8 @@ const dir = mkdtempSync(join(tmpdir(), 'mapstyle-'));
 try {
   const file = join(dir, 'mapStyle.mjs');
   writeFileSync(file, src);
-  const { buildMapStyle } = await import(pathToFileURL(file).href);
-  for (const theme of ['light', 'dark']) {
+  const { buildMapStyle, STYLE_VARIANTS } = await import(pathToFileURL(file).href);
+  for (const theme of STYLE_VARIANTS) {
     const out = new URL(`apps/shared/map-style-${theme}.json`, root);
     writeFileSync(out, JSON.stringify(buildMapStyle(theme)) + '\n');
     console.log('written', out.pathname);

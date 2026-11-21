@@ -21,7 +21,18 @@ import { watchPosition, openLocationSettings } from '../lib/geo.js';
 import { getBattery, batteryLabel } from '../lib/battery.js';
 import { timeAgo } from '../lib/time.js';
 import { useAuth } from '../lib/auth.jsx';
-import { buildMapStyle, MAP_MAX_ZOOM } from '../lib/mapStyle.js';
+import { buildMapStyle, MAP_MAX_ZOOM, MAP_STYLES, resolveMapStyle } from '../lib/mapStyle.js';
+import {
+  Map3DControl,
+  MAX_PITCH,
+  PITCH_3D,
+  applyTerrain,
+  load3DPref,
+  loadMapStylePref,
+  save3DPref,
+  saveMapStylePref,
+  set3D,
+} from '../lib/map3d.js';
 import { geofencesToGeoJSON, historyToGeoJSON } from '../lib/geojson.js';
 import PeerList from '../components/PeerList.jsx';
 import GeofencePanel from '../components/GeofencePanel.jsx';
@@ -72,6 +83,7 @@ export default function MapView() {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const appliedThemeRef = useRef(null);
+  const is3DRef = useRef(true);
   const peerMarkersRef = useRef({});
   const ownMarkerRef = useRef(null);
   const geofencesRef = useRef([]);
@@ -91,6 +103,8 @@ export default function MapView() {
   const [mapMenuOpen, setMapMenuOpen] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const [mapTheme, setMapTheme] = useState(currentMapTheme());
+  const [mapStyleId, setMapStyleId] = useState(loadMapStylePref);
+  const mapVariant = resolveMapStyle(mapStyleId, mapTheme);
 
   const [history, setHistory] = useState(null); // { userId, name, points }
   const [playIndex, setPlayIndex] = useState(0);
@@ -184,17 +198,40 @@ export default function MapView() {
 
   // Harita kurulumu
   useEffect(() => {
-    const theme = currentMapTheme();
-    appliedThemeRef.current = theme;
+    const variant = resolveMapStyle(loadMapStylePref(), currentMapTheme());
+    appliedThemeRef.current = variant;
+    const is3D = load3DPref();
+    is3DRef.current = is3D;
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: buildMapStyle(theme),
+      style: buildMapStyle(variant, { web: true }),
       center: TURKEY_CENTER,
       zoom: 5,
+      pitch: is3D ? PITCH_3D : 0,
+      maxPitch: MAX_PITCH,
       maxZoom: MAP_MAX_ZOOM,
       attributionControl: false,
     });
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+    // Kaynak atiflari (OSM, uydu goruntusu) — kucuk "i" dugmesi
+    map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
+    // Pusula: harita dondurulup egildiginde gorunur, tiklayinca kuzeye/duz bakisa doner
+    map.addControl(
+      new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }),
+      'top-right',
+    );
+    map.addControl(
+      new Map3DControl({
+        enabled: is3D,
+        onToggle: (on) => {
+          is3DRef.current = on;
+          save3DPref(on);
+          set3D(map, on);
+        },
+      }),
+      'top-right',
+    );
+    // Tema degisiminde setStyle araziyi sifirlar; her stil yuklemesinde geri ac
+    map.on('style.load', () => applyTerrain(map, is3DRef.current));
     map.on('style.load', syncGeofenceLayers);
     map.on('style.load', syncHistoryLayers);
     mapRef.current = map;
@@ -224,13 +261,19 @@ export default function MapView() {
     return () => observer.disconnect();
   }, []);
 
-  // Harita stilini temaya gore degistir
+  // Harita stilini secime / temaya gore degistir. Kisi, alan ve gecmis
+  // katmanlari 'style.load' ile yeni stile yeniden eklenir.
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || appliedThemeRef.current === mapTheme) return;
-    appliedThemeRef.current = mapTheme;
-    map.setStyle(buildMapStyle(mapTheme));
-  }, [mapTheme]);
+    if (!map || appliedThemeRef.current === mapVariant) return;
+    appliedThemeRef.current = mapVariant;
+    map.setStyle(buildMapStyle(mapVariant, { web: true }));
+  }, [mapVariant]);
+
+  function chooseMapStyle(id) {
+    setMapStyleId(id);
+    saveMapStylePref(id);
+  }
 
   // Geofence'leri yukle
   function loadGeofences() {
@@ -907,6 +950,24 @@ export default function MapView() {
               <span className="map-menu-label">Buluşmalar</span>
               <span className="map-menu-count">{meetings.length}</span>
             </button>
+            <div className="map-menu-divider" />
+            <div className="map-menu-heading">Harita stili</div>
+            <div className="map-style-grid" role="radiogroup" aria-label="Harita stili">
+              {MAP_STYLES.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={mapStyleId === s.id}
+                  className={`map-style-opt ${mapStyleId === s.id ? 'active' : ''}`}
+                  title={s.hint}
+                  onClick={() => chooseMapStyle(s.id)}
+                >
+                  <span className={`map-style-swatch swatch-${s.id}`} aria-hidden="true" />
+                  <span className="map-style-name">{s.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>
