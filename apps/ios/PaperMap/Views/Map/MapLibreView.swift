@@ -169,6 +169,8 @@ struct MapLibreView: UIViewRepresentable {
         map.showsUserLocation = true
         map.compassViewPosition = .topRight
         map.logoView.isHidden = true
+        // z16 tiles are overzoomed up to z22 (web/src/lib/mapStyle.js MAP_MAX_ZOOM).
+        map.maximumZoomLevel = 22
         map.attributionButtonPosition = .bottomRight
         // Türkiye overview until the first fix arrives.
         map.setCenter(CLLocationCoordinate2D(latitude: 39.0, longitude: 35.2), zoomLevel: 4.8, animated: false)

@@ -21,7 +21,7 @@ import { watchPosition, openLocationSettings } from '../lib/geo.js';
 import { getBattery, batteryLabel } from '../lib/battery.js';
 import { timeAgo } from '../lib/time.js';
 import { useAuth } from '../lib/auth.jsx';
-import { buildMapStyle } from '../lib/mapStyle.js';
+import { buildMapStyle, MAP_MAX_ZOOM } from '../lib/mapStyle.js';
 import { geofencesToGeoJSON, historyToGeoJSON } from '../lib/geojson.js';
 import PeerList from '../components/PeerList.jsx';
 import GeofencePanel from '../components/GeofencePanel.jsx';
@@ -191,6 +191,7 @@ export default function MapView() {
       style: buildMapStyle(theme),
       center: TURKEY_CENTER,
       zoom: 5,
+      maxZoom: MAP_MAX_ZOOM,
       attributionControl: false,
     });
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');

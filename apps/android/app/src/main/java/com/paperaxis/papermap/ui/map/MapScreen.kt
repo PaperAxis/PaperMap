@@ -434,6 +434,8 @@ fun MapScreen(vm: AppViewModel, user: User, mapVm: MapViewModel = viewModel()) {
                         m.uiSettings.isCompassEnabled = true
                         m.uiSettings.isAttributionEnabled = true
                         m.uiSettings.isLogoEnabled = false
+                        // z16 tile'lari z22'ye kadar buyutulur (web/src/lib/mapStyle.js MAP_MAX_ZOOM).
+                        m.setMaxZoomPreference(22.0)
                         m.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(39.0, 35.0), 5.0))
                         m.addOnMapClickListener { onMapClick(it) }
                         map = m

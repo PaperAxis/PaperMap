@@ -7,6 +7,10 @@ const TILES = `${API_BASE}/tiles`;
 // z16 tilelar client tarafinda z17+ icin buyutulerek (overzoom) gosterilir.
 const SOURCE_MAXZOOM = 16;
 
+// Kullanicinin yakinlasabilecegi en yuksek zoom (web, Android, iOS ayni).
+// z16 verisi z22'ye kadar buyutulur; stil cizgi/yazi boyutlarini z20'ye kadar buyutur.
+export const MAP_MAX_ZOOM = 22;
+
 // Acik/koyu tema renk paletleri — harita gorunumu tema ile birlikte degisir.
 // Zengin OpenMapTiles semasi: arazi, POI, havalimani, sinirlar vb.
 const PALETTES = {
@@ -122,6 +126,57 @@ const poiColor = (p) => [
   ['school', 'college', 'university', 'library'], p.poiEdu,
   p.poiGeneric,
 ];
+
+// POI nokta + ad katmanlari. Kisiye odaklaninca harita z16'ya gider; o andan
+// itibaren cevredeki tum mekanlarin adi gosterilir. z15'te yalniz onemli
+// (rank'i dusuk) mekanlarin adi yazar. Cakismada onemli mekan once yerlesir.
+const POI_ALL_FROM = 16;
+const poiLayers = (p) => {
+  const ranked = (max) => ['<=', ['coalesce', ['get', 'rank'], 999], max];
+  const dot = {
+    id: 'poi',
+    type: 'circle',
+    source: 'openmaptiles',
+    'source-layer': 'poi',
+    minzoom: 15,
+    paint: {
+      'circle-color': poiColor(p),
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 15, 2.2, 18, 4, 20, 6],
+      'circle-stroke-color': p.textHalo,
+      'circle-stroke-width': 1,
+    },
+  };
+  const name = (id, minzoom, maxzoom, filter) => ({
+    id,
+    type: 'symbol',
+    source: 'openmaptiles',
+    'source-layer': 'poi',
+    minzoom,
+    ...(maxzoom ? { maxzoom } : {}),
+    ...(filter ? { filter } : {}),
+    layout: {
+      'text-field': ['get', 'name'],
+      'text-font': ['Noto Sans Regular'],
+      'text-size': ['interpolate', ['linear'], ['zoom'], 15, 10, 18, 11.5, 20, 13],
+      'text-anchor': 'top',
+      'text-offset': [0, 0.6],
+      'text-max-width': 8,
+      'text-padding': 1,
+      'text-optional': true,
+      'symbol-sort-key': ['coalesce', ['get', 'rank'], 999],
+    },
+    paint: {
+      'text-color': p.poiText,
+      'text-halo-color': p.textHalo,
+      'text-halo-width': 1.2,
+    },
+  });
+  return [
+    dot,
+    name('poi-label', 15, POI_ALL_FROM, ranked(16)),
+    name('poi-label-all', POI_ALL_FROM),
+  ];
+};
 
 export function buildMapStyle(theme) {
   const p = PALETTES[theme === 'dark' ? 'dark' : 'light'];
@@ -287,7 +342,7 @@ export function buildMapStyle(theme) {
         'source-layer': 'waterway',
         paint: {
           'line-color': p.water,
-          'line-width': ['interpolate', ['linear'], ['zoom'], 8, 0.6, 16, 2.4],
+          'line-width': ['interpolate', ['linear'], ['zoom'], 8, 0.6, 16, 2.4, 20, 6],
         },
       },
 
@@ -322,7 +377,7 @@ export function buildMapStyle(theme) {
         minzoom: 15,
         paint: {
           'line-color': p.buildingLine,
-          'line-width': ['interpolate', ['linear'], ['zoom'], 15, 0.2, 18, 1.2],
+          'line-width': ['interpolate', ['linear'], ['zoom'], 15, 0.2, 18, 1.2, 20, 2],
         },
       },
 
@@ -352,7 +407,7 @@ export function buildMapStyle(theme) {
         'source-layer': 'transportation',
         filter: ['==', 'class', 'rail'],
         minzoom: 10,
-        paint: { 'line-color': p.rail, 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.6, 16, 2] },
+        paint: { 'line-color': p.rail, 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.6, 16, 2, 20, 4] },
       },
 
       // ---- Patika / tali yollar ----
@@ -366,7 +421,7 @@ export function buildMapStyle(theme) {
         layout: { 'line-cap': 'round' },
         paint: {
           'line-color': p.path,
-          'line-width': ['interpolate', ['linear'], ['zoom'], 14, 0.6, 18, 2.4],
+          'line-width': ['interpolate', ['linear'], ['zoom'], 14, 0.6, 18, 2.4, 20, 4],
           'line-dasharray': [2, 2],
         },
       },
@@ -380,7 +435,7 @@ export function buildMapStyle(theme) {
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': p.track,
-          'line-width': ['interpolate', ['linear'], ['zoom'], 13, 0.5, 18, 2],
+          'line-width': ['interpolate', ['linear'], ['zoom'], 13, 0.5, 18, 2, 20, 3.5],
           'line-dasharray': [4, 2],
         },
       },
@@ -395,7 +450,7 @@ export function buildMapStyle(theme) {
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': p.roadCasing,
-          'line-width': ['interpolate', ['linear'], ['zoom'], 6, 2.4, 16, 13],
+          'line-width': ['interpolate', ['linear'], ['zoom'], 6, 2.4, 16, 13, 20, 40],
         },
       },
       {
@@ -408,7 +463,7 @@ export function buildMapStyle(theme) {
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': p.roadService,
-          'line-width': ['interpolate', ['linear'], ['zoom'], 13, 0.8, 18, 5],
+          'line-width': ['interpolate', ['linear'], ['zoom'], 13, 0.8, 18, 5, 20, 12],
         },
       },
       {
@@ -421,7 +476,7 @@ export function buildMapStyle(theme) {
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': p.roadMinor,
-          'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.8, 18, 7],
+          'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.8, 18, 7, 20, 18],
         },
       },
       {
@@ -433,7 +488,7 @@ export function buildMapStyle(theme) {
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': p.roadMajor,
-          'line-width': ['interpolate', ['linear'], ['zoom'], 6, 1.3, 16, 8.5],
+          'line-width': ['interpolate', ['linear'], ['zoom'], 6, 1.3, 16, 8.5, 20, 30],
         },
       },
 
@@ -475,7 +530,7 @@ export function buildMapStyle(theme) {
           'symbol-placement': 'line',
           'text-field': ['get', 'name'],
           'text-font': ['Noto Sans Regular'],
-          'text-size': 11,
+          'text-size': ['interpolate', ['linear'], ['zoom'], 13, 11, 18, 13, 20, 16],
         },
         paint: label(p),
       },
@@ -484,11 +539,11 @@ export function buildMapStyle(theme) {
         type: 'symbol',
         source: 'openmaptiles',
         'source-layer': 'housenumber',
-        minzoom: 17,
+        minzoom: 16,
         layout: {
           'text-field': ['get', 'housenumber'],
           'text-font': ['Noto Sans Regular'],
-          'text-size': 9.5,
+          'text-size': ['interpolate', ['linear'], ['zoom'], 16, 9.5, 20, 13],
         },
         paint: {
           'text-color': p.poiText,
@@ -496,42 +551,8 @@ export function buildMapStyle(theme) {
           'text-halo-width': 1,
         },
       },
-      {
-        id: 'poi',
-        type: 'circle',
-        source: 'openmaptiles',
-        'source-layer': 'poi',
-        minzoom: 15,
-        filter: ['<=', ['coalesce', ['get', 'rank'], 999], 16],
-        paint: {
-          'circle-color': poiColor(p),
-          'circle-radius': ['interpolate', ['linear'], ['zoom'], 15, 2.2, 18, 4],
-          'circle-stroke-color': p.textHalo,
-          'circle-stroke-width': 1,
-        },
-      },
-      {
-        id: 'poi-label',
-        type: 'symbol',
-        source: 'openmaptiles',
-        'source-layer': 'poi',
-        minzoom: 16,
-        filter: ['<=', ['coalesce', ['get', 'rank'], 999], 12],
-        layout: {
-          'text-field': ['get', 'name'],
-          'text-font': ['Noto Sans Regular'],
-          'text-size': 10.5,
-          'text-anchor': 'top',
-          'text-offset': [0, 0.6],
-          'text-max-width': 8,
-          'text-optional': true,
-        },
-        paint: {
-          'text-color': p.poiText,
-          'text-halo-color': p.textHalo,
-          'text-halo-width': 1.2,
-        },
-      },
+      // POI: z15-16 yalniz onemli yerler, z17+ tum yerler (nokta ve ad).
+      ...poiLayers(p),
       {
         id: 'water-label',
         type: 'symbol',
