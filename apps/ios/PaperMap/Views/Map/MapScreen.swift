@@ -49,6 +49,8 @@ struct MapScreen: View {
     @AppStorage(MapStyleChoice.storageKey) private var mapStyle = MapStyleChoice.auto.rawValue
     @State private var bearing = 0.0
     @State private var resetNorth = 0
+    @State private var pitch = 0.0
+    @State private var tiltToggle = 0
 
     private var styleVariant: String {
         (MapStyleChoice(rawValue: mapStyle) ?? .auto).variant(dark: colorScheme == .dark)
@@ -73,6 +75,8 @@ struct MapScreen: View {
                 styleVariant: styleVariant,
                 resetNorthRequest: resetNorth,
                 onBearingChange: { bearing = $0 },
+                tiltToggleRequest: tiltToggle,
+                onPitchChange: { pitch = $0 },
                 recenterRequest: recenter,
                 focus: mapStore.focus,
                 placing: placing != nil,
@@ -102,6 +106,7 @@ struct MapScreen: View {
                 HStack(spacing: 8) {
                     MapStylePicker(selection: $mapStyle)
                     CompassButton(bearing: bearing) { resetNorth += 1 }
+                    TiltButton(pitch: pitch) { tiltToggle += 1 }
                     Spacer()
                 }
                 HStack(spacing: 12) {

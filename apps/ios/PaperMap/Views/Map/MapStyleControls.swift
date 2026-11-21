@@ -64,6 +64,29 @@ struct MapStylePicker: View {
     }
 }
 
+/// 3D / 2D toggle next to the compass. The map can also be tilted with two
+/// fingers dragged up/down together and rotated with a two-finger twist; this
+/// button makes the perspective discoverable and reachable with one tap.
+struct TiltButton: View {
+    let pitch: Double
+    let action: () -> Void
+
+    private var active: Bool { pitch > 5 }
+
+    var body: some View {
+        Button(action: action) {
+            Text(active ? "3D" : "2D")
+                .font(.system(size: 15, weight: .heavy))
+                .foregroundColor(active ? Pa.primary : Pa.text)
+                .frame(width: 48, height: 48)
+                .background(Pa.bg)
+                .clipShape(RoundedRectangle(cornerRadius: Pa.radiusMd))
+                .shadow(color: .black.opacity(0.08), radius: 6, y: 2)
+        }
+        .accessibilityLabel(active ? "2B görünüme geç" : "3B görünüme geç")
+    }
+}
+
 /// Compass next to the style picker: the needle points north as the map
 /// turns; tapping turns the map back to north-up and flat (as on the web).
 struct CompassButton: View {

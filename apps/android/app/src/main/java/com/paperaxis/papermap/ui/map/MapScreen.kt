@@ -159,6 +159,7 @@ fun MapScreen(vm: AppViewModel, user: User, mapVm: MapViewModel = viewModel()) {
     var styleVariant by remember { mutableStateOf<String?>(null) }
     var styleChoice by remember { mutableStateOf(loadMapStyleChoice(context)) }
     var bearing by remember { mutableDoubleStateOf(0.0) }
+    var tilt by remember { mutableDoubleStateOf(0.0) }
     var selection by remember { mutableStateOf<Selection?>(null) }
     var panel by remember { mutableStateOf<Panel?>(null) }
     var layersMenu by remember { mutableStateOf(false) }
@@ -443,12 +444,23 @@ fun MapScreen(vm: AppViewModel, user: User, mapVm: MapViewModel = viewModel()) {
                         m.uiSettings.isCompassEnabled = false
                         m.uiSettings.isAttributionEnabled = true
                         m.uiSettings.isLogoEnabled = false
+                        // Perspective gestures: two fingers dragged up/down tilt the
+                        // camera (3D buildings, terrain shading), a two-finger twist rotates.
+                        m.uiSettings.isTiltGesturesEnabled = true
+                        m.uiSettings.isRotateGesturesEnabled = true
+                        m.setMaxPitchPreference(60.0)
                         // z16 tile'lari z22'ye kadar buyutulur (web/src/lib/mapStyle.js MAP_MAX_ZOOM).
                         m.setMaxZoomPreference(22.0)
                         m.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(39.0, 35.0), 5.0))
                         m.addOnMapClickListener { onMapClick(it) }
-                        m.addOnCameraMoveListener { bearing = m.cameraPosition.bearing }
-                        m.addOnCameraIdleListener { bearing = m.cameraPosition.bearing }
+                        m.addOnCameraMoveListener {
+                            bearing = m.cameraPosition.bearing
+                            tilt = m.cameraPosition.tilt
+                        }
+                        m.addOnCameraIdleListener {
+                            bearing = m.cameraPosition.bearing
+                            tilt = m.cameraPosition.tilt
+                        }
                         map = m
                     }
                 }
@@ -541,6 +553,16 @@ fun MapScreen(vm: AppViewModel, user: User, mapVm: MapViewModel = viewModel()) {
                         CameraUpdateFactory.newCameraPosition(
                             CameraPosition.Builder(m.cameraPosition).bearing(0.0).tilt(0.0).build(),
                         ),
+                    )
+                }
+                TiltButton(tilt) {
+                    val m = map ?: return@TiltButton
+                    val target = if (m.cameraPosition.tilt > 5.0) 0.0 else TILT_3D
+                    m.animateCamera(
+                        CameraUpdateFactory.newCameraPosition(
+                            CameraPosition.Builder(m.cameraPosition).tilt(target).build(),
+                        ),
+                        600,
                     )
                 }
             }
