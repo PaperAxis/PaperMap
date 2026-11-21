@@ -13,12 +13,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import com.paperaxis.papermap.R
+import com.paperaxis.papermap.ui.common.AppIcon
+import com.paperaxis.papermap.ui.common.Lucide
 
 /** Password input with a show / hide toggle (web components/PasswordInput.jsx). */
 @Composable
@@ -39,8 +40,8 @@ fun PasswordField(
         visualTransformation = if (show) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = {
             IconButton(onClick = { show = !show }) {
-                Icon(
-                    painter = painterResource(if (show) R.drawable.ic_eye_off else R.drawable.ic_eye),
+                AppIcon(
+                    if (show) Lucide.EyeOff else Lucide.Eye,
                     contentDescription = if (show) "Şifreyi gizle" else "Şifreyi göster",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

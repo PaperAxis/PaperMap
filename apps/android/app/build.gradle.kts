@@ -104,7 +104,6 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.material:material-icons-core")
     // Profile fonts from Google Fonts through Play services (ui/theme/Fonts.kt).
     implementation("androidx.compose.ui:ui-text-google-fonts")
 

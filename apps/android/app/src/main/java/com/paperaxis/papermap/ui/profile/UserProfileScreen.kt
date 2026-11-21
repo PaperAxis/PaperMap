@@ -11,10 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -33,7 +29,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.paperaxis.papermap.ui.AppViewModel
+import com.paperaxis.papermap.ui.common.AppIcon
 import com.paperaxis.papermap.ui.common.Avatar
+import com.paperaxis.papermap.ui.common.Lucide
 
 /** A friend's or family member's profile (web pages/UserProfile.jsx). */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,7 +48,7 @@ fun UserProfileScreen(vm: AppViewModel, userId: String) {
                 title = { Text(profile?.displayName ?: "Profil") },
                 navigationIcon = {
                     IconButton(onClick = vm::closeOverlay) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Geri")
+                        AppIcon(Lucide.ArrowLeft, contentDescription = "Geri")
                     }
                 },
             )
@@ -81,7 +79,7 @@ fun UserProfileScreen(vm: AppViewModel, userId: String) {
                         enabled = !busy,
                         modifier = Modifier.weight(1f),
                     ) {
-                        Icon(Icons.Filled.Email, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                        AppIcon(Lucide.MessageCircle, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
                         Text("Mesaj gönder", modifier = Modifier.padding(start = 8.dp))
                     }
                     OutlinedButton(
@@ -89,7 +87,7 @@ fun UserProfileScreen(vm: AppViewModel, userId: String) {
                         enabled = !busy,
                         modifier = Modifier.weight(1f),
                     ) {
-                        Icon(Icons.Filled.LocationOn, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                        AppIcon(Lucide.MapPin, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
                         Text("Konum iste", modifier = Modifier.padding(start = 8.dp))
                     }
                 }

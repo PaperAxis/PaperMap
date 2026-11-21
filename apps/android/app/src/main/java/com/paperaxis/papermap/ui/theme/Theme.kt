@@ -21,6 +21,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.paperaxis.papermap.ui.common.IconStyle
+import com.paperaxis.papermap.ui.common.LocalIconStyle
 import kotlinx.coroutines.CoroutineExceptionHandler
 
 // PaperAxis design tokens (apps/README.md).
@@ -141,10 +143,15 @@ private fun Typography.withFonts(fonts: FontPair): Typography {
 
 /**
  * Applies the profile theme (one of the web catalog ids, or "system" / unset to
- * follow the device) and font choice.
+ * follow the device), font and icon style.
  */
 @Composable
-fun PaperMapTheme(themeId: String? = null, fontId: String? = null, content: @Composable () -> Unit) {
+fun PaperMapTheme(
+    themeId: String? = null,
+    fontId: String? = null,
+    iconStyle: String? = null,
+    content: @Composable () -> Unit,
+) {
     val context = LocalContext.current
     val systemDark = isSystemInDarkTheme()
     val theme = remember(themeId, systemDark) { ThemeCatalog.get(context).resolve(themeId, systemDark) }
@@ -154,7 +161,11 @@ fun PaperMapTheme(themeId: String? = null, fontId: String? = null, content: @Com
     // downloadable faces swap in as soon as they arrive.
     val typography = remember(fontId) { PaTypography.withFonts(fontPairFor(fontId)) }
     val fontResolver = remember(context) { createFontFamilyResolver(context, FontLoadErrorHandler) }
-    CompositionLocalProvider(LocalDarkTheme provides dark, LocalFontFamilyResolver provides fontResolver) {
+    CompositionLocalProvider(
+        LocalDarkTheme provides dark,
+        LocalFontFamilyResolver provides fontResolver,
+        LocalIconStyle provides IconStyle.from(iconStyle),
+    ) {
         MaterialTheme(
             colorScheme = scheme,
             typography = typography,

@@ -141,11 +141,3 @@ fun ThemeDef.colorScheme(): ColorScheme {
         )
     }
 }
-
-/** Icon styles (web lib/iconStyles.js); stored with the profile. */
-val ICON_STYLES = listOf(
-    "normal" to "Normal",
-    "thin" to "İnce",
-    "bold" to "Kalın",
-    "sharp" to "Keskin",
-)

@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -28,7 +26,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.paperaxis.papermap.PaperMapApp
 import com.paperaxis.papermap.ui.AppViewModel
+import com.paperaxis.papermap.ui.common.AppIcon
 import com.paperaxis.papermap.ui.common.EmptyState
+import com.paperaxis.papermap.ui.common.Lucide
 import com.paperaxis.papermap.ui.common.relativeTime
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,7 +52,7 @@ fun NotificationsScreen(vm: AppViewModel) {
                 title = { Text("Bildirimler") },
                 navigationIcon = {
                     IconButton(onClick = { vm.closeNotifications() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Geri")
+                        AppIcon(Lucide.ArrowLeft, contentDescription = "Geri")
                     }
                 },
                 actions = {

@@ -27,7 +27,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val appearance by vm.appearance.collectAsState()
-            PaperMapTheme(themeId = appearance.theme, fontId = appearance.font) {
+            PaperMapTheme(themeId = appearance.theme, fontId = appearance.font, iconStyle = appearance.iconStyle) {
                 // Status / navigation bar icons follow the in-app theme, not only the device.
                 val dark = LocalDarkTheme.current
                 LaunchedEffect(dark) {

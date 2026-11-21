@@ -16,13 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.Star
-import androidx.compose.material.icons.sharp.Star
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -35,16 +28,18 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.paperaxis.papermap.ui.common.AppIcon
+import com.paperaxis.papermap.ui.common.IconStyle
+import com.paperaxis.papermap.ui.common.Lucide
 import com.paperaxis.papermap.ui.common.parseHexColor
+import com.paperaxis.papermap.ui.common.vector
 import com.paperaxis.papermap.ui.theme.FONTS
 import com.paperaxis.papermap.ui.theme.FONT_CATEGORIES
-import com.paperaxis.papermap.ui.theme.ICON_STYLES
 import com.paperaxis.papermap.ui.theme.SYSTEM_THEME
 import com.paperaxis.papermap.ui.theme.ThemeCatalog
 import com.paperaxis.papermap.ui.theme.ThemeDef
@@ -90,8 +85,8 @@ fun ThemePicker(value: String?, onSelect: (String) -> Unit) {
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Icon(
-                    if (expanded) Icons.Filled.KeyboardArrowDown else Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                AppIcon(
+                    if (expanded) Lucide.ChevronDown else Lucide.ChevronRight,
                     contentDescription = null,
                 )
             }
@@ -148,8 +143,8 @@ private fun ThemeSwatch(theme: ThemeDef, selected: Boolean, wide: Boolean, onCli
             }
         }
         if (selected) {
-            Icon(
-                Icons.Filled.Check,
+            AppIcon(
+                Lucide.Check,
                 contentDescription = null,
                 tint = parseHexColor(c.brand),
                 modifier = Modifier.size(14.dp).align(Alignment.TopEnd),
@@ -188,21 +183,17 @@ fun FontPicker(value: String?, onSelect: (String) -> Unit) {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun IconStylePicker(value: String?, onSelect: (String) -> Unit) {
-    val current = value ?: "normal"
+    val current = IconStyle.from(value)
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        ICON_STYLES.forEach { (id, name) ->
+        IconStyle.entries.forEach { style ->
             FilterChip(
-                selected = id == current,
-                onClick = { onSelect(id) },
+                selected = style == current,
+                onClick = { onSelect(style.id) },
                 leadingIcon = {
-                    val icon = when (id) {
-                        "bold" -> Icons.Filled.Star
-                        "sharp" -> Icons.Sharp.Star
-                        else -> Icons.Outlined.Star
-                    }
-                    Icon(icon, contentDescription = null, modifier = Modifier.alpha(if (id == "thin") 0.6f else 1f))
+                    // Each chip previews its own stroke, whatever style is active.
+                    Icon(Lucide.Star.vector(style), contentDescription = null)
                 },
-                label = { Text(name) },
+                label = { Text(style.label) },
             )
         }
     }
