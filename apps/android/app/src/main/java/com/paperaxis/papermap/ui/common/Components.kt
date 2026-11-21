@@ -20,8 +20,29 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
+import com.paperaxis.papermap.BuildConfig
 import java.time.Duration
 import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+
+/** Absolute URL of a server upload ("/uploads/…"), or null. */
+fun uploadUrl(path: String?): String? = if (path.isNullOrBlank()) null else BuildConfig.API_BASE + path
+
+private val trLocale: Locale = Locale.forLanguageTag("tr")
+
+/** "12 Kas 14:05" (web: toLocaleString tr-TR, day numeric, month short). */
+fun shortDateTime(iso: String?): String {
+    val t = runCatching { Instant.parse(iso) }.getOrNull() ?: return ""
+    return DateTimeFormatter.ofPattern("d MMM HH:mm", trLocale).withZone(ZoneId.systemDefault()).format(t)
+}
+
+/** "Pil %85" / "Pil %85 (şarjda)" (web lib/battery.js). */
+fun batteryLabel(battery: Int?, charging: Boolean?): String =
+    if (battery == null) "" else "Pil %$battery" + if (charging == true) " (şarjda)" else ""
 
 /** Parses "#RRGGBB" into a color; falls back to Axis Blue. */
 fun parseHexColor(hex: String?, fallback: Color = Color(0xFF315BDB)): Color {
@@ -56,8 +77,9 @@ fun relativeTime(iso: String?): String {
     }
 }
 
+/** Profile photo when [imagePath] is set, otherwise initials on the avatar colour. */
 @Composable
-fun Avatar(name: String, color: String?, size: Dp = 40.dp) {
+fun Avatar(name: String, color: String?, size: Dp = 40.dp, imagePath: String? = null) {
     val bg = parseHexColor(color)
     Box(
         modifier = Modifier.size(size).clip(CircleShape).background(bg),
@@ -69,6 +91,16 @@ fun Avatar(name: String, color: String?, size: Dp = 40.dp) {
             fontWeight = FontWeight.SemiBold,
             fontSize = (size.value * 0.38f).sp,
         )
+        val url = uploadUrl(imagePath)
+        if (url != null) {
+            // Drawn over the initials; a failed load leaves the initials visible.
+            AsyncImage(
+                model = url,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.size(size).clip(CircleShape),
+            )
+        }
     }
 }
 
@@ -78,13 +110,14 @@ fun PersonRow(
     subtitle: String?,
     color: String?,
     modifier: Modifier = Modifier,
+    avatarPath: String? = null,
     trailing: @Composable () -> Unit = {},
 ) {
     Row(
         modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Avatar(name, color)
+        Avatar(name, color, imagePath = avatarPath)
         Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
             Text(name, style = MaterialTheme.typography.titleMedium)
             if (!subtitle.isNullOrBlank()) {

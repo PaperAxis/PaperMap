@@ -9,6 +9,11 @@ import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -97,12 +102,50 @@ private val PaShapes = Shapes(
     large = RoundedCornerShape(20.dp),
 )
 
+/** True when the applied theme is dark (map style, status bar icons). */
+val LocalDarkTheme = staticCompositionLocalOf { false }
+
+private fun Typography.withFamily(family: FontFamily): Typography =
+    if (family == FontFamily.Default) {
+        this
+    } else {
+        Typography(
+            displayLarge = displayLarge.copy(fontFamily = family),
+            displayMedium = displayMedium.copy(fontFamily = family),
+            displaySmall = displaySmall.copy(fontFamily = family),
+            headlineLarge = headlineLarge.copy(fontFamily = family),
+            headlineMedium = headlineMedium.copy(fontFamily = family),
+            headlineSmall = headlineSmall.copy(fontFamily = family),
+            titleLarge = titleLarge.copy(fontFamily = family),
+            titleMedium = titleMedium.copy(fontFamily = family),
+            titleSmall = titleSmall.copy(fontFamily = family),
+            bodyLarge = bodyLarge.copy(fontFamily = family),
+            bodyMedium = bodyMedium.copy(fontFamily = family),
+            bodySmall = bodySmall.copy(fontFamily = family),
+            labelLarge = labelLarge.copy(fontFamily = family),
+            labelMedium = labelMedium.copy(fontFamily = family),
+            labelSmall = labelSmall.copy(fontFamily = family),
+        )
+    }
+
+/**
+ * Applies the profile theme (one of the web catalog ids, or "system" / unset to
+ * follow the device) and font choice.
+ */
 @Composable
-fun PaperMapTheme(dark: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = if (dark) Dark else Light,
-        typography = PaTypography,
-        shapes = PaShapes,
-        content = content,
-    )
+fun PaperMapTheme(themeId: String? = null, fontId: String? = null, content: @Composable () -> Unit) {
+    val context = LocalContext.current
+    val systemDark = isSystemInDarkTheme()
+    val theme = remember(themeId, systemDark) { ThemeCatalog.get(context).resolve(themeId, systemDark) }
+    val dark = theme?.dark ?: systemDark
+    val scheme = remember(theme, dark) { theme?.colorScheme() ?: if (dark) Dark else Light }
+    val typography = remember(fontId) { PaTypography.withFamily(fontFamilyFor(fontId)) }
+    CompositionLocalProvider(LocalDarkTheme provides dark) {
+        MaterialTheme(
+            colorScheme = scheme,
+            typography = typography,
+            shapes = PaShapes,
+            content = content,
+        )
+    }
 }

@@ -1,9 +1,6 @@
 // Copyright (c) 2026 PaperAxis. All rights reserved.
 package com.paperaxis.papermap.ui.auth
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -39,7 +36,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -47,7 +43,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.paperaxis.papermap.R
-import com.paperaxis.papermap.ui.theme.Pa
+import com.paperaxis.papermap.data.AppSettings
 
 @Composable
 fun AuthScreen(
@@ -57,6 +53,8 @@ fun AuthScreen(
     onLogin: (login: String, password: String, remember: Boolean) -> Unit,
     onRegister: (email: String, username: String, displayName: String, password: String) -> Unit,
     onSso: (provider: String) -> Unit,
+    settings: AppSettings,
+    onForgot: () -> Unit,
 ) {
     var registering by rememberSaveable { mutableStateOf(false) }
     var login by rememberSaveable(initialLogin) { mutableStateOf(initialLogin) }
@@ -77,22 +75,9 @@ fun AuthScreen(
             .padding(horizontal = 24.dp, vertical = 32.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        // Adaptive mipmaps cannot be drawn by painterResource; use the foreground on ink.
-        Image(
-            painter = painterResource(R.drawable.ic_launcher_foreground),
-            contentDescription = null,
-            modifier = Modifier
-                .size(64.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(Pa.Ink),
-        )
-        Spacer(Modifier.height(8.dp))
+        BrandHeader(settings)
         Text(
-            if (registering) "Hesap oluştur" else "PaperMap'e giriş yap",
-            style = MaterialTheme.typography.headlineMedium,
-        )
-        Text(
-            "Aile ve arkadaşlarınla karşılıklı konum paylaşımı.",
+            if (registering) "Yeni hesap oluştur" else "Hesabına giriş yap",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -210,6 +195,9 @@ fun AuthScreen(
         }
         TextButton(onClick = { registering = !registering; localError = null }) {
             Text(if (registering) "Hesabın var mı? Giriş yap" else "Hesabın yok mu? Kayıt ol")
+        }
+        if (!registering) {
+            TextButton(onClick = onForgot) { Text("Şifreni mi unuttun?") }
         }
         Spacer(Modifier.height(24.dp))
         Text(

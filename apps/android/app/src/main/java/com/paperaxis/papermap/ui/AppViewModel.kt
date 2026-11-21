@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.paperaxis.papermap.PaperMapApp
 import com.paperaxis.papermap.data.AndroidRelease
+import com.paperaxis.papermap.data.AppSettings
 import com.paperaxis.papermap.data.ApiException
 import com.paperaxis.papermap.data.AppNotification
 import com.paperaxis.papermap.data.ChatMessage
@@ -15,6 +16,9 @@ import com.paperaxis.papermap.data.FamilySummary
 import com.paperaxis.papermap.data.FriendsResponse
 import com.paperaxis.papermap.data.IdentitiesResponse
 import com.paperaxis.papermap.data.Peer
+import com.paperaxis.papermap.data.PrivacyPerson
+import com.paperaxis.papermap.data.PublicProfile
+import com.paperaxis.papermap.data.ShareLink
 import com.paperaxis.papermap.data.User
 import com.paperaxis.papermap.location.LocationService
 import com.paperaxis.papermap.location.readBattery
@@ -23,6 +27,28 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import com.paperaxis.papermap.ui.common.readImageForUpload
+
+/** Account e-mail links opened in the app: reset password, verify e-mail. */
+sealed interface AuthLink {
+    data class Reset(val token: String) : AuthLink
+    data class Verify(val token: String) : AuthLink
+}
+
+/** Full-screen pages opened above the tabs. */
+sealed interface Overlay {
+    data object Admin : Overlay
+    data class UserProfile(val userId: String) : Overlay
+}
+
+/** A point the map tab should fly to (chat place messages). */
+data class MapFocus(val lat: Double, val lng: Double)
+
+/** Theme id, font id and icon style; applied by PaperMapTheme. */
+data class Appearance(val theme: String? = null, val font: String? = null, val iconStyle: String? = null)
 
 sealed interface SessionState {
     data object Loading : SessionState
@@ -100,7 +126,51 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val _openUrl = MutableStateFlow<String?>(null)
     val openUrl: StateFlow<String?> = _openUrl.asStateFlow()
 
+    /** Server branding (app name and logo) set in the admin panel. */
+    private val _appSettings = MutableStateFlow(AppSettings())
+    val appSettings: StateFlow<AppSettings> = _appSettings.asStateFlow()
+
+    private val _authLink = MutableStateFlow<AuthLink?>(null)
+    val authLink: StateFlow<AuthLink?> = _authLink.asStateFlow()
+
+    private val _appearance = MutableStateFlow(Appearance())
+    val appearance: StateFlow<Appearance> = _appearance.asStateFlow()
+
+    private val _overlay = MutableStateFlow<Overlay?>(null)
+    val overlay: StateFlow<Overlay?> = _overlay.asStateFlow()
+
+    /** Profile shown by [Overlay.UserProfile]; null while loading. */
+    private val _viewedProfile = MutableStateFlow<PublicProfile?>(null)
+    val viewedProfile: StateFlow<PublicProfile?> = _viewedProfile.asStateFlow()
+
+    private val _privacyPeople = MutableStateFlow<List<PrivacyPerson>>(emptyList())
+    val privacyPeople: StateFlow<List<PrivacyPerson>> = _privacyPeople.asStateFlow()
+
+    private val _mapFocus = MutableStateFlow<MapFocus?>(null)
+    val mapFocus: StateFlow<MapFocus?> = _mapFocus.asStateFlow()
+
+    /** API or socket unreachable for a few seconds (web components/OfflineBanner.jsx). */
+    val socketConnected: StateFlow<Boolean> = realtime.connected
+
+    private val _shareLinks = MutableStateFlow<List<ShareLink>>(emptyList())
+    val shareLinks: StateFlow<List<ShareLink>> = _shareLinks.asStateFlow()
+
     init {
+        viewModelScope.launch {
+            // Cached appearance avoids a flash of the default theme before /me returns.
+            app.session.appearance().let { _appearance.value = Appearance(it.first, it.second, it.third) }
+        }
+        viewModelScope.launch {
+            session.collect { s ->
+                val user = (s as? SessionState.SignedIn)?.user ?: return@collect
+                val next = Appearance(user.theme, user.fontPref, user.iconStyle)
+                if (next != _appearance.value) {
+                    _appearance.value = next
+                    app.session.setAppearance(user.theme, user.fontPref, user.iconStyle)
+                }
+            }
+        }
+        refreshAppSettings()
         viewModelScope.launch {
             _rememberedLogin.value = app.session.rememberedLogin()
             val token = app.session.token()
@@ -207,12 +277,67 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             _unreadNotifications.value = 0
             _showNotifications.value = false
             _identities.value = null
+            _overlay.value = null
+            _privacyPeople.value = emptyList()
+            _shareLinks.value = emptyList()
             app.onSignedOut()
             _session.value = SessionState.SignedOut
         }
     }
 
     private fun currentUser(): User? = (session.value as? SessionState.SignedIn)?.user
+
+    fun refreshAppSettings() {
+        viewModelScope.launch { runCatching { api.appSettings() }.onSuccess { _appSettings.value = it } }
+    }
+
+    /** Runs [block] and reports null on success or the error text (forms that show errors inline). */
+    private fun attempt(block: suspend () -> Unit, onResult: (String?) -> Unit) {
+        viewModelScope.launch {
+            val error = try {
+                block()
+                null
+            } catch (e: Exception) {
+                e.message ?: "Bir hata oluştu"
+            }
+            onResult(error)
+        }
+    }
+
+    fun forgotPassword(email: String, onResult: (String?) -> Unit) =
+        attempt({ api.forgotPassword(email) }, onResult)
+
+    fun resetPassword(token: String, password: String, onResult: (String?) -> Unit) =
+        attempt({ api.resetPassword(token, password) }, onResult)
+
+    fun verifyEmail(token: String, onResult: (String?) -> Unit) = attempt({
+        api.verifyEmail(token)
+        if (currentUser() != null) _session.value = SessionState.SignedIn(api.me())
+    }, onResult)
+
+    /**
+     * Handles https://maps.paperaxis.com/reset/<token>, /verify/<token> and the
+     * papermap://reset/<token>, papermap://verify/<token> forms. Returns false for other URIs.
+     */
+    fun handleAccountLink(uri: android.net.Uri): Boolean {
+        val parts = if (uri.scheme == "papermap") {
+            listOfNotNull(uri.host) + uri.pathSegments
+        } else {
+            uri.pathSegments
+        }
+        if (parts.size < 2) return false
+        val token = parts[1]
+        _authLink.value = when (parts[0]) {
+            "reset" -> AuthLink.Reset(token)
+            "verify" -> AuthLink.Verify(token)
+            else -> return false
+        }
+        return true
+    }
+
+    fun closeAuthLink() {
+        _authLink.value = null
+    }
 
     // SSO: Google / PaperApp via the server-side flow (docs/SSO.md).
     fun refreshSsoProviders() {
@@ -284,10 +409,22 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         else -> "Giriş tamamlanamadı. Yeniden dene."
     }
 
-    fun setSharing(enabled: Boolean) = launchAction {
-        val user = api.setSharing(enabled)
+    /** durationMinutes: 60, 480 or null for unlimited (web MapView share menu). */
+    fun setSharing(enabled: Boolean, durationMinutes: Int? = null) = launchAction {
+        val user = api.setSharing(enabled, durationMinutes)
         _session.value = SessionState.SignedIn(user)
         syncLocationService(user)
+    }
+
+    /** Re-reads the user, e.g. when timed sharing has run out. */
+    fun refreshMe() {
+        viewModelScope.launch {
+            runCatching { api.me() }.onSuccess { user ->
+                if (currentUser() == null) return@onSuccess
+                _session.value = SessionState.SignedIn(user)
+                syncLocationService(user)
+            }
+        }
     }
 
     /** Called with foreground location fixes from the map screen. */
@@ -305,11 +442,152 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun updateDisplayName(name: String) = launchAction {
-        val trimmed = name.trim()
-        require(trimmed.isNotEmpty()) { "Görünen ad boş olamaz" }
-        _session.value = SessionState.SignedIn(api.updateDisplayName(trimmed))
-        _message.value = "Görünen ad kaydedildi"
+    private suspend fun patchProfile(patch: JsonObject) {
+        _session.value = SessionState.SignedIn(api.updateProfile(patch))
+    }
+
+    /** Profile info card: display name, username and (without a photo) avatar colour. */
+    fun saveProfileInfo(displayName: String, username: String, avatarColor: String?) = launchAction {
+        val name = displayName.trim()
+        require(name.isNotEmpty()) { "Görünen ad boş olamaz" }
+        val uname = username.trim().lowercase()
+        require(Regex("^[a-z0-9_]{3,20}$").matches(uname)) { "Kullanıcı adı 3-20 karakter: küçük harf, rakam ve alt çizgi" }
+        if (avatarColor != null) require(Regex("^#[0-9a-fA-F]{6}$").matches(avatarColor)) { "Geçersiz renk kodu" }
+        patchProfile(buildJsonObject {
+            put("displayName", name)
+            put("username", uname)
+            if (avatarColor != null) put("avatarColor", avatarColor)
+        })
+        _message.value = "Profil bilgileri kaydedildi."
+    }
+
+    fun saveStatus(value: String) = launchAction {
+        val text = value.trim()
+        patchProfile(buildJsonObject { put("statusText", text) })
+        _message.value = if (text.isNotEmpty()) "Durum güncellendi." else "Durum temizlendi."
+    }
+
+    /** Theme, font or icon style; null fields are left unchanged. */
+    fun changeAppearance(theme: String? = null, font: String? = null, iconStyle: String? = null) = launchAction {
+        patchProfile(buildJsonObject {
+            if (theme != null) put("theme", theme)
+            if (font != null) put("fontPref", font)
+            if (iconStyle != null) put("iconStyle", iconStyle)
+        })
+        _message.value = "Görünüm güncellendi."
+    }
+
+    fun resendVerification() = launchAction {
+        api.resendVerification()
+        _message.value = "Doğrulama e-postası gönderildi."
+    }
+
+    fun changePassword(current: String, new: String, onDone: () -> Unit) = launchAction {
+        val user = currentUser() ?: return@launchAction
+        val firstPassword = !user.hasPassword
+        require(new.length >= 8) { "Yeni şifre en az 8 karakter olmalı" }
+        if (!firstPassword) require(current.isNotEmpty()) { "Mevcut şifreni gir" }
+        api.changePassword(if (firstPassword) null else current, new)
+        if (firstPassword) {
+            _session.value = SessionState.SignedIn(user.copy(hasPassword = true))
+            refreshIdentities()
+        }
+        _message.value = if (firstPassword) "Şifre belirlendi." else "Şifre değiştirildi."
+        onDone()
+    }
+
+    fun uploadAvatar(uri: android.net.Uri) = launchAction {
+        val image = readImageForUpload(app, uri, maxSide = 768)
+        _session.value = SessionState.SignedIn(api.uploadAvatar(image.bytes, image.mime))
+        _message.value = "Profil fotoğrafı güncellendi."
+    }
+
+    fun removeAvatar() = launchAction {
+        _session.value = SessionState.SignedIn(api.removeAvatar())
+        _message.value = "Profil fotoğrafı kaldırıldı."
+    }
+
+    fun uploadBanner(uri: android.net.Uri) = launchAction {
+        val image = readImageForUpload(app, uri, maxSide = 1600)
+        _session.value = SessionState.SignedIn(api.uploadBanner(image.bytes, image.mime))
+        _message.value = "Banner güncellendi."
+    }
+
+    fun removeBanner() = launchAction {
+        _session.value = SessionState.SignedIn(api.removeBanner())
+        _message.value = "Banner kaldırıldı."
+    }
+
+    // Per-person location privacy
+    fun refreshPrivacy() {
+        viewModelScope.launch { runCatching { api.privacyPeople() }.onSuccess { _privacyPeople.value = it } }
+    }
+
+    fun setHidden(personId: String, hidden: Boolean) {
+        fun apply(value: Boolean) {
+            _privacyPeople.value = _privacyPeople.value.map { if (it.id == personId) it.copy(hidden = value) else it }
+        }
+        apply(hidden)
+        viewModelScope.launch {
+            try {
+                api.setHidden(personId, hidden)
+            } catch (e: Exception) {
+                apply(!hidden)
+                _message.value = e.message ?: "Bir hata oluştu"
+            }
+        }
+    }
+
+    // Temporary public share links
+    fun refreshShareLinks() {
+        viewModelScope.launch { runCatching { api.shareLinks() }.onSuccess { _shareLinks.value = it } }
+    }
+
+    fun createShareLink(minutes: Int) = launchAction {
+        _shareLinks.value = listOf(api.createShareLink(minutes)) + _shareLinks.value
+        _message.value = "Konum bağlantısı oluşturuldu."
+    }
+
+    fun revokeShareLink(id: String) = launchAction {
+        api.revokeShareLink(id)
+        _shareLinks.value = _shareLinks.value.filter { it.id != id }
+    }
+
+    fun shareLinkUrl(link: ShareLink): String = api.shareLinkUrl(link.token)
+
+    // Pages above the tabs
+    fun openAdmin() {
+        _overlay.value = Overlay.Admin
+    }
+
+    fun openUserProfile(userId: String) {
+        _viewedProfile.value = null
+        _overlay.value = Overlay.UserProfile(userId)
+        launchAction { _viewedProfile.value = api.publicProfile(userId) }
+    }
+
+    fun closeOverlay() {
+        _overlay.value = null
+        _viewedProfile.value = null
+    }
+
+    /** Closes full-screen pages and shows [lat],[lng] on the in-app map. */
+    fun focusOnMap(lat: Double, lng: Double) {
+        _openChat.value = null
+        _chatMessages.value = emptyList()
+        _showNotifications.value = false
+        _overlay.value = null
+        _mapFocus.value = MapFocus(lat, lng)
+        refreshConversations()
+    }
+
+    fun consumeMapFocus() {
+        _mapFocus.value = null
+    }
+
+    fun requestLocation(userId: String) = launchAction {
+        api.requestLocation(userId)
+        _message.value = "Konum isteği gönderildi."
     }
 
     // Friends
@@ -429,6 +707,16 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
+
+    /** Sends a location message: the current position or a saved place. */
+    fun sendPlace(lat: Double, lng: Double, label: String, onDone: () -> Unit) = launchAction {
+        val chat = _openChat.value ?: return@launchAction
+        appendMessage(api.sendPlace(chat.id, lat, lng, label))
+        refreshConversations()
+        onDone()
+    }
+
+    suspend fun savedPlaces(): List<com.paperaxis.papermap.data.Place> = api.places()
 
     // The sender also receives its own message over the socket; dedupe by id.
     private fun appendMessage(m: ChatMessage) {

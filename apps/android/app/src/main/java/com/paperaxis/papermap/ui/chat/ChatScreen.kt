@@ -1,11 +1,28 @@
 // Copyright (c) 2026 PaperAxis. All rights reserved.
 package com.paperaxis.papermap.ui.chat
 
-import android.content.ActivityNotFoundException
-import android.content.Intent
-import android.net.Uri
 import androidx.activity.compose.BackHandler
+import android.annotation.SuppressLint
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.draw.clip
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.paperaxis.papermap.data.Place
+import com.paperaxis.papermap.location.hasLocationPermission
+import com.paperaxis.papermap.ui.common.parseHexColor
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,7 +61,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.paperaxis.papermap.data.ChatMessage
@@ -60,6 +76,7 @@ fun ChatScreen(vm: AppViewModel, chat: Conversation) {
     val loading by vm.chatLoading.collectAsStateWithLifecycle()
     val myId = vm.currentUserId()
     var draft by remember { mutableStateOf("") }
+    var pickerOpen by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
 
     BackHandler { vm.closeChat() }
@@ -92,7 +109,12 @@ fun ChatScreen(vm: AppViewModel, chat: Conversation) {
                         modifier = Modifier.fillMaxSize(),
                     ) {
                         items(messages, key = { it.id }) { m ->
-                            MessageBubble(m, mine = m.senderId == myId, showSender = chat.type != "direct")
+                            MessageBubble(
+                                m,
+                                mine = m.senderId == myId,
+                                showSender = chat.type != "direct",
+                                onOpenPlace = { lat, lng -> vm.focusOnMap(lat, lng) },
+                            )
                         }
                     }
                 }
@@ -101,6 +123,9 @@ fun ChatScreen(vm: AppViewModel, chat: Conversation) {
                 modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                IconButton(onClick = { pickerOpen = true }) {
+                    Icon(Icons.Filled.LocationOn, contentDescription = "Konum paylaş")
+                }
                 OutlinedTextField(
                     value = draft,
                     onValueChange = { draft = it },
@@ -120,11 +145,14 @@ fun ChatScreen(vm: AppViewModel, chat: Conversation) {
             }
         }
     }
+
+    if (pickerOpen) {
+        PlacePickerDialog(vm, onDismiss = { pickerOpen = false })
+    }
 }
 
 @Composable
-private fun MessageBubble(m: ChatMessage, mine: Boolean, showSender: Boolean) {
-    val context = LocalContext.current
+private fun MessageBubble(m: ChatMessage, mine: Boolean, showSender: Boolean, onOpenPlace: (Double, Double) -> Unit) {
     val bg: Color = if (mine) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
     val fg: Color = if (mine) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
     Row(
@@ -149,13 +177,7 @@ private fun MessageBubble(m: ChatMessage, mine: Boolean, showSender: Boolean) {
                         Modifier.clickable {
                             val lat = m.placeLat ?: return@clickable
                             val lng = m.placeLng ?: return@clickable
-                            val label = Uri.encode(m.placeLabel ?: "Konum")
-                            val uri = Uri.parse("geo:$lat,$lng?q=$lat,$lng($label)")
-                            try {
-                                context.startActivity(Intent(Intent.ACTION_VIEW, uri))
-                            } catch (_: ActivityNotFoundException) {
-                                // No maps app installed.
-                            }
+                            onOpenPlace(lat, lng)
                         }
                     } else {
                         Modifier
@@ -173,7 +195,7 @@ private fun MessageBubble(m: ChatMessage, mine: Boolean, showSender: Boolean) {
                             )
                         }
                         Text(
-                            "Haritada açmak için dokun",
+                            "Haritada göster",
                             style = MaterialTheme.typography.labelSmall,
                         )
                     } else {
@@ -189,4 +211,82 @@ private fun MessageBubble(m: ChatMessage, mine: Boolean, showSender: Boolean) {
             )
         }
     }
+}
+
+/** "Konum paylaş": the current position or a saved place (web ChatView.jsx picker). */
+@Composable
+private fun PlacePickerDialog(vm: AppViewModel, onDismiss: () -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val app = context.applicationContext as com.paperaxis.papermap.PaperMapApp
+    val busy by vm.busy.collectAsStateWithLifecycle()
+    var places by remember { mutableStateOf<List<Place>?>(null) }
+    var locating by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(Unit) { places = runCatching { vm.savedPlaces() }.getOrDefault(emptyList()) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Konum paylaş") },
+        text = {
+            Column(
+                Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Button(
+                    onClick = {
+                        error = null
+                        locating = true
+                        scope.launch {
+                            val loc = currentLocation(context) ?: app.myLocation.value
+                            locating = false
+                            if (loc == null) {
+                                error = "Konum alınamadı. Konum izni verildiğinden emin olun."
+                            } else {
+                                vm.sendPlace(loc.latitude, loc.longitude, "Şu anki konumum", onDismiss)
+                            }
+                        }
+                    },
+                    enabled = !locating && !busy,
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text(if (locating) "Konum alınıyor…" else "Şu anki konumum") }
+                error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                val list = places
+                if (list != null && list.isEmpty()) {
+                    Text(
+                        "Kayıtlı yerin yok. Haritadan yer ekleyebilirsin.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                list.orEmpty().forEach { p ->
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = !busy) { vm.sendPlace(p.lat, p.lng, p.name, onDismiss) }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(Modifier.size(14.dp).clip(CircleShape).background(parseHexColor(p.color)))
+                        Text(p.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(start = 12.dp))
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Vazgeç") } },
+    )
+}
+
+/** One fresh fix, or null without permission / on failure. */
+@SuppressLint("MissingPermission")
+private suspend fun currentLocation(context: android.content.Context): android.location.Location? {
+    if (!hasLocationPermission(context)) return null
+    return runCatching {
+        suspendCancellableCoroutine { cont ->
+            LocationServices.getFusedLocationProviderClient(context)
+                .getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+                .addOnSuccessListener { cont.resume(it) }
+                .addOnFailureListener { cont.resume(null) }
+        }
+    }.getOrNull()
 }

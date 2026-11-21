@@ -157,7 +157,13 @@ private fun FamilyDetailScreen(vm: AppViewModel, onBack: () -> Unit) {
         if (f == null) {
             Column(Modifier.padding(padding)) { EmptyState("Yükleniyor", "Aile bilgileri alınıyor.") }
         } else {
-            FamilyDetailContent(f, Modifier.padding(padding), onLeave = { confirmLeave = true })
+            FamilyDetailContent(
+                f,
+                Modifier.padding(padding),
+                myId = vm.currentUserId(),
+                onLeave = { confirmLeave = true },
+                onOpenMember = vm::openUserProfile,
+            )
         }
     }
 
@@ -180,7 +186,13 @@ private fun FamilyDetailScreen(vm: AppViewModel, onBack: () -> Unit) {
 }
 
 @Composable
-private fun FamilyDetailContent(f: FamilyDetail, modifier: Modifier, onLeave: () -> Unit) {
+private fun FamilyDetailContent(
+    f: FamilyDetail,
+    modifier: Modifier,
+    myId: String?,
+    onLeave: () -> Unit,
+    onOpenMember: (String) -> Unit,
+) {
     val clipboard = LocalClipboardManager.current
     LazyColumn(modifier = modifier.fillMaxSize()) {
         f.inviteCode?.let { code ->
@@ -203,6 +215,8 @@ private fun FamilyDetailContent(f: FamilyDetail, modifier: Modifier, onLeave: ()
                 listOfNotNull(m.username?.let { "@$it" }, if (m.role == "owner") "Yönetici" else null)
                     .joinToString(" · "),
                 m.avatarColor,
+                modifier = if (m.id != myId) Modifier.clickable { onOpenMember(m.id) } else Modifier,
+                avatarPath = m.avatarPath,
             )
         }
         item {

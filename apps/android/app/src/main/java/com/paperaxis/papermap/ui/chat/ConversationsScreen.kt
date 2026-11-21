@@ -97,7 +97,11 @@ private fun ConversationRow(c: Conversation, onClick: () -> Unit) {
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Avatar(c.title, c.otherUser?.avatarColor ?: if (c.type == "family") "#4F6A44" else null)
+        Avatar(
+            c.title,
+            c.otherUser?.avatarColor ?: if (c.type == "family") "#4F6A44" else null,
+            imagePath = c.otherUser?.avatarPath,
+        )
         Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
