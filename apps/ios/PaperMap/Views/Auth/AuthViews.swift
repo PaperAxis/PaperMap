@@ -190,7 +190,7 @@ struct CheckboxToggleStyle: ToggleStyle {
             configuration.isOn.toggle()
         } label: {
             HStack(spacing: 10) {
-                Image(systemName: configuration.isOn ? "checkmark.square.fill" : "square")
+                PaSymbol(configuration.isOn ? "checkmark.square.fill" : "square")
                     .paFont(.title3)
                     .foregroundColor(configuration.isOn ? Pa.primary : Pa.muted)
                 configuration.label

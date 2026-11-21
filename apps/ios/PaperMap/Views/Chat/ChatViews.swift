@@ -37,7 +37,7 @@ struct ConversationListView: View {
         }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button { showNewGroup = true } label: { Image(systemName: "person.3") }
+                Button { showNewGroup = true } label: { PaSymbol("person.3") }
                     .accessibilityLabel("Grup oluştur")
             }
         }
@@ -115,7 +115,7 @@ struct ConversationRow: View {
         } else {
             ZStack {
                 Circle().fill(Pa.surface)
-                Image(systemName: conversation.type == "family" ? "house" : "person.3")
+                PaSymbol(conversation.type == "family" ? "house" : "person.3")
                     .font(.system(size: 17, weight: .medium))
                     .foregroundColor(Pa.text)
             }
@@ -189,7 +189,7 @@ struct ChatView: View {
             Button {
                 showPlacePicker = true
             } label: {
-                Image(systemName: "mappin.and.ellipse")
+                PaSymbol("mappin.and.ellipse")
                     .font(.system(size: 18, weight: .medium))
                     .foregroundColor(Pa.text)
                     .frame(width: 44, height: 44)
@@ -207,7 +207,7 @@ struct ChatView: View {
             Button {
                 Task { await send() }
             } label: {
-                Image(systemName: "paperplane.fill")
+                PaSymbol("paperplane.fill")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(Pa.onPrimary)
                     .frame(width: 44, height: 44)
@@ -286,7 +286,7 @@ struct PlacePickerSheet: View {
                         Task { await sendCurrent() }
                     } label: {
                         HStack {
-                            Label(busy ? "Konum alınıyor…" : "Şu anki konumum", systemImage: "location.fill")
+                            Label(busy ? "Konum alınıyor…" : "Şu anki konumum", symbol: "location.fill")
                             if busy {
                                 Spacer()
                                 ProgressView()
@@ -380,7 +380,7 @@ struct MessageBubble: View {
         if message.isPlace {
             Button(action: openPlace) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Label(message.placeLabel ?? "Konum", systemImage: "mappin.and.ellipse")
+                    Label(message.placeLabel ?? "Konum", symbol: "mappin.and.ellipse")
                         .paFont(.subheadline, weight: .medium)
                     Text("Haritada göster").paFont(.caption)
                 }
@@ -393,11 +393,11 @@ struct MessageBubble: View {
             .accessibilityHint("Haritada gösterir")
             .contextMenu {
                 Button(action: openPlace) {
-                    Label("Haritada göster", systemImage: "map")
+                    Label("Haritada göster", symbol: "map")
                 }
                 if let openExternal {
                     Button(action: openExternal) {
-                        Label("Haritalar'da aç", systemImage: "arrow.up.forward.app")
+                        Label("Haritalar'da aç", symbol: "arrow.up.forward.app")
                     }
                 }
             }
@@ -456,7 +456,7 @@ struct NewGroupView: View {
                             HStack {
                                 PersonRow(person: entry.user)
                                 Spacer()
-                                Image(systemName: selected.contains(entry.user.id) ? "checkmark.circle.fill" : "circle")
+                                PaSymbol(selected.contains(entry.user.id) ? "checkmark.circle.fill" : "circle")
                                     .foregroundColor(selected.contains(entry.user.id) ? Pa.primary : Pa.muted)
                             }
                         }

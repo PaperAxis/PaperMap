@@ -42,14 +42,14 @@ struct UserProfileView: View {
                         Button {
                             Task { await message() }
                         } label: {
-                            Label("Mesaj gönder", systemImage: "bubble.left")
+                            Label("Mesaj gönder", symbol: "bubble.left")
                         }
                         .buttonStyle(PaPrimaryButtonStyle())
                         .disabled(busy)
                         Button {
                             Task { await requestLocation() }
                         } label: {
-                            Label("Konum iste", systemImage: "mappin.and.ellipse")
+                            Label("Konum iste", symbol: "mappin.and.ellipse")
                         }
                         .buttonStyle(PaSecondaryButtonStyle())
                         .disabled(busy)

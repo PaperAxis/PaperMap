@@ -109,7 +109,7 @@ struct LabeledField: View {
                     Button {
                         revealed.toggle()
                     } label: {
-                        Image(systemName: revealed ? "eye.slash" : "eye")
+                        PaSymbol(revealed ? "eye.slash" : "eye")
                             .paFont(.body)
                             .foregroundColor(Pa.muted)
                             .frame(width: 44, height: 44)
@@ -133,7 +133,7 @@ struct LabeledField: View {
 struct ErrorText: View {
     let message: String
     var body: some View {
-        Label(message, systemImage: "exclamationmark.circle")
+        Label(message, symbol: "exclamationmark.circle")
             .paFont(.subheadline)
             .foregroundColor(Pa.danger)
             .frame(maxWidth: .infinity, alignment: .leading)

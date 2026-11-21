@@ -40,6 +40,11 @@ struct PaperMapApp: App {
                 // `.paFont` call sites read the same typeface.
                 .paFont(.body)
                 .environment(\.paTypeface, fonts.typeface)
+                // Profile icon style for PaSymbol, Label(_:symbol:) and the tab bar.
+                .environment(
+                    \.paIconWeight,
+                    Appearance.iconWeight(for: session.user?.iconStyle ?? Appearance.cachedIconStyle)
+                )
                 .tint(Pa.primary)
         }
     }
@@ -190,24 +195,41 @@ private func upload(_ loc: CLLocation, session: Session, realtime: RealtimeServi
 struct MainTabView: View {
     @EnvironmentObject private var chats: ChatStore
     @EnvironmentObject private var router: AppRouter
+    /// Tab icons are drawn by UIKit, so the profile icon weight is baked into each image.
+    @Environment(\.paIconWeight) private var iconWeight
 
     var body: some View {
         TabView(selection: $router.tab) {
             MapScreen()
-                .tabItem { Label("Harita", systemImage: "map") }
+                .tabItem {
+                    Appearance.tabSymbol("map", weight: iconWeight)
+                    Text("Harita")
+                }
                 .tag(AppTab.map)
             NavigationStack { ConversationListView() }
-                .tabItem { Label("Sohbet", systemImage: "bubble.left.and.bubble.right") }
+                .tabItem {
+                    Appearance.tabSymbol("bubble.left.and.bubble.right", weight: iconWeight)
+                    Text("Sohbet")
+                }
                 .badge(chats.unreadTotal)
                 .tag(AppTab.chat)
             NavigationStack { FriendsView() }
-                .tabItem { Label("Arkadaşlar", systemImage: "person.2") }
+                .tabItem {
+                    Appearance.tabSymbol("person.2", weight: iconWeight)
+                    Text("Arkadaşlar")
+                }
                 .tag(AppTab.friends)
             NavigationStack { FamilyListView() }
-                .tabItem { Label("Aile", systemImage: "house") }
+                .tabItem {
+                    Appearance.tabSymbol("house", weight: iconWeight)
+                    Text("Aile")
+                }
                 .tag(AppTab.family)
             NavigationStack { ProfileView() }
-                .tabItem { Label("Profil", systemImage: "person.crop.circle") }
+                .tabItem {
+                    Appearance.tabSymbol("person.crop.circle", weight: iconWeight)
+                    Text("Profil")
+                }
                 .tag(AppTab.profile)
         }
     }

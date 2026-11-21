@@ -47,7 +47,7 @@ struct FamilyListView: View {
                     Button("Aile oluştur") { input = ""; showCreate = true }
                     Button("Davet koduyla katıl") { input = ""; showJoin = true }
                 } label: {
-                    Image(systemName: "plus")
+                    PaSymbol("plus")
                 }
                 .accessibilityLabel("Aile ekle")
             }

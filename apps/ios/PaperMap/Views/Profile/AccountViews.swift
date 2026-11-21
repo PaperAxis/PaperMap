@@ -114,7 +114,7 @@ struct ShareLinksView: View {
                                     .buttonStyle(.bordered)
                                 if let url = link.url {
                                     ShareLink(item: url) {
-                                        Label("Paylaş", systemImage: "square.and.arrow.up")
+                                        Label("Paylaş", symbol: "square.and.arrow.up")
                                     }
                                     .buttonStyle(.bordered)
                                 }

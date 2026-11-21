@@ -35,11 +35,11 @@ struct AppearanceView: View {
                     Task { await patch(ProfilePatch(theme: "system")) }
                 } label: {
                     HStack {
-                        Label("Sistem ayarı", systemImage: "circle.lefthalf.filled")
+                        Label("Sistem ayarı", symbol: "circle.lefthalf.filled")
                             .foregroundColor(Pa.text)
                         Spacer()
                         if currentThemeId == nil {
-                            Image(systemName: "checkmark").foregroundColor(Pa.primary)
+                            PaSymbol("checkmark").foregroundColor(Pa.primary)
                         }
                     }
                 }
@@ -119,7 +119,7 @@ struct AppearanceView: View {
             } header: {
                 Text("İkon stili")
             } footer: {
-                Text("İkon stili web uygulamasında uygulanır.")
+                Text("İkonlar seçtiğin çizgi kalınlığıyla gösterilir. iOS sembollerinde köşe şekli değişmediği için Keskin, biraz daha belirgin bir çizgiyle gösterilir.")
             }
         }
         .disabled(busy)
@@ -146,7 +146,7 @@ struct AppearanceView: View {
                     ))
                 Circle().fill(theme.brand).frame(width: 16, height: 16)
                 if selected {
-                    Image(systemName: "checkmark.circle.fill")
+                    PaSymbol("checkmark.circle.fill")
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(Pa.primary)
                         .background(Circle().fill(Color.white))
@@ -185,7 +185,7 @@ struct AppearanceView: View {
                     if let subtitle { Text(subtitle).paFont(.caption).foregroundColor(Pa.muted) }
                 }
                 Spacer()
-                if selected { Image(systemName: "checkmark").foregroundColor(Pa.primary) }
+                if selected { PaSymbol("checkmark").foregroundColor(Pa.primary) }
             }
         }
         .accessibilityAddTraits(selected ? .isSelected : [])

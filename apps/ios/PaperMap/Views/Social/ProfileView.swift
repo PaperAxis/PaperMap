@@ -39,7 +39,7 @@ struct ProfileView: View {
                         NavigationLink {
                             AdminView()
                         } label: {
-                            Label("Yönetim paneli", systemImage: "wrench.and.screwdriver")
+                            Label("Yönetim paneli", symbol: "wrench.and.screwdriver")
                         }
                     }
                 }
@@ -53,22 +53,22 @@ struct ProfileView: View {
                     NavigationLink {
                         AppearanceView()
                     } label: {
-                        Label("Görünüm", systemImage: "paintpalette")
+                        Label("Görünüm", symbol: "paintpalette")
                     }
                     NavigationLink {
                         LocationPrivacyView()
                     } label: {
-                        Label("Konum gizliliği", systemImage: "eye.slash")
+                        Label("Konum gizliliği", symbol: "eye.slash")
                     }
                     NavigationLink {
                         ShareLinksView()
                     } label: {
-                        Label("Geçici konum bağlantısı", systemImage: "link")
+                        Label("Geçici konum bağlantısı", symbol: "link")
                     }
                     NavigationLink {
                         PasswordView()
                     } label: {
-                        Label(user.passwordSet ? "Şifre değiştir" : "Şifre belirle", systemImage: "key")
+                        Label(user.passwordSet ? "Şifre değiştir" : "Şifre belirle", symbol: "key")
                     }
                 }
             } else {
@@ -139,7 +139,7 @@ struct ProfileView: View {
                 .padding(.horizontal, 16)
                 HStack(spacing: 12) {
                     PhotosPicker(selection: $bannerItem, matching: .images) {
-                        Label("Banner yükle", systemImage: "photo")
+                        Label("Banner yükle", symbol: "photo")
                     }
                     .buttonStyle(.bordered)
                     if user.bannerPath != nil {
@@ -219,7 +219,7 @@ struct ProfileView: View {
                         Text(preset).foregroundColor(Pa.text)
                         Spacer()
                         if session.user?.statusText == preset {
-                            Image(systemName: "checkmark").foregroundColor(Pa.primary)
+                            PaSymbol("checkmark").foregroundColor(Pa.primary)
                         }
                     }
                 }

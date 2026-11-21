@@ -230,7 +230,7 @@ enum Appearance {
         return map
     }()
 
-    // MARK: Fonts (applied by FontStore) and icon styles
+    // MARK: Fonts (applied by FontStore) and icon styles (IconStyle.swift)
 
     static let fontCategories: [(String, String)] = [
         ("okunabilirlik", "Okunabilirlik"), ("sans", "Sans-serif"), ("serif", "Serif"), ("mono", "Monospace"),

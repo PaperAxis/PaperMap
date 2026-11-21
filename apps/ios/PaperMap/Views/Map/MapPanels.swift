@@ -63,7 +63,7 @@ struct CandidateChecklist: View {
                 AvatarView(name: person.displayName, color: person.avatarColor, path: person.avatarPath, size: 32)
                 Text(person.displayName).foregroundColor(Pa.text)
                 Spacer()
-                Image(systemName: on ? "checkmark.circle.fill" : "circle")
+                PaSymbol(on ? "checkmark.circle.fill" : "circle")
                     .foregroundColor(on ? Pa.primary : Pa.muted)
             }
         }
@@ -223,7 +223,7 @@ struct GeofencesSheet: View {
             List {
                 Section {
                     Button(action: onStartPlacing) {
-                        Label("Yeni alan (haritada nokta seç)", systemImage: "plus")
+                        Label("Yeni alan (haritada nokta seç)", symbol: "plus")
                     }
                 }
                 if let error {
@@ -301,7 +301,7 @@ struct GeofenceDetailView: View {
                         mapStore.flyTo(lat: g.lat, lng: g.lng, zoom: 15)
                         closeSheet()
                     } label: {
-                        Label("Haritada gör", systemImage: "map")
+                        Label("Haritada gör", symbol: "map")
                     }
                 }
                 if error != nil || info != nil {
@@ -443,7 +443,7 @@ struct PlacesSheet: View {
             List {
                 Section {
                     Button(action: onStartPlacing) {
-                        Label("Yeni yer (haritada nokta seç)", systemImage: "plus")
+                        Label("Yeni yer (haritada nokta seç)", symbol: "plus")
                     }
                 }
                 if let error {
@@ -514,12 +514,12 @@ struct PlaceDetailView: View {
                         mapStore.flyTo(lat: p.lat, lng: p.lng)
                         closeSheet()
                     } label: {
-                        Label("Haritada gör", systemImage: "map")
+                        Label("Haritada gör", symbol: "map")
                     }
                     Button {
                         Task { await startTrip(p) }
                     } label: {
-                        Label("Yola çık", systemImage: "car")
+                        Label("Yola çık", symbol: "car")
                     }
                     .disabled(busy)
                 }
@@ -603,7 +603,7 @@ struct MeetingsSheet: View {
             List {
                 Section {
                     Button(action: onStartPlacing) {
-                        Label("Yeni buluşma (haritada nokta seç)", systemImage: "plus")
+                        Label("Yeni buluşma (haritada nokta seç)", symbol: "plus")
                     }
                 }
                 Section {
@@ -660,7 +660,7 @@ struct MeetingDetailView: View {
                         mapStore.flyTo(lat: m.lat, lng: m.lng)
                         closeSheet()
                     } label: {
-                        Label("Haritada gör", systemImage: "map")
+                        Label("Haritada gör", symbol: "map")
                     }
                 }
             }

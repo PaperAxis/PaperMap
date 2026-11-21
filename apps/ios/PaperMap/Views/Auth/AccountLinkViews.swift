@@ -42,7 +42,7 @@ struct BrandHeader: View {
 struct InfoText: View {
     let message: String
     var body: some View {
-        Label(message, systemImage: "checkmark.circle")
+        Label(message, symbol: "checkmark.circle")
             .paFont(.subheadline)
             .foregroundColor(Pa.text)
             .frame(maxWidth: .infinity, alignment: .leading)

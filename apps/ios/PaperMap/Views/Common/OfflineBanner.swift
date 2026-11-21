@@ -6,7 +6,7 @@ import UIKit
 /// Shown at the top of every screen while the device has no connection.
 struct OfflineBanner: View {
     var body: some View {
-        Label("Çevrimdışısın — internet bağlantısı bekleniyor…", systemImage: "wifi.slash")
+        Label("Çevrimdışısın — internet bağlantısı bekleniyor…", symbol: "wifi.slash")
             .paFont(.footnote, weight: .medium)
             .foregroundColor(Color(uiColor: .systemBackground))
             .frame(maxWidth: .infinity)

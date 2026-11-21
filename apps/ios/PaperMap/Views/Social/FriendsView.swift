@@ -23,7 +23,7 @@ struct FriendsView: View {
                 Section { ErrorText(message: error) }
             }
             if let notice {
-                Section { Label(notice, systemImage: "checkmark.circle").foregroundColor(Pa.text) }
+                Section { Label(notice, symbol: "checkmark.circle").foregroundColor(Pa.text) }
             }
             if !data.incoming.isEmpty {
                 Section("Gelen istekler") {
@@ -58,7 +58,7 @@ struct FriendsView: View {
                         Button {
                             Task { await message(entry) }
                         } label: {
-                            Label("Mesaj", systemImage: "bubble.left")
+                            Label("Mesaj", symbol: "bubble.left")
                         }
                         .buttonStyle(.bordered)
                     }
@@ -91,7 +91,7 @@ struct FriendsView: View {
                     newUsername = ""
                     showAdd = true
                 } label: {
-                    Image(systemName: "person.badge.plus")
+                    PaSymbol("person.badge.plus")
                 }
                 .accessibilityLabel("Arkadaş ekle")
             }
