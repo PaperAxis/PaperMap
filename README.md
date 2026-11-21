@@ -12,7 +12,7 @@ Aile ve arkadaşlarla karşılıklı **konum paylaşımı** yapılan bir harita 
   (aydınlık, karanlık, gradyanlar, erişilebilir), 25 yazı tipi. Tema ve yazı
   tipi kimlikleri PaperApp ve PaperBudget ile aynıdır. Tercihler hesaba
   kayıtlıdır, tüm cihazlarda senkron. Ayrıntı: `docs/DESIGN_SYSTEM.md`.
-- **Mobil**: Capacitor ile Android uygulamasına paketlenir.
+- **Mobil**: Native Android (Kotlin + Compose) ve iOS (SwiftUI) uygulamaları.
 
 ## Native uygulamalar (2.0)
 
@@ -21,8 +21,8 @@ Android (Kotlin + Jetpack Compose) ve iOS (SwiftUI) native uygulamaları
 [apps/README.md](apps/README.md). Derleme ve yayın:
 `.github/workflows/native-release.yml` (APK → PaperUpdates `papermap-android`
 ve GitHub Release, IPA → AltStore kaynağı; yalnızca `v*` etiketi ya da elle
-çalıştırmada — `main`'e push yalnızca derler). Capacitor ile paketlenen eski web
-kabuğu (`mobile-release.yml`) yalnızca elle çalışır.
+çalıştırmada — `main`'e push yalnızca derler). Eski Capacitor web kabuğu emekliye
+ayrıldı; mobil uygulamalar yalnızca native'dir.
 
 ## Teknolojiler
 
@@ -31,7 +31,7 @@ kabuğu (`mobile-release.yml`) yalnızca elle çalışır.
 | Frontend    | React + Vite, MapLibre GL + OpenFreeMap |
 | Backend     | Node.js + Express + Socket.IO         |
 | Veritabanı  | PostgreSQL + Prisma ORM               |
-| Mobil       | Capacitor (Android)                   |
+| Mobil       | Kotlin + Compose (Android), SwiftUI (iOS), MapLibre Native |
 | Dağıtım     | Docker + docker-compose               |
 
 ## Hızlı Başlangıç (Docker)
@@ -388,7 +388,7 @@ papermap/
 │       ├── routes/              # auth, friends, families, location
 │       ├── socket.js            # gercek zamanli konum yayini
 │       └── visibility.js        # kimin kimi gorebilecegi
-└── web/      # React + Vite + Capacitor
+└── web/      # React + Vite
     └── src/
         ├── pages/               # Login, Register, MapView, Friends, Family
         ├── components/          # Nav, ProtectedRoute, PeerList
@@ -403,22 +403,19 @@ papermap/
 4. **Harita** sekmesi konumunu paylaşır ve görünür kişileri canlı gösterir.
 5. Üstteki **Paylaşım açık/kapalı** düğmesiyle konum paylaşımını dilediğin an durdur.
 
-## GitHub Actions ile APK + IPA (önerilen)
+## GitHub Actions ile APK + IPA
 
-`.github/workflows/mobile-release.yml` **tek workflow'u** Android APK ve iOS IPA'yı
-**paralel** derler ve ikisini tek bir **GitHub Release**'e yükler. Yerel kurulum
-(Android Studio / Mac) gerekmez.
+`.github/workflows/native-release.yml` native Android APK'yı ve iOS IPA'yı
+**paralel** derler. Yerel kurulum (Android Studio / Mac) gerekmez.
 
 **Tetikleme:**
 
-- **Etiket ile:** `git tag v1.0.0 && git push origin v1.0.0` → APK + IPA derlenir.
-- **Elle:** GitHub'da **Actions** sekmesi → *Mobil Sürüm (APK + IPA)* → **Run workflow**.
-
-iOS işi başarısız olsa bile (örn. henüz ayarlanmamışsa) Android APK yine yayınlanır.
-
-**Backend adresi:** Varsayılan olarak `https://maps.paperaxis.com` gömülür.
-Değiştirmek için repo **Settings → Secrets and variables → Actions → Variables**
-altına `VITE_API_URL` değişkenini ekleyin (ya da elle çalıştırırken girin).
+- **Sürüm etiketi ile (yayın):** `git tag v3.0.0 && git push origin v3.0.0` →
+  sürüm `3.0.0` olur; APK + IPA GitHub Release'e, APK PaperUpdates'e, IPA
+  AltStore kaynağına yüklenir. Sürüm kuralları: [apps/README.md](apps/README.md#sürüm).
+- **Elle:** GitHub'da **Actions** → *Native Sürüm (APK + IPA)* → **Run workflow**.
+- `main` ve çalışma dallarına (`ccr-*`, `dev`) `apps/**` değişikliği push'u yalnızca
+  derleme denetimi yapar, yayınlamaz.
 
 **İmzalama:** Workflow imzalı APK üretir. Secrets yoksa o derlemeye özel geçici bir
 keystore oluşturur (APK kurulur ama her derlemede anahtar değişir). Uygulamayı
@@ -452,7 +449,8 @@ base64 -w0 papermap.jks        # macOS: base64 -i papermap.jks
 | `ANDROID_KEY_ALIAS`         | Anahtar alias'ı (örn. `papermap`)       |
 | `ANDROID_KEY_PASSWORD`      | Anahtar (key) parolası                  |
 
-Derleme bitince **Releases** sayfasından `papermap.apk` indirilip cihaza kurulur.
+Derleme bitince **Releases** sayfasından `PaperMap-<sürüm>.apk` indirilip cihaza
+kurulur; kurulu uygulama sonraki sürümleri PaperUpdates üzerinden kendisi bildirir.
 
 ## Uygulama ikonu ve favicon (marka)
 
@@ -462,11 +460,9 @@ uygulama ikonlarının kaynakları üretilir:
 - **Web favicon** (`web/public/favicon.ico`, `favicon-16/32.png`,
   `apple-touch-icon.png`, `icon-192/512.png`) — `index.html`'de bağlıdır,
   build ile `dist/`'e kopyalanır. Bunlar repoda **hazır** durur.
-- **Mobil ikonlar** — `web/assets/` altındaki kaynaklardan (`icon-only.png`,
-  `icon-foreground.png`, `icon-background.png`, `splash.png`, `splash-dark.png`)
-  CI'da `@capacitor/assets` ile Android `mipmap` ve iOS `AppIcon` setine
-  otomatik üretilir (mobile-release workflow'unda `cap add` sonrası adım).
-  Yani her APK/IPA derlemesinde ikon markanızla gömülür.
+- **Mobil ikon kaynakları** — `icon-only.png`, `icon-foreground.png`,
+  `icon-background.png`, `splash.png`, `splash-dark.png`. Native uygulamalar
+  kendi kopyalarını `apps/assets/` altında tutar.
 
 **Logoyu değiştirmek** için `branding/logo.png`'yi yenisiyle değiştirip:
 
@@ -480,76 +476,14 @@ yeniden üretir; commit'leyip yeni bir derleme tetiklemeniz yeterli. Adaptive
 ikon güvenli bölgesi, iOS için opak zemin ve koyu tema açılış ekranı otomatik
 ayarlanır.
 
-## Mobil (Capacitor / Android) — yerel derleme
-
-Android projesi `web/android/` altında üretilir ve `.gitignore` ile hariç tutulur;
-aşağıdaki komutlarla yeniden üretilir.
-
-**Gereksinimler:** Android Studio + Android SDK + JDK 21 (Capacitor 7 gereği).
-
-```bash
-cd web
-
-# Backend adresini LAN IP'sine gore ayarla (mobil cihazda localhost CALISMAZ)
-export VITE_API_URL=http://192.168.1.20:4015
-
-npm install
-npm run build
-npm run cap:add:android     # ilk kez: android/ klasorunu olusturur
-
-# Uygulama ikonunu markayla uret (CI bunu otomatik yapar)
-npx --package @capacitor/assets@3 -- capacitor-assets generate --android \
-  --iconBackgroundColor '#ffffff' --iconBackgroundColorDark '#ffffff' \
-  --splashBackgroundColor '#ffffff' --splashBackgroundColorDark '#10131c'
-
-npm run cap:sync            # web build'ini ve eklentileri senkronlar
-npm run cap:open:android    # Android Studio'da acar -> Run ile cihaza yukle
-```
-
-Web kodu her değiştiğinde: `npm run build && npm run cap:sync`.
-
-### Android manifest düzenlemeleri
-
-`npm run cap:add:android` sonrası konum izinleri için şu betiği çalıştırın
-(GitHub Actions workflow'u bunu otomatik yapar):
-
-```bash
-node scripts/patch-manifest.mjs
-```
-
-Bu, `web/android/app/src/main/AndroidManifest.xml` dosyasına konum
-(ön plan + arka plan) ve bildirim izinlerini ekler.
-
-Ayrıca backend `https` değil `http` ise (yerel geliştirme), `<application>`
-etiketine `android:usesCleartextTraffic="true"` ekleyin. Üretimde backend'i
-HTTPS arkasına almanız önerilir.
-
-> **Arka plan konumu:** APK'da uygulama arka plandayken de konum güncellenir
-> (`@capacitor-community/background-geolocation`); Android kalıcı bir bildirim
-> gösterir. Tarayıcıda konum yalnızca sayfa açıkken güncellenir.
->
-> Arka planda **çalışması için iki ayar şart** (Android'in koyduğu kısıt):
-> 1. **Konum izni "Her zaman izin ver"** olmalı — uygulama ilk açılışta
->    yalnızca "Uygulamayı kullanırken" izni alır. *Ayarlar > Uygulamalar >
->    PaperMap > İzinler > Konum > Her zaman izin ver* seçin. Bu seçili
->    değilse uygulama arka plana geçince konum **tamamen durur**.
-> 2. **Pil optimizasyonu kapalı** olmalı — *Ayarlar > Uygulamalar > PaperMap
->    > Pil > Sınırsız / Optimize etme*. Aksi halde Android (özellikle
->    Xiaomi/Samsung/Oppo gibi markalarda) arka plandaki uygulamayı uyutur.
->
-> Uygulama izin eksikse haritanın üstünde uyarı ve "Ayarları aç" düğmesi
-> gösterir. **Uygulamayı görev yöneticisinden tamamen kapatırsanız** (kartı
-> kaydırınca) arka plan servisi de durur — bu eklentinin/Android'in bir
-> sınırıdır; uygulamanın arka planda *açık* kalması gerekir.
-
 ## iOS (iPhone)
 
-Yukarıdaki **Mobil Sürüm** workflow'unun `ios` işi, GitHub'ın **macOS
-runner**'ında iOS uygulamasını derler ve **imzasız bir IPA** üretip Release'e
+Yukarıdaki **Native Sürüm** iş akışının `ios` işi, GitHub'ın **macOS
+runner**'ında SwiftUI uygulamasını derler ve **imzasız bir IPA** üretip Release'e
 yükler. (Mac sahibi olmanız gerekmez.) APK ile aynı anda, tek tetiklemeyle.
 
 **Önemli — iOS imzalama:** Android'in aksine iOS'ta imzasız IPA doğrudan
-kurulamaz. İmzasız `papermap-unsigned.ipa`'yı bir iPhone'a yüklemek için
+kurulamaz. İmzasız `PaperMap-<sürüm>.ipa`'yı bir iPhone'a yüklemek için
 **AltStore / SideStore** veya **Sideloadly** kullanılır; bunlar kendi
 (ücretsiz) Apple ID'nizle uygulamayı imzalar. Uygulama 7 günde bir
 yenilenmelidir (ücretsiz Apple ID sınırı).
@@ -564,7 +498,7 @@ Release'e ekler. Bu sayede IPA'yı elle indirmeye gerek kalmaz:
 2. AltStore → **Browse** → sağ üst **+** → şu kaynak URL'sini ekleyin:
 
    ```
-   https://github.com/captainendis/papermap/releases/latest/download/altstore.json
+   https://github.com/PaperAxis/PaperMap/releases/latest/download/altstore.json
    ```
 
 3. **PaperMap** listede çıkar; **Free** / **Get** ile tek dokunuşla kurulur.
@@ -573,7 +507,7 @@ Release'e ekler. Bu sayede IPA'yı elle indirmeye gerek kalmaz:
 
 ### Elle kurulum (kaynak olmadan)
 
-Release'ten `papermap-unsigned.ipa`'yı indirip AltStore'da **My Apps → +**
+Release'ten `PaperMap-<sürüm>.ipa`'yı indirip AltStore'da **My Apps → +**
 ile seçerek de kurabilirsiniz. Sideloadly kullanıyorsanız IPA'yı uygulamaya
 sürükleyip Apple ID'nizle imzalayın.
 
@@ -604,8 +538,7 @@ imzalama (sertifika + provisioning profile, GitHub Secrets ile) ve iOS için
 Firebase APNs yapılandırması eklenerek doğrudan kurulabilir, push destekli
 IPA üretilebilir.
 
-iOS projesi `web/ios/` altında üretilir (`.gitignore`'da). Yerel derleme için
-Mac'te: `cd web && npm run build && npm run cap:add:ios && npm run cap:open:ios`.
+Yerel derleme için Mac'te: `cd apps/ios && xcodegen generate && open PaperMap.xcodeproj`.
 
 ## Ortam Değişkenleri
 

@@ -9,6 +9,7 @@
 #   en son vX.Y.Z etiketinden alinir (v3.0.0 -> 3.0.<no>); boylece elle yapilan
 #   yayinlar etiketli surumun gerisine dusmez (PaperUpdates geri gitmeyi reddeder).
 #   Bunun icin checkout'ta etiketler cekilmis olmali (fetch-depth: 0).
+# Kullanan: .github/workflows/native-release.yml
 set -euo pipefail
 
 FALLBACK="${1:?varsayilan ana.ara surum gerekli, or. 2.0}"
