@@ -9,11 +9,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.materialIcon
-import androidx.compose.material.icons.materialPath
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -40,25 +35,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.paperaxis.papermap.data.Candidates
 import com.paperaxis.papermap.data.SosEvent
+import com.paperaxis.papermap.ui.common.AppIcon
+import com.paperaxis.papermap.ui.common.Lucide
 import com.paperaxis.papermap.ui.common.shortDateTime
-
-/** Material "Pause" (not part of material-icons-core). */
-val PauseIcon: ImageVector = materialIcon(name = "Filled.Pause") {
-    materialPath {
-        moveTo(6f, 19f)
-        horizontalLineToRelative(4f)
-        verticalLineTo(5f)
-        horizontalLineTo(6f)
-        verticalLineToRelative(14f)
-        close()
-        moveTo(14f, 5f)
-        verticalLineToRelative(14f)
-        horizontalLineToRelative(4f)
-        verticalLineTo(5f)
-        horizontalLineToRelative(-4f)
-        close()
-    }
-}
 
 val SosRed = Color(0xFFC62828)
 
@@ -87,7 +66,7 @@ fun SosBanner(event: SosEvent, onShow: (() -> Unit)?, onClose: () -> Unit) {
             modifier = Modifier.fillMaxWidth().padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(Icons.Filled.Warning, contentDescription = null)
+            AppIcon(Lucide.TriangleAlert, contentDescription = null)
             val msg = event.message?.takeIf { it.isNotBlank() }
             Text(
                 "${event.displayName} acil durum bildirdi" + (msg?.let { ": $it" } ?: "."),
@@ -254,8 +233,8 @@ fun PlaybackBar(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = onToggle) {
-                Icon(
-                    if (playing) PauseIcon else Icons.Filled.PlayArrow,
+                AppIcon(
+                    if (playing) Lucide.Pause else Lucide.Play,
                     contentDescription = if (playing) "Duraklat" else "Oynat",
                 )
             }

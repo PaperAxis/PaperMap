@@ -6,6 +6,7 @@ import SwiftUI
 /// Stored on the account so web and mobile share the choice.
 struct AppearanceView: View {
     @EnvironmentObject private var session: Session
+    @EnvironmentObject private var fonts: FontStore
     @State private var openCategory: String?
     @State private var busy = false
     @State private var error: String?
@@ -34,11 +35,11 @@ struct AppearanceView: View {
                     Task { await patch(ProfilePatch(theme: "system")) }
                 } label: {
                     HStack {
-                        Label("Sistem ayarı", systemImage: "circle.lefthalf.filled")
+                        Label("Sistem ayarı", symbol: "circle.lefthalf.filled")
                             .foregroundColor(Pa.text)
                         Spacer()
                         if currentThemeId == nil {
-                            Image(systemName: "checkmark").foregroundColor(Pa.primary)
+                            PaSymbol("checkmark").foregroundColor(Pa.primary)
                         }
                     }
                 }
@@ -61,7 +62,7 @@ struct AppearanceView: View {
                             Text(category.label).foregroundColor(Pa.text)
                             Spacer()
                             Text(verbatim: "\(category.themes.count)")
-                                .font(.caption.monospacedDigit())
+                                .paFont(.caption, monospacedDigit: true)
                                 .foregroundColor(Pa.muted)
                         }
                     }
@@ -82,14 +83,27 @@ struct AppearanceView: View {
                             subtitle: cat.1,
                             selected: Appearance.resolvedFontId(session.user?.fontPref) == font.id
                         ) {
-                            Task { await patch(ProfilePatch(fontPref: font.id)) }
+                            // Applied right away (and retried after a failed download);
+                            // a failed save falls back to the account's font.
+                            fonts.apply(fontId: font.id)
+                            Task {
+                                await patch(ProfilePatch(fontPref: font.id))
+                                fonts.apply(fontId: session.user?.fontPref)
+                            }
                         }
                     }
                 }
             } header: {
                 Text("Yazı tipi")
             } footer: {
-                Text("Yazı tipi web uygulamasında uygulanır.")
+                switch fonts.status {
+                case .downloading:
+                    Text("Yazı tipi indiriliyor; hazır olana kadar sistem yazı tipi görünür.")
+                case .failed:
+                    Text("Yazı tipi indirilemedi, sistem yazı tipi kullanılıyor. Bağlantın olduğunda yeniden seçebilirsin.")
+                case .ready:
+                    Text("Seçtiğin yazı tipi ilk kullanımda indirilir ve tüm uygulamada kullanılır.")
+                }
             }
 
             Section {
@@ -105,7 +119,7 @@ struct AppearanceView: View {
             } header: {
                 Text("İkon stili")
             } footer: {
-                Text("İkon stili web uygulamasında uygulanır.")
+                Text("İkonlar seçtiğin çizgi kalınlığıyla gösterilir. iOS sembollerinde köşe şekli değişmediği için Keskin, biraz daha belirgin bir çizgiyle gösterilir.")
             }
         }
         .disabled(busy)
@@ -132,7 +146,7 @@ struct AppearanceView: View {
                     ))
                 Circle().fill(theme.brand).frame(width: 16, height: 16)
                 if selected {
-                    Image(systemName: "checkmark.circle.fill")
+                    PaSymbol("checkmark.circle.fill")
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(Pa.primary)
                         .background(Circle().fill(Color.white))
@@ -168,10 +182,10 @@ struct AppearanceView: View {
                 }
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title).foregroundColor(Pa.text)
-                    if let subtitle { Text(subtitle).font(.caption).foregroundColor(Pa.muted) }
+                    if let subtitle { Text(subtitle).paFont(.caption).foregroundColor(Pa.muted) }
                 }
                 Spacer()
-                if selected { Image(systemName: "checkmark").foregroundColor(Pa.primary) }
+                if selected { PaSymbol("checkmark").foregroundColor(Pa.primary) }
             }
         }
         .accessibilityAddTraits(selected ? .isSelected : [])

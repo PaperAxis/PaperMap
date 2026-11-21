@@ -39,7 +39,7 @@ struct ProfileView: View {
                         NavigationLink {
                             AdminView()
                         } label: {
-                            Label("Yönetim paneli", systemImage: "wrench.and.screwdriver")
+                            Label("Yönetim paneli", symbol: "wrench.and.screwdriver")
                         }
                     }
                 }
@@ -53,22 +53,22 @@ struct ProfileView: View {
                     NavigationLink {
                         AppearanceView()
                     } label: {
-                        Label("Görünüm", systemImage: "paintpalette")
+                        Label("Görünüm", symbol: "paintpalette")
                     }
                     NavigationLink {
                         LocationPrivacyView()
                     } label: {
-                        Label("Konum gizliliği", systemImage: "eye.slash")
+                        Label("Konum gizliliği", symbol: "eye.slash")
                     }
                     NavigationLink {
                         ShareLinksView()
                     } label: {
-                        Label("Geçici konum bağlantısı", systemImage: "link")
+                        Label("Geçici konum bağlantısı", symbol: "link")
                     }
                     NavigationLink {
                         PasswordView()
                     } label: {
-                        Label(user.passwordSet ? "Şifre değiştir" : "Şifre belirle", systemImage: "key")
+                        Label(user.passwordSet ? "Şifre değiştir" : "Şifre belirle", symbol: "key")
                     }
                 }
             } else {
@@ -83,14 +83,14 @@ struct ProfileView: View {
                 HStack(spacing: 12) {
                     Image("LaunchLogo").resizable().frame(width: 40, height: 40).accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("PaperMap").font(.headline).foregroundColor(Pa.text)
+                        Text("PaperMap").paFont(.headline).foregroundColor(Pa.text)
                         Text(verbatim: "Sürüm \(Config.version) (\(Config.build))")
                             .font(.system(.caption, design: .monospaced))
                             .foregroundColor(Pa.muted)
                     }
                 }
                 Text("Bir PaperAxis ürünüdür.").foregroundColor(Pa.text)
-                Text(verbatim: "© 2026 PaperAxis. Tüm hakları saklıdır.").font(.caption).foregroundColor(Pa.muted)
+                Text(verbatim: "© 2026 PaperAxis. Tüm hakları saklıdır.").paFont(.caption).foregroundColor(Pa.muted)
                 Link("info@paperaxis.com", destination: URL(string: "mailto:info@paperaxis.com")!)
             }
 
@@ -128,18 +128,18 @@ struct ProfileView: View {
                     avatarPath: user.avatarPath, bannerPath: user.bannerPath
                 )
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(user.displayName).font(.title3.weight(.semibold)).foregroundColor(Pa.text)
+                    Text(user.displayName).paFont(.title3, weight: .semibold).foregroundColor(Pa.text)
                     if let u = user.username {
-                        Text(verbatim: "@\(u)").font(.subheadline).foregroundColor(Pa.muted)
+                        Text(verbatim: "@\(u)").paFont(.subheadline).foregroundColor(Pa.muted)
                     }
                     if let status = user.statusText, !status.isEmpty {
-                        Text(status).font(.subheadline).foregroundColor(Pa.text)
+                        Text(status).paFont(.subheadline).foregroundColor(Pa.text)
                     }
                 }
                 .padding(.horizontal, 16)
                 HStack(spacing: 12) {
                     PhotosPicker(selection: $bannerItem, matching: .images) {
-                        Label("Banner yükle", systemImage: "photo")
+                        Label("Banner yükle", symbol: "photo")
                     }
                     .buttonStyle(.bordered)
                     if user.bannerPath != nil {
@@ -158,7 +158,7 @@ struct ProfileView: View {
     private func verifySection(_ user: User) -> some View {
         Section {
             Text("E-posta adresin (\(user.email ?? "")) henüz doğrulanmadı. Doğrulama bağlantısını e-postandan onayla.")
-                .font(.subheadline)
+                .paFont(.subheadline)
                 .foregroundColor(Pa.text)
             Button {
                 Task { await resendVerify() }
@@ -197,7 +197,7 @@ struct ProfileView: View {
                         if lower != value { username = lower }
                     }
                 Text(verbatim: "Arkadaşların seni @\(username) ile bulur.")
-                    .font(.caption).foregroundColor(Pa.muted)
+                    .paFont(.caption).foregroundColor(Pa.muted)
             }
             if user.avatarPath == nil {
                 ColorPicker("Avatar rengi", selection: $avatarColor, supportsOpacity: false)
@@ -219,7 +219,7 @@ struct ProfileView: View {
                         Text(preset).foregroundColor(Pa.text)
                         Spacer()
                         if session.user?.statusText == preset {
-                            Image(systemName: "checkmark").foregroundColor(Pa.primary)
+                            PaSymbol("checkmark").foregroundColor(Pa.primary)
                         }
                     }
                 }
@@ -254,7 +254,7 @@ struct ProfileView: View {
             if sharing, session.user?.sharingUntil != nil {
                 TimelineView(.periodic(from: .now, by: 30)) { context in
                     Text(SharingText.label(for: session.user, now: context.date))
-                        .font(.subheadline).foregroundColor(Pa.muted)
+                        .paFont(.subheadline).foregroundColor(Pa.muted)
                 }
             }
         } footer: {
@@ -389,9 +389,9 @@ struct LinkedAccountsSection: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(provider.title).foregroundColor(Pa.text)
                         if let identity {
-                            Text(identity.email ?? "Bağlı").font(.caption).foregroundColor(Pa.muted)
+                            Text(identity.email ?? "Bağlı").paFont(.caption).foregroundColor(Pa.muted)
                         } else {
-                            Text("Bağlı değil").font(.caption).foregroundColor(Pa.muted)
+                            Text("Bağlı değil").paFont(.caption).foregroundColor(Pa.muted)
                         }
                     }
                     Spacer()

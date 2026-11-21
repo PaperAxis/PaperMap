@@ -25,7 +25,7 @@ struct UserProfileView: View {
                         avatarPath: user.avatarPath, bannerPath: user.bannerPath
                     )
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(user.displayName).font(.title2.weight(.semibold)).foregroundColor(Pa.text)
+                        Text(user.displayName).paFont(.title2, weight: .semibold).foregroundColor(Pa.text)
                         if let u = user.username {
                             Text(verbatim: "@\(u)").foregroundColor(Pa.muted)
                         }
@@ -42,14 +42,14 @@ struct UserProfileView: View {
                         Button {
                             Task { await message() }
                         } label: {
-                            Label("Mesaj gönder", systemImage: "bubble.left")
+                            Label("Mesaj gönder", symbol: "bubble.left")
                         }
                         .buttonStyle(PaPrimaryButtonStyle())
                         .disabled(busy)
                         Button {
                             Task { await requestLocation() }
                         } label: {
-                            Label("Konum iste", systemImage: "mappin.and.ellipse")
+                            Label("Konum iste", symbol: "mappin.and.ellipse")
                         }
                         .buttonStyle(PaSecondaryButtonStyle())
                         .disabled(busy)

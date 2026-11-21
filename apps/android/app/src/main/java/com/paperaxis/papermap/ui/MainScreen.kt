@@ -13,12 +13,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Face
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -26,17 +20,17 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -50,7 +44,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.delay
 import com.paperaxis.papermap.data.User
 import com.paperaxis.papermap.notify.Notifier
 import com.paperaxis.papermap.ui.admin.AdminScreen
@@ -60,6 +53,9 @@ import com.paperaxis.papermap.ui.auth.ResetPasswordScreen
 import com.paperaxis.papermap.ui.auth.VerifyEmailScreen
 import com.paperaxis.papermap.ui.chat.ChatScreen
 import com.paperaxis.papermap.ui.chat.ConversationsScreen
+import com.paperaxis.papermap.ui.common.AppIcon
+import com.paperaxis.papermap.ui.common.Lucide
+import com.paperaxis.papermap.ui.common.LucideIcon
 import com.paperaxis.papermap.ui.family.FamilyScreen
 import com.paperaxis.papermap.ui.friends.FriendsScreen
 import com.paperaxis.papermap.ui.map.MapScreen
@@ -68,15 +64,16 @@ import com.paperaxis.papermap.ui.map.SosBanner
 import com.paperaxis.papermap.ui.notifications.NotificationsScreen
 import com.paperaxis.papermap.ui.profile.ProfileScreen
 import com.paperaxis.papermap.ui.profile.UserProfileScreen
+import kotlinx.coroutines.delay
 
-private data class Tab(val label: String, val icon: ImageVector)
+private data class Tab(val label: String, val icon: LucideIcon)
 
 private val tabs = listOf(
-    Tab("Harita", Icons.Filled.LocationOn),
-    Tab("Sohbet", Icons.Filled.Email),
-    Tab("Arkadaşlar", Icons.Filled.Face),
-    Tab("Aile", Icons.Filled.Home),
-    Tab("Profil", Icons.Filled.AccountCircle),
+    Tab("Harita", Lucide.Map),
+    Tab("Sohbet", Lucide.MessageCircle),
+    Tab("Arkadaşlar", Lucide.Users),
+    Tab("Aile", Lucide.House),
+    Tab("Profil", Lucide.User),
 )
 
 @Composable
@@ -242,10 +239,10 @@ private fun SignedInShell(vm: AppViewModel, user: User) {
                         icon = {
                             if (index == 1 && chatUnread > 0) {
                                 BadgedBox(badge = { Badge { Text(if (chatUnread > 99) "99+" else chatUnread.toString()) } }) {
-                                    Icon(t.icon, contentDescription = null)
+                                    AppIcon(t.icon, contentDescription = null)
                                 }
                             } else {
-                                Icon(t.icon, contentDescription = null)
+                                AppIcon(t.icon, contentDescription = null)
                             }
                         },
                         label = { Text(t.label) },

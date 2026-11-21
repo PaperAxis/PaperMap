@@ -27,9 +27,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Build
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -70,7 +67,9 @@ import com.paperaxis.papermap.BuildConfig
 import com.paperaxis.papermap.data.IdentitiesResponse
 import com.paperaxis.papermap.data.User
 import com.paperaxis.papermap.ui.AppViewModel
+import com.paperaxis.papermap.ui.common.AppIcon
 import com.paperaxis.papermap.ui.common.Avatar
+import com.paperaxis.papermap.ui.common.Lucide
 import com.paperaxis.papermap.ui.common.PasswordField
 import com.paperaxis.papermap.ui.common.SectionLabel
 import com.paperaxis.papermap.ui.common.parseHexColor
@@ -119,13 +118,13 @@ fun ProfileScreen(vm: AppViewModel, user: User) {
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Icon(Icons.Filled.Build, contentDescription = null)
+                    AppIcon(Lucide.Wrench, contentDescription = null)
                     Text(
                         "Yönetim paneli",
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.weight(1f).padding(start = 12.dp),
                     )
-                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
+                    AppIcon(Lucide.ChevronRight, contentDescription = null)
                 }
             }
 

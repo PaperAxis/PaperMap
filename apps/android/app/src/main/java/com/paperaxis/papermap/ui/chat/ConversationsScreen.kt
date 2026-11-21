@@ -16,8 +16,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -46,8 +44,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.paperaxis.papermap.data.Conversation
 import com.paperaxis.papermap.ui.AppViewModel
+import com.paperaxis.papermap.ui.common.AppIcon
 import com.paperaxis.papermap.ui.common.Avatar
 import com.paperaxis.papermap.ui.common.EmptyState
+import com.paperaxis.papermap.ui.common.Lucide
 import com.paperaxis.papermap.ui.common.relativeTime
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,7 +64,7 @@ fun ConversationsScreen(vm: AppViewModel) {
                 title = { Text("Sohbet") },
                 actions = {
                     IconButton(onClick = { creatingGroup = true }) {
-                        Icon(Icons.Filled.Add, contentDescription = "Yeni grup")
+                        AppIcon(Lucide.Plus, contentDescription = "Yeni grup")
                     }
                 },
             )

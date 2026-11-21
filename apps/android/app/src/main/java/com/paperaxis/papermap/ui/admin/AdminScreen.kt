@@ -18,8 +18,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -51,7 +49,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.paperaxis.papermap.data.AdminUser
 import com.paperaxis.papermap.ui.AppViewModel
+import com.paperaxis.papermap.ui.common.AppIcon
 import com.paperaxis.papermap.ui.common.Avatar
+import com.paperaxis.papermap.ui.common.Lucide
 import com.paperaxis.papermap.ui.common.SectionLabel
 import com.paperaxis.papermap.ui.common.uploadUrl
 
@@ -86,7 +86,7 @@ fun AdminScreen(vm: AppViewModel, admin: AdminViewModel = viewModel()) {
                 title = { Text("Yönetim") },
                 navigationIcon = {
                     IconButton(onClick = vm::closeOverlay) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Geri")
+                        AppIcon(Lucide.ArrowLeft, contentDescription = "Geri")
                     }
                 },
             )

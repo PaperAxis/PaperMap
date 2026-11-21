@@ -6,7 +6,6 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import com.paperaxis.papermap.data.AppJson
 import com.paperaxis.papermap.ui.common.parseHexColor
 import kotlinx.serialization.Serializable
@@ -142,64 +141,3 @@ fun ThemeDef.colorScheme(): ColorScheme {
         )
     }
 }
-
-/** Font catalog; ids and order match web/src/lib/appearance/fonts.js. */
-data class FontOption(val id: String, val label: String, val category: String)
-
-val FONT_CATEGORIES = listOf(
-    "okunabilirlik" to "Okunabilirlik",
-    "sans" to "Sans-serif",
-    "serif" to "Serif",
-    "mono" to "Monospace",
-)
-
-val FONTS = listOf(
-    FontOption("lexend", "Lexend (disleksi dostu)", "okunabilirlik"),
-    FontOption("atkinson", "Atkinson Hyperlegible", "okunabilirlik"),
-    FontOption("inter", "Inter ve Manrope (varsayılan)", "sans"),
-    FontOption("sistem", "Sistem", "sans"),
-    FontOption("roboto", "Roboto", "sans"),
-    FontOption("open-sans", "Open Sans", "sans"),
-    FontOption("lato", "Lato", "sans"),
-    FontOption("montserrat", "Montserrat", "sans"),
-    FontOption("poppins", "Poppins", "sans"),
-    FontOption("nunito", "Nunito", "sans"),
-    FontOption("work-sans", "Work Sans", "sans"),
-    FontOption("rubik", "Rubik", "sans"),
-    FontOption("dm-sans", "DM Sans", "sans"),
-    FontOption("manrope", "Manrope", "sans"),
-    FontOption("mulish", "Mulish", "sans"),
-    FontOption("karla", "Karla", "sans"),
-    FontOption("merriweather", "Merriweather", "serif"),
-    FontOption("lora", "Lora", "serif"),
-    FontOption("pt-serif", "PT Serif", "serif"),
-    FontOption("roboto-slab", "Roboto Slab", "serif"),
-    FontOption("bitter", "Bitter", "serif"),
-    FontOption("eb-garamond", "EB Garamond", "serif"),
-    FontOption("playfair", "Playfair Display", "serif"),
-    FontOption("jetbrains-mono", "JetBrains Mono", "mono"),
-    FontOption("ibm-plex-mono", "IBM Plex Mono", "mono"),
-)
-
-const val DEFAULT_FONT = "inter"
-
-fun resolveFontId(value: String?): String =
-    if (value != null && FONTS.any { it.id == value }) value else DEFAULT_FONT
-
-/**
- * The app bundles no web fonts, so a choice is applied by its family:
- * serif and monospace picks switch to the platform serif / monospace face.
- */
-fun fontFamilyFor(id: String?): FontFamily = when (FONTS.firstOrNull { it.id == resolveFontId(id) }?.category) {
-    "serif" -> FontFamily.Serif
-    "mono" -> FontFamily.Monospace
-    else -> FontFamily.Default
-}
-
-/** Icon styles (web lib/iconStyles.js); stored with the profile. */
-val ICON_STYLES = listOf(
-    "normal" to "Normal",
-    "thin" to "İnce",
-    "bold" to "Kalın",
-    "sharp" to "Keskin",
-)

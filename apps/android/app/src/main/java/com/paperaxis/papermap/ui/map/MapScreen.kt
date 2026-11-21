@@ -20,15 +20,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Place
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
@@ -85,8 +76,12 @@ import com.paperaxis.papermap.data.Place
 import com.paperaxis.papermap.data.User
 import com.paperaxis.papermap.location.hasLocationPermission
 import com.paperaxis.papermap.ui.AppViewModel
+import com.paperaxis.papermap.ui.common.AppIcon
 import com.paperaxis.papermap.ui.common.Avatar
+import com.paperaxis.papermap.ui.common.Lucide
+import com.paperaxis.papermap.ui.common.LucideIcon
 import com.paperaxis.papermap.ui.theme.LocalDarkTheme
+import java.time.Instant
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.maplibre.android.camera.CameraUpdateFactory
@@ -99,7 +94,6 @@ import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.geojson.Feature
 import org.maplibre.geojson.FeatureCollection
 import org.maplibre.geojson.Point
-import java.time.Instant
 
 private fun loadStyleJson(context: Context, dark: Boolean): String =
     context.assets.open(if (dark) "map-style-dark.json" else "map-style-light.json")
@@ -522,7 +516,7 @@ fun MapScreen(vm: AppViewModel, user: User, mapVm: MapViewModel = viewModel()) {
             onClick = { sosConfirm = true },
             containerColor = SosRed,
             contentColor = Color.White,
-            icon = { Icon(Icons.Filled.Warning, contentDescription = null) },
+            icon = { AppIcon(Lucide.TriangleAlert, contentDescription = null) },
             text = { Text("SOS") },
             modifier = Modifier.align(Alignment.BottomStart).padding(16.dp),
         )
@@ -534,19 +528,19 @@ fun MapScreen(vm: AppViewModel, user: User, mapVm: MapViewModel = viewModel()) {
         ) {
             Box {
                 SmallFloatingActionButton(onClick = { layersMenu = true }) {
-                    Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Katmanlar menüsü")
+                    AppIcon(Lucide.Layers, contentDescription = "Katmanlar menüsü")
                 }
                 DropdownMenu(expanded = layersMenu, onDismissRequest = { layersMenu = false }) {
-                    LayerItem(Icons.Filled.Person, "Kişiler", peers.size, layers.people,
+                    LayerItem(Lucide.Users, "Kişiler", peers.size, layers.people,
                         onToggle = { mapVm.setLayers(layers.copy(people = it)) },
                         onOpen = { layersMenu = false; panel = Panel.People })
-                    LayerItem(Icons.Filled.Place, "Alanlar", geofences.size, layers.geofences,
+                    LayerItem(Lucide.Radius, "Alanlar", geofences.size, layers.geofences,
                         onToggle = { mapVm.setLayers(layers.copy(geofences = it)) },
                         onOpen = { layersMenu = false; mapVm.loadCandidates(); panel = Panel.Geofences })
-                    LayerItem(Icons.Filled.Star, "Yerler", places.size, layers.places,
+                    LayerItem(Lucide.Star, "Yerler", places.size, layers.places,
                         onToggle = { mapVm.setLayers(layers.copy(places = it)) },
                         onOpen = { layersMenu = false; panel = Panel.Places })
-                    LayerItem(Icons.Filled.DateRange, "Buluşmalar", meetings.size, layers.meetings,
+                    LayerItem(Lucide.Calendar, "Buluşmalar", meetings.size, layers.meetings,
                         onToggle = { mapVm.setLayers(layers.copy(meetings = it)) },
                         onOpen = { layersMenu = false; panel = Panel.Meetings })
                 }
@@ -559,7 +553,7 @@ fun MapScreen(vm: AppViewModel, user: User, mapVm: MapViewModel = viewModel()) {
             SmallFloatingActionButton(
                 onClick = { me?.let { flyTo(it.latitude, it.longitude) } },
             ) {
-                Icon(Icons.Filled.LocationOn, contentDescription = "Konumuma git")
+                AppIcon(Lucide.LocateFixed, contentDescription = "Konumuma git")
             }
         }
 
@@ -710,7 +704,7 @@ fun MapScreen(vm: AppViewModel, user: User, mapVm: MapViewModel = viewModel()) {
 
 @Composable
 private fun LayerItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: LucideIcon,
     label: String,
     count: Int,
     visible: Boolean,
@@ -718,7 +712,7 @@ private fun LayerItem(
     onOpen: () -> Unit,
 ) {
     DropdownMenuItem(
-        leadingIcon = { Icon(icon, contentDescription = null) },
+        leadingIcon = { AppIcon(icon, contentDescription = null) },
         text = { Text("$label  $count") },
         trailingIcon = {
             Checkbox(checked = visible, onCheckedChange = onToggle)
@@ -763,10 +757,10 @@ private fun NotificationBell(unread: Int, onClick: () -> Unit) {
         IconButton(onClick = onClick) {
             if (unread > 0) {
                 BadgedBox(badge = { Badge() }) {
-                    Icon(Icons.Filled.Notifications, contentDescription = "Bildirimler, $unread okunmamış")
+                    AppIcon(Lucide.Bell, contentDescription = "Bildirimler, $unread okunmamış")
                 }
             } else {
-                Icon(Icons.Filled.Notifications, contentDescription = "Bildirimler")
+                AppIcon(Lucide.Bell, contentDescription = "Bildirimler")
             }
         }
     }

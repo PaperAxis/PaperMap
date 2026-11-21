@@ -23,7 +23,7 @@ struct FriendsView: View {
                 Section { ErrorText(message: error) }
             }
             if let notice {
-                Section { Label(notice, systemImage: "checkmark.circle").foregroundColor(Pa.text) }
+                Section { Label(notice, symbol: "checkmark.circle").foregroundColor(Pa.text) }
             }
             if !data.incoming.isEmpty {
                 Section("Gelen istekler") {
@@ -42,7 +42,7 @@ struct FriendsView: View {
             Section("Arkadaşlar") {
                 if data.friends.isEmpty && loaded {
                     Text("Henüz arkadaşın yok. Sağ üstten kullanıcı adıyla ekleyebilirsin.")
-                        .font(.subheadline).foregroundColor(Pa.muted)
+                        .paFont(.subheadline).foregroundColor(Pa.muted)
                 }
                 ForEach(data.friends) { entry in
                     HStack {
@@ -58,7 +58,7 @@ struct FriendsView: View {
                         Button {
                             Task { await message(entry) }
                         } label: {
-                            Label("Mesaj", systemImage: "bubble.left")
+                            Label("Mesaj", symbol: "bubble.left")
                         }
                         .buttonStyle(.bordered)
                     }
@@ -91,7 +91,7 @@ struct FriendsView: View {
                     newUsername = ""
                     showAdd = true
                 } label: {
-                    Image(systemName: "person.badge.plus")
+                    PaSymbol("person.badge.plus")
                 }
                 .accessibilityLabel("Arkadaş ekle")
             }
@@ -178,7 +178,7 @@ struct PersonRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(person.displayName).foregroundColor(Pa.text)
                 if let line = subtitle ?? person.username.map({ "@" + $0 }) {
-                    Text(line).font(.caption).foregroundColor(Pa.muted)
+                    Text(line).paFont(.caption).foregroundColor(Pa.muted)
                 }
             }
         }

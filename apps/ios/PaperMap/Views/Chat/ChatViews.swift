@@ -15,9 +15,9 @@ struct ConversationListView: View {
             }
             if chats.conversations.isEmpty && chats.loaded {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Henüz sohbet yok").font(.headline).foregroundColor(Pa.text)
+                    Text("Henüz sohbet yok").paFont(.headline).foregroundColor(Pa.text)
                     Text("Arkadaşlar sekmesinden birine mesaj gönderebilir ya da sağ üstten grup açabilirsin. Aile sohbetleri burada kendiliğinden görünür.")
-                        .font(.subheadline).foregroundColor(Pa.muted)
+                        .paFont(.subheadline).foregroundColor(Pa.muted)
                 }
                 .padding(.vertical, 8)
             }
@@ -37,7 +37,7 @@ struct ConversationListView: View {
         }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button { showNewGroup = true } label: { Image(systemName: "person.3") }
+                Button { showNewGroup = true } label: { PaSymbol("person.3") }
                     .accessibilityLabel("Grup oluştur")
             }
         }
@@ -63,23 +63,23 @@ struct ConversationRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 HStack {
                     Text(conversation.title)
-                        .font(.body.weight(conversation.unread > 0 ? .semibold : .regular))
+                        .paFont(.body, weight: conversation.unread > 0 ? .semibold : .regular)
                         .foregroundColor(Pa.text)
                         .lineLimit(1)
                     Spacer()
                     if let rel = Format.relative(conversation.lastMessage?.createdAt ?? conversation.updatedAt) {
-                        Text(rel).font(.caption).foregroundColor(Pa.muted).lineLimit(1)
+                        Text(rel).paFont(.caption).foregroundColor(Pa.muted).lineLimit(1)
                     }
                 }
                 HStack {
                     Text(previewText)
-                        .font(.subheadline)
+                        .paFont(.subheadline)
                         .foregroundColor(conversation.unread > 0 ? Pa.text : Pa.muted)
                         .lineLimit(1)
                     Spacer()
                     if conversation.unread > 0 {
                         Text(verbatim: "\(conversation.unread)")
-                            .font(.caption.weight(.semibold).monospacedDigit())
+                            .paFont(.caption, weight: .semibold, monospacedDigit: true)
                             .foregroundColor(Pa.onPrimary)
                             .padding(.horizontal, 7)
                             .padding(.vertical, 2)
@@ -115,7 +115,7 @@ struct ConversationRow: View {
         } else {
             ZStack {
                 Circle().fill(Pa.surface)
-                Image(systemName: conversation.type == "family" ? "house" : "person.3")
+                PaSymbol(conversation.type == "family" ? "house" : "person.3")
                     .font(.system(size: 17, weight: .medium))
                     .foregroundColor(Pa.text)
             }
@@ -189,7 +189,7 @@ struct ChatView: View {
             Button {
                 showPlacePicker = true
             } label: {
-                Image(systemName: "mappin.and.ellipse")
+                PaSymbol("mappin.and.ellipse")
                     .font(.system(size: 18, weight: .medium))
                     .foregroundColor(Pa.text)
                     .frame(width: 44, height: 44)
@@ -207,7 +207,7 @@ struct ChatView: View {
             Button {
                 Task { await send() }
             } label: {
-                Image(systemName: "paperplane.fill")
+                PaSymbol("paperplane.fill")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(Pa.onPrimary)
                     .frame(width: 44, height: 44)
@@ -286,7 +286,7 @@ struct PlacePickerSheet: View {
                         Task { await sendCurrent() }
                     } label: {
                         HStack {
-                            Label(busy ? "Konum alınıyor…" : "Şu anki konumum", systemImage: "location.fill")
+                            Label(busy ? "Konum alınıyor…" : "Şu anki konumum", symbol: "location.fill")
                             if busy {
                                 Spacer()
                                 ProgressView()
@@ -364,11 +364,11 @@ struct MessageBubble: View {
             if mine { Spacer(minLength: 48) }
             VStack(alignment: mine ? .trailing : .leading, spacing: 3) {
                 if showSender && !mine, let name = message.senderName {
-                    Text(name).font(.caption.weight(.semibold)).foregroundColor(Pa.muted)
+                    Text(name).paFont(.caption, weight: .semibold).foregroundColor(Pa.muted)
                 }
                 content
                 if let rel = Format.relative(message.createdAt) {
-                    Text(rel).font(.caption2).foregroundColor(Pa.muted)
+                    Text(rel).paFont(.caption2).foregroundColor(Pa.muted)
                 }
             }
             if !mine { Spacer(minLength: 48) }
@@ -380,9 +380,9 @@ struct MessageBubble: View {
         if message.isPlace {
             Button(action: openPlace) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Label(message.placeLabel ?? "Konum", systemImage: "mappin.and.ellipse")
-                        .font(.subheadline.weight(.medium))
-                    Text("Haritada göster").font(.caption)
+                    Label(message.placeLabel ?? "Konum", symbol: "mappin.and.ellipse")
+                        .paFont(.subheadline, weight: .medium)
+                    Text("Haritada göster").paFont(.caption)
                 }
                 .foregroundColor(mine ? Pa.onPrimary : Pa.text)
                 .padding(.horizontal, 12)
@@ -393,17 +393,17 @@ struct MessageBubble: View {
             .accessibilityHint("Haritada gösterir")
             .contextMenu {
                 Button(action: openPlace) {
-                    Label("Haritada göster", systemImage: "map")
+                    Label("Haritada göster", symbol: "map")
                 }
                 if let openExternal {
                     Button(action: openExternal) {
-                        Label("Haritalar'da aç", systemImage: "arrow.up.forward.app")
+                        Label("Haritalar'da aç", symbol: "arrow.up.forward.app")
                     }
                 }
             }
         } else {
             Text(message.body ?? "")
-                .font(.body)
+                .paFont(.body)
                 .foregroundColor(mine ? Pa.onPrimary : Pa.text)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
@@ -443,7 +443,7 @@ struct NewGroupView: View {
                 Section("Üyeler") {
                     if friends.isEmpty {
                         Text("Gruba eklemek için önce arkadaş eklemelisin.")
-                            .font(.subheadline).foregroundColor(Pa.muted)
+                            .paFont(.subheadline).foregroundColor(Pa.muted)
                     }
                     ForEach(friends) { entry in
                         Button {
@@ -456,7 +456,7 @@ struct NewGroupView: View {
                             HStack {
                                 PersonRow(person: entry.user)
                                 Spacer()
-                                Image(systemName: selected.contains(entry.user.id) ? "checkmark.circle.fill" : "circle")
+                                PaSymbol(selected.contains(entry.user.id) ? "checkmark.circle.fill" : "circle")
                                     .foregroundColor(selected.contains(entry.user.id) ? Pa.primary : Pa.muted)
                             }
                         }
@@ -514,22 +514,22 @@ struct NotificationsView: View {
                 }
                 if notifications.items.isEmpty && notifications.loaded {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Bildirim yok").font(.headline).foregroundColor(Pa.text)
+                        Text("Bildirim yok").paFont(.headline).foregroundColor(Pa.text)
                         Text("Yeni mesajlar, alan giriş-çıkışları ve diğer olaylar burada görünür.")
-                            .font(.subheadline).foregroundColor(Pa.muted)
+                            .paFont(.subheadline).foregroundColor(Pa.muted)
                     }
                     .padding(.vertical, 8)
                 }
                 ForEach(notifications.items) { item in
                     VStack(alignment: .leading, spacing: 3) {
                         Text(item.title)
-                            .font(.body.weight(item.readAt == nil ? .semibold : .regular))
+                            .paFont(.body, weight: item.readAt == nil ? .semibold : .regular)
                             .foregroundColor(Pa.text)
                         Text(item.body)
-                            .font(.subheadline)
+                            .paFont(.subheadline)
                             .foregroundColor(item.readAt == nil ? Pa.text : Pa.muted)
                         if let rel = Format.relative(item.createdAt) {
-                            Text(rel).font(.caption).foregroundColor(Pa.muted)
+                            Text(rel).paFont(.caption).foregroundColor(Pa.muted)
                         }
                     }
                     .padding(.vertical, 4)

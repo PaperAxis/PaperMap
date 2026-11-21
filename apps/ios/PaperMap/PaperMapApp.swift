@@ -17,6 +17,7 @@ struct PaperMapApp: App {
     @StateObject private var network = NetworkMonitor()
     @StateObject private var branding = Branding()
     @StateObject private var mapStore = MapStore()
+    @StateObject private var fonts = FontStore()
 
     init() {
         UNUserNotificationCenter.current().delegate = NotificationDelegate.shared
@@ -34,6 +35,16 @@ struct PaperMapApp: App {
                 .environmentObject(network)
                 .environmentObject(branding)
                 .environmentObject(mapStore)
+                .environmentObject(fonts)
+                // Profile font for every text that does not pick a style itself;
+                // `.paFont` call sites read the same typeface.
+                .paFont(.body)
+                .environment(\.paTypeface, fonts.typeface)
+                // Profile icon style for PaSymbol, Label(_:symbol:) and the tab bar.
+                .environment(
+                    \.paIconWeight,
+                    Appearance.iconWeight(for: session.user?.iconStyle ?? Appearance.cachedIconStyle)
+                )
                 .tint(Pa.primary)
         }
     }
@@ -49,6 +60,7 @@ struct RootView: View {
     @EnvironmentObject private var network: NetworkMonitor
     @EnvironmentObject private var branding: Branding
     @EnvironmentObject private var mapStore: MapStore
+    @EnvironmentObject private var fonts: FontStore
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -68,6 +80,11 @@ struct RootView: View {
         }
         .task(id: session.token) { await onTokenChange() }
         .task { await branding.load() }
+        // A new pick (or the account's font after sign-in) applies at once;
+        // signed out, the last font stays.
+        .onChange(of: session.user?.fontPref) { value in
+            if session.user != nil { fonts.apply(fontId: value) }
+        }
         .onOpenURL { url in
             // papermap://sso is normally delivered to ASWebAuthenticationSession;
             // a stray callback (session already closed) is ignored. Reset and
@@ -178,24 +195,41 @@ private func upload(_ loc: CLLocation, session: Session, realtime: RealtimeServi
 struct MainTabView: View {
     @EnvironmentObject private var chats: ChatStore
     @EnvironmentObject private var router: AppRouter
+    /// Tab icons are drawn by UIKit, so the profile icon weight is baked into each image.
+    @Environment(\.paIconWeight) private var iconWeight
 
     var body: some View {
         TabView(selection: $router.tab) {
             MapScreen()
-                .tabItem { Label("Harita", systemImage: "map") }
+                .tabItem {
+                    Appearance.tabSymbol("map", weight: iconWeight)
+                    Text("Harita")
+                }
                 .tag(AppTab.map)
             NavigationStack { ConversationListView() }
-                .tabItem { Label("Sohbet", systemImage: "bubble.left.and.bubble.right") }
+                .tabItem {
+                    Appearance.tabSymbol("bubble.left.and.bubble.right", weight: iconWeight)
+                    Text("Sohbet")
+                }
                 .badge(chats.unreadTotal)
                 .tag(AppTab.chat)
             NavigationStack { FriendsView() }
-                .tabItem { Label("Arkadaşlar", systemImage: "person.2") }
+                .tabItem {
+                    Appearance.tabSymbol("person.2", weight: iconWeight)
+                    Text("Arkadaşlar")
+                }
                 .tag(AppTab.friends)
             NavigationStack { FamilyListView() }
-                .tabItem { Label("Aile", systemImage: "house") }
+                .tabItem {
+                    Appearance.tabSymbol("house", weight: iconWeight)
+                    Text("Aile")
+                }
                 .tag(AppTab.family)
             NavigationStack { ProfileView() }
-                .tabItem { Label("Profil", systemImage: "person.crop.circle") }
+                .tabItem {
+                    Appearance.tabSymbol("person.crop.circle", weight: iconWeight)
+                    Text("Profil")
+                }
                 .tag(AppTab.profile)
         }
     }

@@ -7,8 +7,11 @@ import Foundation
 final class Session: ObservableObject {
     @Published private(set) var token: String?
     @Published var user: User? {
-        // Remembered so the next launch starts in the right color scheme.
-        didSet { if user?.theme != oldValue?.theme { Appearance.cache(themeId: user?.theme) } }
+        // Remembered so the next launch starts in the right color scheme and icon style.
+        didSet {
+            if user?.theme != oldValue?.theme { Appearance.cache(themeId: user?.theme) }
+            if let user, user.iconStyle != oldValue?.iconStyle { Appearance.cache(iconStyle: user.iconStyle) }
+        }
     }
 
     /// Login name saved by "Beni hatırla"; prefills the login form.

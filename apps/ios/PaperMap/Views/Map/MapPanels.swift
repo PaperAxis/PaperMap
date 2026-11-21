@@ -41,7 +41,7 @@ struct CandidateChecklist: View {
                                 if allIn { selected.remove(m.id) } else { selected.insert(m.id) }
                             }
                         }
-                        .font(.caption.weight(.semibold))
+                        .paFont(.caption, weight: .semibold)
                         .textCase(nil)
                     }
                 }
@@ -63,7 +63,7 @@ struct CandidateChecklist: View {
                 AvatarView(name: person.displayName, color: person.avatarColor, path: person.avatarPath, size: 32)
                 Text(person.displayName).foregroundColor(Pa.text)
                 Spacer()
-                Image(systemName: on ? "checkmark.circle.fill" : "circle")
+                PaSymbol(on ? "checkmark.circle.fill" : "circle")
                     .foregroundColor(on ? Pa.primary : Pa.muted)
             }
         }
@@ -165,7 +165,7 @@ struct CreateAtPointSheet: View {
                         }
                     } else {
                         Section {
-                            Text("Kimleri davet etmek istersin?").font(.subheadline.weight(.medium))
+                            Text("Kimleri davet etmek istersin?").paFont(.subheadline, weight: .medium)
                         }
                         list
                     }
@@ -223,7 +223,7 @@ struct GeofencesSheet: View {
             List {
                 Section {
                     Button(action: onStartPlacing) {
-                        Label("Yeni alan (haritada nokta seç)", systemImage: "plus")
+                        Label("Yeni alan (haritada nokta seç)", symbol: "plus")
                     }
                 }
                 if let error {
@@ -232,7 +232,7 @@ struct GeofencesSheet: View {
                 Section {
                     if mapStore.geofences.isEmpty {
                         Text("Henüz alan yok. Yeni bir alan ekleyip seçtiğin kişiler girince/çıkınca bildirim al.")
-                            .font(.subheadline).foregroundColor(Pa.muted)
+                            .paFont(.subheadline).foregroundColor(Pa.muted)
                     }
                     ForEach(mapStore.geofences) { g in
                         NavigationLink {
@@ -241,7 +241,7 @@ struct GeofencesSheet: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(g.name).foregroundColor(Pa.text)
                                 Text("\(Int(g.radius)) m · \(g.watches.count) kişi izleniyor")
-                                    .font(.caption).foregroundColor(Pa.muted)
+                                    .paFont(.caption).foregroundColor(Pa.muted)
                             }
                         }
                         .swipeActions {
@@ -301,7 +301,7 @@ struct GeofenceDetailView: View {
                         mapStore.flyTo(lat: g.lat, lng: g.lng, zoom: 15)
                         closeSheet()
                     } label: {
-                        Label("Haritada gör", systemImage: "map")
+                        Label("Haritada gör", symbol: "map")
                     }
                 }
                 if error != nil || info != nil {
@@ -328,7 +328,7 @@ struct GeofenceDetailView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(w.displayName).foregroundColor(Pa.text)
                                 Text(w.inside == true ? "içeride" : w.inside == false ? "dışarıda" : "henüz bilinmiyor")
-                                    .font(.caption).foregroundColor(Pa.muted)
+                                    .paFont(.caption).foregroundColor(Pa.muted)
                             }
                             Spacer()
                             Button("Çıkar") { Task { await removeWatch(w.userId) } }
@@ -348,7 +348,7 @@ struct GeofenceDetailView: View {
                     }
                 } else {
                     Section {
-                        Text("Kişi ekle").font(.subheadline.weight(.medium))
+                        Text("Kişi ekle").paFont(.subheadline, weight: .medium)
                     }
                     checklist
                     Section {
@@ -443,7 +443,7 @@ struct PlacesSheet: View {
             List {
                 Section {
                     Button(action: onStartPlacing) {
-                        Label("Yeni yer (haritada nokta seç)", systemImage: "plus")
+                        Label("Yeni yer (haritada nokta seç)", symbol: "plus")
                     }
                 }
                 if let error {
@@ -452,7 +452,7 @@ struct PlacesSheet: View {
                 Section {
                     if mapStore.places.isEmpty {
                         Text("Henüz kayıtlı yer yok. Sık gittiğin yerleri haritaya işaretle.")
-                            .font(.subheadline).foregroundColor(Pa.muted)
+                            .paFont(.subheadline).foregroundColor(Pa.muted)
                     }
                     ForEach(mapStore.places) { p in
                         NavigationLink {
@@ -514,12 +514,12 @@ struct PlaceDetailView: View {
                         mapStore.flyTo(lat: p.lat, lng: p.lng)
                         closeSheet()
                     } label: {
-                        Label("Haritada gör", systemImage: "map")
+                        Label("Haritada gör", symbol: "map")
                     }
                     Button {
                         Task { await startTrip(p) }
                     } label: {
-                        Label("Yola çık", systemImage: "car")
+                        Label("Yola çık", symbol: "car")
                     }
                     .disabled(busy)
                 }
@@ -603,13 +603,13 @@ struct MeetingsSheet: View {
             List {
                 Section {
                     Button(action: onStartPlacing) {
-                        Label("Yeni buluşma (haritada nokta seç)", systemImage: "plus")
+                        Label("Yeni buluşma (haritada nokta seç)", symbol: "plus")
                     }
                 }
                 Section {
                     if mapStore.meetings.isEmpty {
                         Text("Henüz buluşma yok. Bir nokta seçip kişileri davet et; herkesin oraya varış süresini birlikte görün.")
-                            .font(.subheadline).foregroundColor(Pa.muted)
+                            .paFont(.subheadline).foregroundColor(Pa.muted)
                     }
                     ForEach(mapStore.meetings) { m in
                         NavigationLink {
@@ -618,7 +618,7 @@ struct MeetingsSheet: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(m.label).foregroundColor(Pa.text)
                                 Text("\(m.memberCount ?? 1) kişi" + (m.isOwner ? " · sahibisin" : ""))
-                                    .font(.caption).foregroundColor(Pa.muted)
+                                    .paFont(.caption).foregroundColor(Pa.muted)
                             }
                         }
                     }
@@ -660,7 +660,7 @@ struct MeetingDetailView: View {
                         mapStore.flyTo(lat: m.lat, lng: m.lng)
                         closeSheet()
                     } label: {
-                        Label("Haritada gör", systemImage: "map")
+                        Label("Haritada gör", symbol: "map")
                     }
                 }
             }
@@ -671,7 +671,7 @@ struct MeetingDetailView: View {
                             AvatarView(name: member.displayName, color: member.avatarColor, path: member.avatarPath, size: 36)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(member.displayName + (member.isOwner ? " (sahip)" : "")).foregroundColor(Pa.text)
-                                Text(member.etaText).font(.caption).foregroundColor(Pa.muted)
+                                Text(member.etaText).paFont(.caption).foregroundColor(Pa.muted)
                             }
                         }
                         .accessibilityElement(children: .combine)

@@ -1,8 +1,8 @@
 // Copyright (c) 2026 PaperAxis. All rights reserved.
 // Theme, font and icon-style catalog shared with the web app
 // (web/src/lib/appearance/themes.js, fonts.js, lib/iconStyles.js). The ids are
-// stored on the user record; iOS applies the theme's light/dark scheme, the web
-// app applies the full palette, font and icon style.
+// stored on the user record; iOS applies the theme's light/dark scheme, the font
+// (Fonts.swift) and the icon style; the web app also applies the full palette.
 
 import SwiftUI
 import UIKit
@@ -27,6 +27,12 @@ struct FontOption: Identifiable, Hashable {
     let id: String
     let label: String
     let category: String
+    /// Google Fonts family; nil uses the system font.
+    var family: String? = nil
+    /// Static weights Google Fonts serves for the family.
+    var weights: [Int] = Appearance.fullFontWeights
+    /// Headline family when it differs from the body (the default pairs Inter with Manrope).
+    var display: String? = nil
 }
 
 struct IconStyleOption: Identifiable, Hashable {
@@ -224,39 +230,46 @@ enum Appearance {
         return map
     }()
 
-    // MARK: Fonts and icon styles (synced; applied by the web app)
+    // MARK: Fonts (applied by FontStore) and icon styles (IconStyle.swift)
 
     static let fontCategories: [(String, String)] = [
         ("okunabilirlik", "Okunabilirlik"), ("sans", "Sans-serif"), ("serif", "Serif"), ("mono", "Monospace"),
     ]
 
     static let fonts: [FontOption] = [
-        FontOption(id: "lexend", label: "Lexend (disleksi dostu)", category: "okunabilirlik"),
-        FontOption(id: "atkinson", label: "Atkinson Hyperlegible", category: "okunabilirlik"),
-        FontOption(id: "inter", label: "Inter ve Manrope (varsayılan)", category: "sans"),
+        FontOption(id: "lexend", label: "Lexend (disleksi dostu)", category: "okunabilirlik", family: "Lexend"),
+        FontOption(id: "atkinson", label: "Atkinson Hyperlegible", category: "okunabilirlik", family: "Atkinson Hyperlegible", weights: [400, 700]),
+        FontOption(id: "inter", label: "Inter ve Manrope (varsayılan)", category: "sans", family: "Inter", display: "Manrope"),
         FontOption(id: "sistem", label: "Sistem", category: "sans"),
-        FontOption(id: "roboto", label: "Roboto", category: "sans"),
-        FontOption(id: "open-sans", label: "Open Sans", category: "sans"),
-        FontOption(id: "lato", label: "Lato", category: "sans"),
-        FontOption(id: "montserrat", label: "Montserrat", category: "sans"),
-        FontOption(id: "poppins", label: "Poppins", category: "sans"),
-        FontOption(id: "nunito", label: "Nunito", category: "sans"),
-        FontOption(id: "work-sans", label: "Work Sans", category: "sans"),
-        FontOption(id: "rubik", label: "Rubik", category: "sans"),
-        FontOption(id: "dm-sans", label: "DM Sans", category: "sans"),
-        FontOption(id: "manrope", label: "Manrope", category: "sans"),
-        FontOption(id: "mulish", label: "Mulish", category: "sans"),
-        FontOption(id: "karla", label: "Karla", category: "sans"),
-        FontOption(id: "merriweather", label: "Merriweather", category: "serif"),
-        FontOption(id: "lora", label: "Lora", category: "serif"),
-        FontOption(id: "pt-serif", label: "PT Serif", category: "serif"),
-        FontOption(id: "roboto-slab", label: "Roboto Slab", category: "serif"),
-        FontOption(id: "bitter", label: "Bitter", category: "serif"),
-        FontOption(id: "eb-garamond", label: "EB Garamond", category: "serif"),
-        FontOption(id: "playfair", label: "Playfair Display", category: "serif"),
-        FontOption(id: "jetbrains-mono", label: "JetBrains Mono", category: "mono"),
-        FontOption(id: "ibm-plex-mono", label: "IBM Plex Mono", category: "mono"),
+        FontOption(id: "roboto", label: "Roboto", category: "sans", family: "Roboto"),
+        FontOption(id: "open-sans", label: "Open Sans", category: "sans", family: "Open Sans"),
+        FontOption(id: "lato", label: "Lato", category: "sans", family: "Lato", weights: [400, 700]),
+        FontOption(id: "montserrat", label: "Montserrat", category: "sans", family: "Montserrat"),
+        FontOption(id: "poppins", label: "Poppins", category: "sans", family: "Poppins"),
+        FontOption(id: "nunito", label: "Nunito", category: "sans", family: "Nunito"),
+        FontOption(id: "work-sans", label: "Work Sans", category: "sans", family: "Work Sans"),
+        FontOption(id: "rubik", label: "Rubik", category: "sans", family: "Rubik"),
+        FontOption(id: "dm-sans", label: "DM Sans", category: "sans", family: "DM Sans"),
+        FontOption(id: "manrope", label: "Manrope", category: "sans", family: "Manrope"),
+        FontOption(id: "mulish", label: "Mulish", category: "sans", family: "Mulish"),
+        FontOption(id: "karla", label: "Karla", category: "sans", family: "Karla"),
+        FontOption(id: "merriweather", label: "Merriweather", category: "serif", family: "Merriweather"),
+        FontOption(id: "lora", label: "Lora", category: "serif", family: "Lora"),
+        FontOption(id: "pt-serif", label: "PT Serif", category: "serif", family: "PT Serif", weights: [400, 700]),
+        FontOption(id: "roboto-slab", label: "Roboto Slab", category: "serif", family: "Roboto Slab"),
+        FontOption(id: "bitter", label: "Bitter", category: "serif", family: "Bitter"),
+        FontOption(id: "eb-garamond", label: "EB Garamond", category: "serif", family: "EB Garamond"),
+        FontOption(id: "playfair", label: "Playfair Display", category: "serif", family: "Playfair Display"),
+        FontOption(id: "jetbrains-mono", label: "JetBrains Mono", category: "mono", family: "JetBrains Mono"),
+        FontOption(id: "ibm-plex-mono", label: "IBM Plex Mono", category: "mono", family: "IBM Plex Mono"),
     ]
+
+    static let fullFontWeights = [400, 500, 600, 700]
+
+    static func font(_ id: String?) -> FontOption? {
+        let resolved = resolvedFontId(id)
+        return fonts.first { $0.id == resolved }
+    }
 
     /// Unknown and legacy values ("default") resolve to the default font, as on the web.
     static func resolvedFontId(_ value: String?) -> String {
