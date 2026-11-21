@@ -6,11 +6,6 @@ build/
 *.log
 npm-debug.log*
 
-# Capacitor generated native projects (CI'da yeniden uretilir)
-web/android/
-web/ios/
-web/ios/App/Pods/
-
 # Build artefaktlari ve imzalama anahtarlari (asla commit'lenmemeli)
 *.apk
 *.aab

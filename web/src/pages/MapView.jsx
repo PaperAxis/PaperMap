@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { api, getToken, API_BASE } from '../lib/api.js';
 import { createSocket } from '../lib/socket.js';
-import { watchPosition, openLocationSettings } from '../lib/geo.js';
+import { watchPosition } from '../lib/geo.js';
 import { getBattery, batteryLabel } from '../lib/battery.js';
 import { timeAgo } from '../lib/time.js';
 import { useAuth } from '../lib/auth.jsx';
@@ -96,7 +96,6 @@ export default function MapView() {
   const [myPos, setMyPos] = useState(null);
   const [myMeta, setMyMeta] = useState(null);
   const [geoError, setGeoError] = useState('');
-  const [locationSettingsNeeded, setLocationSettingsNeeded] = useState(false);
   const [notice, setNotice] = useState('');
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const [, setShareTick] = useState(0);
@@ -445,10 +444,9 @@ export default function MapView() {
     const stop = watchPosition(
       async (pos) => {
         setGeoError('');
-        setLocationSettingsNeeded(false);
         setMyPos(pos);
         const bat = await getBattery();
-        // Konum HTTP ile gonderilir — arka planda da calisir
+        // Konum HTTP ile gonderilir
         api('/api/location', {
           method: 'POST',
           body: { ...pos, battery: bat?.level, charging: bat?.charging },
@@ -463,15 +461,13 @@ export default function MapView() {
           .catch(() => {});
       },
       (err) => {
-        if (err?.code === 'NOT_AUTHORIZED') {
+        if (err?.code === 1) {
           setGeoError(
-            'Arka planda konum paylaşımı için konum izni "Her zaman izin ver" ' +
-              'olmalı. Ayarlardan seçin.',
+            'Konum izni reddedildi. Haritada görünmek için tarayıcı ayarlarından ' +
+              'bu siteye konum izni verin.',
           );
-          setLocationSettingsNeeded(true);
-        } else if (err?.code === 1) {
-          setGeoError('Konum izni reddedildi. Haritada görünmek için izin verin.');
-          setLocationSettingsNeeded(true);
+        } else if (err?.code === 'UNSUPPORTED') {
+          setGeoError(err.message);
         } else {
           setGeoError('Konum alınamadı: ' + (err?.message || 'bilinmeyen hata'));
         }
@@ -975,14 +971,6 @@ export default function MapView() {
       {geoError && (
         <div className="geo-banner">
           {geoError}
-          {locationSettingsNeeded && (
-            <>
-              {' '}
-              <button type="button" className="link-btn" onClick={openLocationSettings}>
-                Ayarları aç
-              </button>
-            </>
-          )}
         </div>
       )}
       {notice && (

@@ -471,7 +471,7 @@ pip install Pillow            # tek sefer
 python3 scripts/generate-icons.py
 ```
 
-Bu betik `web/public/` favicon'larını ve `web/assets/` mobil kaynaklarını
+Bu betik `web/public/` favicon'larını ve `apps/assets/` mobil kaynaklarını
 yeniden üretir; commit'leyip yeni bir derleme tetiklemeniz yeterli. Adaptive
 ikon güvenli bölgesi, iOS için opak zemin ve koyu tema açılış ekranı otomatik
 ayarlanır.
