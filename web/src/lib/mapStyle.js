@@ -1,7 +1,23 @@
 import { API_BASE } from './api.js';
 
-// Self-hosted tile sunucusu (web nginx /tiles/ -> tileserver-gl)
+// Self-hosted tile sunucusu (web nginx /tiles/ -> tileserver-gl). PMTiles
+// yapilandirilmadiginda vektor kutucuklar ve fontlar buradan gelir.
 const TILES = `${API_BASE}/tiles`;
+
+// Harita verisi kaynagi. configureMapSources({ pmtiles }) cagrilirsa vektor
+// kutucuklar statik bir hosting'deki tek bir PMTiles dosyasindan (ör. tum dunya,
+// https://tiles.paperaxis.com/planet.pmtiles) HTTP Range ile okunur; fontlar
+// varsayilan olarak ayni adresin /fonts klasorunden gelir. Web'de pmtiles://
+// protokolunu lib/mapSources.js kaydeder; native MapLibre (Android 11.8+,
+// iOS 6.10+) pmtiles://https://... adresini kendisi okur.
+const mapSources = { pmtiles: '', glyphs: '' };
+
+export function configureMapSources({ pmtiles = '', glyphs = '' } = {}) {
+  mapSources.pmtiles = pmtiles.trim().replace(/\/$/, '');
+  let g = glyphs.trim().replace(/\/$/, '');
+  if (!g && mapSources.pmtiles) g = `${new URL(mapSources.pmtiles).origin}/fonts`;
+  mapSources.glyphs = g;
+}
 
 // Yukseklik (DEM) kutucuklari: web nginx /terrain/ -> AWS Terrarium (Mapzen) acik
 // veri seti. nginx istekleri sunucudan yapar ve diskte onbellege alir; tarayici
@@ -25,9 +41,6 @@ const SOURCE_MAXZOOM = 16;
 
 // Terrarium veri setinin Turkiye icin anlamli en yuksek zoom'u (~5 m/piksel).
 const DEM_MAXZOOM = 15;
-
-// Turkiye ve cevresi — DEM ve vektor kaynaklari bu alanin disini istemez.
-const TURKEY_BOUNDS = [25.0, 35.0, 45.5, 42.6];
 
 // Kullanicinin yakinlasabilecegi en yuksek zoom (web, Android, iOS ayni).
 // z16 verisi z22'ye kadar buyutulur; stil cizgi/yazi boyutlarini z20'ye kadar buyutur.
@@ -609,13 +622,14 @@ export function buildMapStyle(theme, opts = {}) {
     tileSize: 256,
     minzoom: 0,
     maxzoom: DEM_MAXZOOM,
-    bounds: TURKEY_BOUNDS,
     attribution: 'Elevation: Mapzen Terrain Tiles (AWS Open Data)',
   };
 
   const style = {
     version: 8,
-    glyphs: `${TILES}/fonts/{fontstack}/{range}.pbf`,
+    glyphs: mapSources.glyphs
+      ? `${mapSources.glyphs}/{fontstack}/{range}.pbf`
+      : `${TILES}/fonts/{fontstack}/{range}.pbf`,
     // 3B binalarin yan yuzlerini golgelendiren isik
     light: {
       anchor: 'viewport',
@@ -624,14 +638,21 @@ export function buildMapStyle(theme, opts = {}) {
       position: [1.3, 200, 35],
     },
     sources: {
-      openmaptiles: {
-        type: 'vector',
-        // tileserver-gl, planetiler mbtiles'ina otomatik config'de "v3" adini verir
-        tiles: [`${TILES}/data/v3/{z}/{x}/{y}.pbf`],
-        minzoom: 0,
-        maxzoom: SOURCE_MAXZOOM,
-        attribution: '© OpenMapTiles © OpenStreetMap katkıcıları',
-      },
+      openmaptiles: mapSources.pmtiles
+        ? {
+            // Zoom araligi ve sinirlar PMTiles basligindan okunur
+            type: 'vector',
+            url: `pmtiles://${mapSources.pmtiles}`,
+            attribution: 'OpenFreeMap © OpenMapTiles · © OpenStreetMap katkıcıları',
+          }
+        : {
+            type: 'vector',
+            // tileserver-gl, planetiler mbtiles'ina otomatik config'de "v3" adini verir
+            tiles: [`${TILES}/data/v3/{z}/{x}/{y}.pbf`],
+            minzoom: 0,
+            maxzoom: SOURCE_MAXZOOM,
+            attribution: '© OpenMapTiles © OpenStreetMap katkıcıları',
+          },
       ...(variant === 'satellite'
         ? {
             satellite: {
