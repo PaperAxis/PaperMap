@@ -36,7 +36,7 @@ if (smtpConfigured) {
 // E-posta gonderir. Sonuc: { ok, skipped?, error? }. SMTP yapilandirilmamissa
 // (SMTP_HOST bos) gonderim atlanir ve baglanti sunucu loguna yazilir — boylece
 // SMTP olmadan da akislar kirilmaz. Hata firlatmaz; cagiran sonuca bakabilir.
-export async function sendMail({ to, subject, text, link }) {
+export async function sendMail({ to, subject, text, html, link }) {
   if (!smtpConfigured) {
     console.warn(
       `[mailer] SMTP yapılandırılmadı — e-posta gönderilmedi (${to}: ${subject}).` +
@@ -50,6 +50,7 @@ export async function sendMail({ to, subject, text, link }) {
       to,
       subject,
       text,
+      ...(html ? { html } : {}),
     });
     return { ok: true };
   } catch (err) {
