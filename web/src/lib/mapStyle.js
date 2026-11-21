@@ -4,8 +4,8 @@ import { API_BASE } from './api.js';
 const TILES = `${API_BASE}/tiles`;
 
 // build-turkey-tiles.sh icindeki TILE_MAXZOOM ile ayni olmali.
-// z15 tile'lar client tarafinda z16+ icin buyutulerek (overzoom) gosterilir.
-const SOURCE_MAXZOOM = 15;
+// z16 tilelar client tarafinda z17+ icin buyutulerek (overzoom) gosterilir.
+const SOURCE_MAXZOOM = 16;
 
 // Acik/koyu tema renk paletleri — harita gorunumu tema ile birlikte degisir.
 // Zengin OpenMapTiles semasi: arazi, POI, havalimani, sinirlar vb.
@@ -539,8 +539,8 @@ export function buildMapStyle(theme) {
         'source-layer': 'water_name',
         layout: {
           'text-field': ['get', 'name'],
-          // Italic yedegi: tileserver'da yoksa Regular'a duser (font kompozisyonu)
-          'text-font': ['Noto Sans Italic', 'Noto Sans Regular'],
+          // tileserver-gl-light yalniz Noto Sans Regular sunar; olmayan fontstack 400 doner
+          'text-font': ['Noto Sans Regular'],
           'text-size': ['interpolate', ['linear'], ['zoom'], 6, 10, 14, 14],
           'text-max-width': 7,
         },
@@ -622,7 +622,7 @@ export function buildMapStyle(theme) {
         filter: ['in', 'class', 'city', 'town'],
         layout: {
           'text-field': ['get', 'name'],
-          'text-font': ['Noto Sans Bold'],
+          'text-font': ['Noto Sans Regular'],
           'text-size': [
             'interpolate',
             ['linear'],
@@ -690,7 +690,7 @@ export function buildMapStyle(theme) {
         filter: ['==', 'class', 'country'],
         layout: {
           'text-field': ['get', 'name'],
-          'text-font': ['Noto Sans Bold'],
+          'text-font': ['Noto Sans Regular'],
           'text-size': ['interpolate', ['linear'], ['zoom'], 2, 10, 6, 18],
           'text-transform': 'uppercase',
           'text-letter-spacing': 0.1,
