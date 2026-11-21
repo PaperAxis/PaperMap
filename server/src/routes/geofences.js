@@ -89,8 +89,8 @@ router.post('/', requireAuth, async (req, res) => {
   ) {
     return res.status(400).json({ error: 'Geçersiz konum' });
   }
-  if (!Number.isFinite(r) || r < 50 || r > 50000) {
-    return res.status(400).json({ error: 'Yarıçap 50–50000 metre arasında olmalı' });
+  if (!Number.isFinite(r) || r < 50 || r > 5000) {
+    return res.status(400).json({ error: 'Yarıçap 50–5000 metre arasında olmalı' });
   }
   const g = await prisma.geofence.create({
     data: {
@@ -136,8 +136,8 @@ router.patch('/:id', requireAuth, async (req, res) => {
   }
   if (radius !== undefined) {
     const r = Number(radius);
-    if (!Number.isFinite(r) || r < 50 || r > 50000) {
-      return res.status(400).json({ error: 'Yarıçap 50–50000 metre arasında olmalı' });
+    if (!Number.isFinite(r) || r < 50 || r > 5000) {
+      return res.status(400).json({ error: 'Yarıçap 50–5000 metre arasında olmalı' });
     }
     data.radius = r;
   }
