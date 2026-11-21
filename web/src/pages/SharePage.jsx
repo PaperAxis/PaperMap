@@ -3,8 +3,17 @@ import { useParams } from 'react-router-dom';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { api } from '../lib/api.js';
-import { buildMapStyle, MAP_MAX_ZOOM } from '../lib/mapStyle.js';
-import { Map3DControl, MAX_PITCH, PITCH_3D, applyTerrain, load3DPref, save3DPref, set3D } from '../lib/map3d.js';
+import { buildMapStyle, MAP_MAX_ZOOM, resolveMapStyle } from '../lib/mapStyle.js';
+import {
+  Map3DControl,
+  MAX_PITCH,
+  PITCH_3D,
+  applyTerrain,
+  load3DPref,
+  loadMapStylePref,
+  save3DPref,
+  set3D,
+} from '../lib/map3d.js';
 import { timeAgo } from '../lib/time.js';
 
 const TURKEY_CENTER = [35.0, 39.0];
@@ -22,7 +31,8 @@ export default function SharePage() {
     let is3D = load3DPref();
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: buildMapStyle('light', { web: true }),
+      // Paylasim sayfasi acik temadadir; ziyaretcinin sectigi stil (or. Uydu) korunur
+      style: buildMapStyle(resolveMapStyle(loadMapStylePref(), 'light'), { web: true }),
       center: TURKEY_CENTER,
       zoom: 5,
       pitch: is3D ? PITCH_3D : 0,
@@ -30,6 +40,7 @@ export default function SharePage() {
       maxZoom: MAP_MAX_ZOOM,
       attributionControl: false,
     });
+    map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
     map.addControl(
       new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }),
       'top-right',

@@ -734,6 +734,100 @@ button.link-row {
   text-align: left;
 }
 
+.map-menu-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 6px;
+}
+
+.map-menu-heading {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 6px 10px 2px;
+}
+
+/* Harita stili secici */
+.map-style-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 4px 6px 6px;
+}
+
+.map-style-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  background: none;
+  color: var(--text);
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  padding: 5px 2px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.map-style-opt:hover {
+  background: var(--surface-2);
+}
+
+.map-style-opt.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--card));
+}
+
+.map-style-swatch {
+  width: 44px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background-size: cover;
+}
+
+.map-style-opt.active .map-style-swatch {
+  border-color: var(--accent);
+}
+
+/* Stil onizlemeleri: zemin + su + yol izlenimi */
+.swatch-light {
+  background:
+    linear-gradient(115deg, transparent 46%, #ffffff 46%, #ffffff 54%, transparent 54%),
+    linear-gradient(0deg, #a9c9e8 28%, transparent 28%),
+    #eef0f2;
+}
+.swatch-dark {
+  background:
+    linear-gradient(115deg, transparent 46%, #3b4150 46%, #3b4150 54%, transparent 54%),
+    linear-gradient(0deg, #0f1d2f 28%, transparent 28%),
+    #10131c;
+}
+.swatch-auto {
+  background:
+    linear-gradient(115deg, transparent 46%, #9aa3b5 46%, #9aa3b5 54%, transparent 54%),
+    linear-gradient(90deg, #eef0f2 50%, #10131c 50%);
+}
+.swatch-terrain {
+  background:
+    radial-gradient(circle at 70% 35%, #8a7356 0 14%, transparent 15%),
+    radial-gradient(ellipse at 30% 70%, #b3d19f 0 38%, transparent 40%),
+    linear-gradient(0deg, #94c0e6 22%, transparent 22%),
+    #f3efe4;
+}
+.swatch-satellite {
+  background:
+    linear-gradient(115deg, transparent 47%, rgba(255, 255, 255, 0.7) 47%, rgba(255, 255, 255, 0.7) 52%, transparent 52%),
+    radial-gradient(circle at 25% 30%, #6d7f4e 0 22%, transparent 24%),
+    radial-gradient(circle at 75% 70%, #8c7a5b 0 26%, transparent 28%),
+    linear-gradient(0deg, #1f4060 25%, transparent 25%),
+    #4a5a3a;
+}
+
 .map-menu-count {
   font-family: var(--font-mono);
   font-size: 12px;

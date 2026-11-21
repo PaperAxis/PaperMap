@@ -8,6 +8,12 @@ const TILES = `${API_BASE}/tiles`;
 // dis bir servise hic baglanmaz (kullanicinin baktigi bolge disari sizmaz).
 const TERRAIN = `${API_BASE}/terrain`;
 
+// Uydu goruntusu kutucuklari: web nginx /satellite/ -> Esri World Imagery.
+// DEM gibi sunucu uzerinden gecer ve onbellege alinir (bkz. web/nginx.conf).
+const SATELLITE = `${API_BASE}/satellite`;
+// Turkiye sehirlerinde goruntu z19'a kadar var; otesi buyutulerek gosterilir.
+const SATELLITE_MAXZOOM = 19;
+
 // build-turkey-tiles.sh icindeki TILE_MAXZOOM ile ayni olmali.
 // z16 tilelar client tarafinda z17+ icin buyutulerek (overzoom) gosterilir.
 const SOURCE_MAXZOOM = 16;
@@ -24,6 +30,24 @@ export const MAP_MAX_ZOOM = 22;
 
 // 3D arazi icin web'in kullandigi raster-dem kaynaginin adi (map.setTerrain).
 export const TERRAIN_SOURCE = 'terrain-dem';
+
+// Kullanicinin secebilecegi harita stilleri. "auto" uygulama temasini izler.
+export const MAP_STYLES = [
+  { id: 'auto', label: 'Otomatik', hint: 'Temaya uyar' },
+  { id: 'light', label: 'Açık', hint: 'Sade, aydınlık' },
+  { id: 'dark', label: 'Koyu', hint: 'Gece için' },
+  { id: 'terrain', label: 'Arazi', hint: 'Dağlar, orman' },
+  { id: 'satellite', label: 'Uydu', hint: 'Uydu görüntüsü' },
+];
+export const DEFAULT_MAP_STYLE = 'auto';
+
+// Secilen stil + uygulama temasi -> cizilecek stil varyanti.
+export function resolveMapStyle(styleId, appTheme) {
+  if (styleId === 'light' || styleId === 'dark' || styleId === 'terrain' || styleId === 'satellite') {
+    return styleId;
+  }
+  return appTheme === 'dark' ? 'dark' : 'light';
+}
 
 // Acik/koyu tema renk paletleri — harita gorunumu tema ile birlikte degisir.
 // Zengin OpenMapTiles semasi: arazi, POI, havalimani, sinirlar vb.
@@ -195,6 +219,67 @@ const PALETTES = {
     fog: '#10131c',
   },
 };
+
+// Arazi (topografik) stili: kagit tonlu zemin, doygun dogal renkler, belirgin
+// dag golgeleri ve sicak tonlu kabartma.
+PALETTES.terrain = {
+  ...PALETTES.light,
+  background: '#f3efe4',
+  landuse: '#ebe6da',
+  water: '#94c0e6',
+  waterInt: '#b6d3ec',
+  waterLine: '#7eaedb',
+  wood: '#b3d19f',
+  grass: '#d0e4bb',
+  farmland: '#ebe5c2',
+  sand: '#efdfb4',
+  rock: '#d9d0c2',
+  wetland: '#c3dccb',
+  park: '#c4dfb2',
+  hillShadow: '#4a3d2e',
+  hillHighlight: '#fffbef',
+  hillAccent: '#6b5843',
+  peak: '#6b4f2a',
+  parkText: '#3e6e35',
+  fog: '#f3efe4',
+  horizon: '#eef2f0',
+};
+
+// Uydu (hibrit) stili: goruntu ustunde beyaz etiketler, koyu hale, yari saydam
+// yollar. Zemin dolgulari cizilmez; renkleri goruntu verir.
+PALETTES.satellite = {
+  ...PALETTES.dark,
+  background: '#1f2a22',
+  motorway: '#ffd27a',
+  trunk: '#ffe2a6',
+  roadMajor: '#ffffff',
+  roadMinor: '#f2f2f2',
+  roadService: '#e6e6e6',
+  rail: '#e0e0e0',
+  railHatch: '#5a5a5a',
+  transit: '#b9a8ff',
+  ferry: '#bfe0ff',
+  boundary: '#f5f5f5',
+  boundaryDistrict: '#e6d9f2',
+  oneway: '#ffffff',
+  text: '#ffffff',
+  roadText: '#ffffff',
+  placeText: '#ffffff',
+  waterText: '#cfe8ff',
+  parkText: '#dff5d6',
+  poiText: '#ffffff',
+  textHalo: 'rgba(0, 0, 0, 0.78)',
+  peak: '#ffe9c4',
+  sky: '#8fb8e0',
+  horizon: '#d6e3ef',
+  fog: '#c9d6e2',
+};
+
+// Uydu stilinde cizilen katmanlar (geri kalani goruntunun ustunu kapatirdi).
+const SATELLITE_KEEP = new Set([
+  'background', 'road-ground', 'road-bridge', 'rail', 'transit', 'ferry', 'aerialway',
+  'boundary', 'boundary-district', 'poi', 'road-oneway',
+]);
 
 const FONT = ['Noto Sans Regular'];
 const OMT = { source: 'openmaptiles' };
@@ -415,15 +500,20 @@ const poiLayers = (p) => {
 /**
  * MapLibre stili uretir.
  *
- * @param {'light'|'dark'} theme
+ * @param {'light'|'dark'|'terrain'|'satellite'} theme  Stil varyanti
+ *   (bkz. resolveMapStyle). Native uygulamalar 'light' / 'dark' kullanir.
  * @param {object}  [opts]
  * @param {boolean} [opts.web=false]  Yalniz MapLibre GL JS'in destekledigi
  *   eklentiler: gokyuzu/sis ve 3D arazi icin ayri raster-dem kaynagi. Native
  *   uygulamalara aktarilan JSON'da (export-map-styles.mjs) kapali kalir.
  */
 export function buildMapStyle(theme, opts = {}) {
-  const p = PALETTES[theme === 'dark' ? 'dark' : 'light'];
+  const variant = PALETTES[theme] ? theme : 'light';
+  const p = PALETTES[variant];
+  const isDark = variant === 'dark';
   const roads = roadLayers(p);
+  // Kabartma golgesi vurgusu [z5, z11, z14, z16]
+  const hill = variant === 'terrain' ? [0.75, 0.7, 0.5, 0.25] : isDark ? [0.55, 0.5, 0.3, 0.12] : [0.5, 0.45, 0.3, 0.12];
 
   const demSource = {
     type: 'raster-dem',
@@ -443,7 +533,7 @@ export function buildMapStyle(theme, opts = {}) {
     light: {
       anchor: 'viewport',
       color: '#ffffff',
-      intensity: theme === 'dark' ? 0.25 : 0.4,
+      intensity: isDark ? 0.25 : 0.4,
       position: [1.3, 200, 35],
     },
     sources: {
@@ -453,7 +543,20 @@ export function buildMapStyle(theme, opts = {}) {
         tiles: [`${TILES}/data/v3/{z}/{x}/{y}.pbf`],
         minzoom: 0,
         maxzoom: SOURCE_MAXZOOM,
+        attribution: '© OpenMapTiles © OpenStreetMap katkıcıları',
       },
+      ...(variant === 'satellite'
+        ? {
+            satellite: {
+              type: 'raster',
+              tiles: [`${SATELLITE}/{z}/{x}/{y}.jpg`],
+              tileSize: 256,
+              minzoom: 0,
+              maxzoom: SATELLITE_MAXZOOM,
+              attribution: 'Görüntü: Esri, Maxar, Earthstar Geographics',
+            },
+          }
+        : {}),
       // Arazi golgesi (hillshade). 3D arazi web'de ayri kaynak kullanir.
       hillshade: demSource,
       ...(opts.web ? { [TERRAIN_SOURCE]: { ...demSource } } : {}),
@@ -540,10 +643,10 @@ export function buildMapStyle(theme, opts = {}) {
           'hillshade-illumination-anchor': 'map',
           'hillshade-exaggeration': [
             'interpolate', ['linear'], ['zoom'],
-            5, theme === 'dark' ? 0.55 : 0.5,
-            11, theme === 'dark' ? 0.5 : 0.45,
-            14, 0.3,
-            16, 0.12,
+            5, hill[0],
+            11, hill[1],
+            14, hill[2],
+            16, hill[3],
             17, 0,
           ],
         },
@@ -1125,5 +1228,43 @@ export function buildMapStyle(theme, opts = {}) {
       },
     ],
   };
+  if (variant === 'satellite') toSatellite(style);
   return style;
+}
+
+// Standart stili uydu (hibrit) stiline donusturur: goruntu katmani zeminin
+// hemen ustune girer, dolgular atilir, yollar yari saydam olur.
+function toSatellite(style) {
+  const keep = (l) => l.type === 'symbol' || SATELLITE_KEEP.has(l.id);
+  const layers = style.layers.filter(keep).map((l) => {
+    if (l.type !== 'line' || !l.id.startsWith('road-')) return l;
+    return {
+      ...l,
+      paint: {
+        ...l.paint,
+        'line-opacity': ['interpolate', ['linear'], ['zoom'], 6, 0.35, 12, 0.5, 16, 0.6, 19, 0.35],
+        'line-width': ['interpolate', ['exponential', 1.4], ['zoom'], 5, 0.6, 10, 1.2, 14, 2.4, 18, 6, 20, 10],
+      },
+    };
+  });
+  layers.splice(1, 0, {
+    id: 'satellite',
+    type: 'raster',
+    source: 'satellite',
+    paint: {
+      'raster-fade-duration': 150,
+      'raster-saturation': 0.05,
+      'raster-contrast': 0.05,
+    },
+  });
+  style.layers = layers;
+  delete style.sources.hillshade;
+  // Yer adlari goruntu ustunde okunsun diye biraz daha kalin hale
+  for (const l of style.layers) {
+    if (l.type === 'symbol' && l.paint && 'text-halo-width' in l.paint) {
+      l.paint['text-halo-width'] = Math.max(l.paint['text-halo-width'], 1.6);
+      l.paint['text-halo-blur'] = 0.4;
+    }
+    if (l.id === 'poi') l.paint['circle-stroke-color'] = '#ffffff';
+  }
 }

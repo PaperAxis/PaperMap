@@ -179,6 +179,27 @@ altında 180 gün saklar (en fazla 6 GB). Böylece kullanıcının baktığı b�
 tarafa gitmez ve her kutucuk yalnız bir kez indirilir. Web konteyneri yeniden
 oluşturulursa önbellek boşalır, ilk bakışlarda yeniden dolar.
 
+**Harita stilleri.** Katmanlar menüsünün (sağ üstteki katman simgesi) altındaki
+**Harita stili** bölümünden seçilir; seçim cihazda saklanır:
+
+| Stil | Açıklama |
+|------|----------|
+| Otomatik | Uygulama temasını izler (açık/koyu) — varsayılan |
+| Açık / Koyu | Temadan bağımsız sabit stil |
+| Arazi | Kâğıt tonlu zemin, doygun orman/tarla renkleri, belirgin dağ gölgeleri |
+| Uydu | Uydu görüntüsü + yarı saydam yollar ve beyaz etiketler (hibrit) |
+
+Uydu görüntüsü [Esri World Imagery](https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9)
+kaynağından gelir ve DEM gibi web nginx'i üzerinden (`/satellite/`) çekilip
+`/var/cache/nginx/satellite` altında önbelleğe alınır (30 gün, en fazla 20 GB).
+**Lisans notu:** Esri görüntüsü atıf zorunluluğuyla sunulur ve ticari / yoğun
+kullanım için Esri (ArcGIS Location Platform) hesabı gerektirebilir. Başka bir
+sağlayıcıya (ör. MapTiler Satellite) geçmek için `web/nginx.conf` içindeki
+`$papermap_sat` ve `rewrite` satırlarını değiştirmek yeterlidir; istemci kodu
+aynı kalır. Kaynak atıfları haritanın sol altındaki "i" düğmesinde gösterilir.
+
+Native uygulamalar şimdilik açık/koyu stilleri kullanır (temaya göre).
+
 Stil `mapStyle.js` içinde değişirse native stillerini yeniden üretin:
 
 ```bash

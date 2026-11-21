@@ -1,9 +1,10 @@
-import { TERRAIN_SOURCE } from './mapStyle.js';
+import { DEFAULT_MAP_STYLE, MAP_STYLES, TERRAIN_SOURCE } from './mapStyle.js';
 
 // 3B harita gorunumu: egik kamera (pitch), gercek arazi yuksekligi (terrain) ve
 // 3B binalar. Tercih cihaz basina saklanir; varsayilan 3B'dir.
 
 const PREF_KEY = 'papermap.map3d';
+const STYLE_PREF_KEY = 'papermap.mapStyle';
 
 // 3B'ye geciste kameranin egimi (derece). 0 = tepeden.
 export const PITCH_3D = 50;
@@ -26,6 +27,24 @@ export function save3DPref(on) {
     localStorage.setItem(PREF_KEY, on ? '1' : '0');
   } catch {
     /* gizli sekme vb. — tercih yalniz bu oturumda gecerli */
+  }
+}
+
+// Secilen harita stili (Otomatik / Acik / Koyu / Arazi / Uydu), cihaz basina.
+export function loadMapStylePref() {
+  try {
+    const v = localStorage.getItem(STYLE_PREF_KEY);
+    return MAP_STYLES.some((s) => s.id === v) ? v : DEFAULT_MAP_STYLE;
+  } catch {
+    return DEFAULT_MAP_STYLE;
+  }
+}
+
+export function saveMapStylePref(id) {
+  try {
+    localStorage.setItem(STYLE_PREF_KEY, id);
+  } catch {
+    /* tercih yalniz bu oturumda gecerli */
   }
 }
 
