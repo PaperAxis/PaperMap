@@ -176,6 +176,32 @@ private fun StyleSwatch(choice: MapStyleChoice, border: Color) {
     }
 }
 
+/** Camera tilt (degrees) the 3D button switches to; the map's tilt gesture goes up to 60. */
+const val TILT_3D = 55.0
+
+/**
+ * 3D / 2D toggle next to the compass. The map can also be tilted with two
+ * fingers dragged up/down together and rotated with a two-finger twist; this
+ * button makes the perspective discoverable and reachable with one tap.
+ */
+@Composable
+fun TiltButton(tilt: Double, onClick: () -> Unit) {
+    val active = tilt > 5.0
+    SmallFloatingActionButton(
+        onClick = onClick,
+        modifier = Modifier.semantics {
+            contentDescription = if (active) "2B görünüme geç" else "3B görünüme geç"
+        },
+    ) {
+        Text(
+            if (active) "3D" else "2D",
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.ExtraBold,
+            color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+        )
+    }
+}
+
 /**
  * Compass next to the style picker: the needle points north as the map turns.
  * Tapping it turns the map back to north-up and flat (as on the web).

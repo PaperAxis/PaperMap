@@ -122,7 +122,8 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.7.0")
 
     implementation("com.google.android.gms:play-services-location:21.3.0")
-    implementation("org.maplibre.gl:android-sdk:11.5.2")
+    // 11.8+: pmtiles://https://... vektor kaynagi (tiles.paperaxis.com)
+    implementation("org.maplibre.gl:android-sdk:11.13.5")
     implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
     implementation("com.google.firebase:firebase-messaging")
 

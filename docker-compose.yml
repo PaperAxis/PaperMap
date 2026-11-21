@@ -63,6 +63,8 @@ services:
       context: ./web
       args:
         VITE_API_URL: ${VITE_API_URL}
+        VITE_TILES_PMTILES: ${VITE_TILES_PMTILES:-}
+        VITE_GLYPHS_URL: ${VITE_GLYPHS_URL:-}
     restart: unless-stopped
     depends_on:
       server:

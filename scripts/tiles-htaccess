@@ -1,0 +1,52 @@
+# PaperMap harita dosyalari (tiles.paperaxis.com) — scripts/publish-world-tiles.sh kurar.
+# planet.pmtiles: tum dunya vektor haritasi (HTTP Range ile parca parca okunur)
+# fonts/<font>/<aralik>.pbf: harita yazilarinin glifleri
+
+Options -Indexes
+
+# Web uygulamasi baska bir alan adindan (maps.paperaxis.com) okur: CORS acik.
+# Native uygulamalar Origin gondermez; basliklar onlari etkilemez.
+<IfModule mod_headers.c>
+  Header always set Access-Control-Allow-Origin "*"
+  Header always set Access-Control-Allow-Methods "GET, HEAD, OPTIONS"
+  Header always set Access-Control-Allow-Headers "Range, If-Match, If-None-Match"
+  Header always set Access-Control-Expose-Headers "ETag, Content-Range, Content-Length, Accept-Ranges"
+</IfModule>
+
+AddType application/vnd.pmtiles .pmtiles
+AddType application/x-protobuf .pbf
+
+# PMTiles Range istegiyle okunur; sunucu yaniti sikistirirsa (gzip/brotli)
+# bayt araliklari bozulur ve harita bos kalir. Kutucuklar zaten sikistirilmis.
+<IfModule mod_deflate.c>
+  SetEnvIfNoCase Request_URI "\.(pmtiles|pbf)$" no-gzip dont-vary
+</IfModule>
+<IfModule mod_brotli.c>
+  SetEnvIfNoCase Request_URI "\.(pmtiles|pbf)$" no-brotli
+</IfModule>
+
+<IfModule mod_headers.c>
+  <FilesMatch "\.pmtiles$">
+    # Haftalik guncellenir; istemci ETag ile degisikligi fark eder
+    Header set Cache-Control "public, max-age=3600"
+  </FilesMatch>
+  <FilesMatch "\.pbf$">
+    Header set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  # LiteSpeed: sikistirmayi .pmtiles/.pbf icin kapat
+  RewriteRule \.(pmtiles|pbf)$ - [E=no-gzip:1]
+
+  # CORS on kontrolu (OPTIONS) bos yanitla doner
+  RewriteCond %{REQUEST_METHOD} =OPTIONS
+  RewriteRule ^ - [R=204,L]
+
+  # Olmayan bir font istenirse (eski surumlerin Bold/Italic disindaki ya da
+  # "Font A,Font B" bicimli istekleri) Noto Sans Regular verilir; aksi halde
+  # native MapLibre o kutucugun yazilarini hic cizmez.
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^fonts/[^/]+/([0-9]+-[0-9]+\.pbf)$ "fonts/Noto Sans Regular/$1" [L]
+</IfModule>

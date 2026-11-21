@@ -236,6 +236,58 @@ docker compose restart tiles
 - `127.0.0.1:8080` → web arayüzü (**tek giriş noktası**)
 - `127.0.0.1:4015` → backend (yalnızca hata ayıklama için)
 
+### Tüm dünya haritası (statik hosting, PMTiles)
+
+Vektör harita, VDS'teki Türkiye tile sunucusu yerine **tüm dünyayı** kapsayan tek
+bir [PMTiles](https://docs.protomaps.com/pmtiles/) dosyasından da okunabilir. Dosya
+sıradan bir paylaşımlı hostingde (cPanel, Apache/LiteSpeed) durur; sunucuda program
+çalışmaz, harita dosyadan yalnız gereken kutucuğu HTTP Range ile ister.
+
+- **Veri:** [OpenFreeMap](https://openfreemap.org) planet (OpenMapTiles şeması,
+  stilimizle birebir uyumlu, haftalık güncel, ~85 GB). Atıf haritada gösterilir.
+- **Adres:** `https://tiles.paperaxis.com/planet.pmtiles` ve `.../fonts/`.
+
+**1) Hosting'i hazırlayın.** cPanel'de `tiles.paperaxis.com` alt alan adını açın
+(belge kökü ör. `~/tiles.paperaxis.com`) ve SSL'i (AutoSSL / Let's Encrypt) etkinleştirin.
+
+**2) Veriyi kurun** — `scripts/publish-world-tiles.sh`. MBTiles→PMTiles dönüşümü
+birkaç GB RAM ve uzun CPU süresi ister; paylaşımlı hostingler bunu sınırlayabildiği
+için **dönüşümü VDS'te yapıp hostinge yüklemek önerilir**:
+
+```bash
+# VDS'te (bir kez: ssh-copy-id kullanici@hosting)
+TARGET=kullanici@hosting:tiles.paperaxis.com ./scripts/publish-world-tiles.sh
+# ya da doğrudan hosting'de (SSH ile; oturum kopmasın diye nohup)
+nohup ./publish-world-tiles.sh > tiles.log 2>&1 &
+```
+
+Betik ~170 GB geçici alan kullanır; indirme kesilirse yeniden çalıştırınca kaldığı
+yerden devam eder. Fontları (Noto Sans) ve `.htaccess`'i (`scripts/tiles-htaccess`:
+CORS, `.pmtiles` için sıkıştırmanın kapatılması, önbellek, eksik font → Regular)
+de kurar. Yeni dosya hazır olunca eskisinin yerine tek adımda geçer. Kontrol:
+
+```bash
+curl -sI -H 'Range: bytes=0-126' https://tiles.paperaxis.com/planet.pmtiles   # 206 + Access-Control-Allow-Origin
+```
+
+**3) Uygulamaları geçirin.** `.env`'e ekleyip web'i yeniden derleyin
+(`docker compose up -d --build web`):
+
+```bash
+VITE_TILES_PMTILES=https://tiles.paperaxis.com/planet.pmtiles
+```
+
+Native stilleri PMTiles'a çevirip yeni sürüm çıkarın (Android MapLibre 11.8+,
+iOS 6.10+ gerekir; projede mevcut):
+
+```bash
+node apps/scripts/export-map-styles.mjs --pmtiles https://tiles.paperaxis.com/planet.pmtiles
+```
+
+Eski uygulama sürümleri hâlâ VDS'teki `/tiles/`'ı kullandığından `tiles` servisini
+kullanıcılar güncelleyene kadar açık tutun. Güncelleme için betiği haftada bir
+çalıştırmak yeterlidir (cron).
+
 ### Reverse proxy yönlendirmesi
 
 `web` konteyneri tek giriş noktasıdır: `/api/` ve `/socket.io/` isteklerini

@@ -144,6 +144,8 @@ final class SymbolAnnotationView: MLNAnnotationView {
 }
 
 struct MapLibreView: UIViewRepresentable {
+    /// Camera pitch (degrees) the 3D button switches to; the tilt gesture goes up to 60.
+    static let tilt3D: CGFloat = 55
     let peers: [Peer]
     var geofences: [Geofence] = []
     var places: [SavedPlace] = []
@@ -157,6 +159,10 @@ struct MapLibreView: UIViewRepresentable {
     var resetNorthRequest: Int = 0
     /// Reports the map's bearing in degrees as it turns (for CompassButton).
     var onBearingChange: ((Double) -> Void)? = nil
+    /// Increment to toggle the perspective: flat -> tilted (TiltButton), tilted -> flat.
+    var tiltToggleRequest: Int = 0
+    /// Reports the camera pitch in degrees as it changes (for TiltButton).
+    var onPitchChange: ((Double) -> Void)? = nil
     /// Increment to fly to the user's own location.
     let recenterRequest: Int
     /// One-off camera move (peer, place, meeting, SOS, chat location).
@@ -175,6 +181,10 @@ struct MapLibreView: UIViewRepresentable {
         // The built-in compass is replaced by CompassButton next to the style picker.
         map.compassView.compassVisibility = .hidden
         map.logoView.isHidden = true
+        // Perspective gestures: two fingers dragged up/down tilt the camera
+        // (3D buildings, terrain shading), a two-finger twist rotates.
+        map.isPitchEnabled = true
+        map.isRotateEnabled = true
         // z16 tiles are overzoomed up to z22 (web/src/lib/mapStyle.js MAP_MAX_ZOOM).
         map.maximumZoomLevel = 22
         map.attributionButtonPosition = .bottomRight
@@ -199,6 +209,7 @@ struct MapLibreView: UIViewRepresentable {
         c.onTapMap = onTapMap
         c.placing = placing
         c.onBearingChange = onBearingChange
+        c.onPitchChange = onPitchChange
         if c.styleVariant != styleVariant {
             c.styleVariant = styleVariant
             map.styleURL = Config.mapStyleURL(variant: styleVariant)
@@ -209,6 +220,12 @@ struct MapLibreView: UIViewRepresentable {
             camera.heading = 0
             camera.pitch = 0
             map.setCamera(camera, animated: true)
+        }
+        if tiltToggleRequest != c.lastTiltToggle {
+            c.lastTiltToggle = tiltToggleRequest
+            let camera = map.camera
+            camera.pitch = camera.pitch > 5 ? 0 : MapLibreView.tilt3D
+            map.setCamera(camera, withDuration: 0.6, animationTimingFunction: nil)
         }
         c.sync(peers: peers, on: map)
         c.sync(geofences: geofences, on: map)
@@ -240,7 +257,10 @@ struct MapLibreView: UIViewRepresentable {
         var styleVariant = ""
         var onBearingChange: ((Double) -> Void)?
         var lastResetNorth = 0
+        var onPitchChange: ((Double) -> Void)?
+        var lastTiltToggle = 0
         private var lastBearing = 0.0
+        private var lastPitch = 0.0
         var lastRecenter = 0
         var lastFocusId: UUID?
         var didCenterOnUser = false
@@ -443,12 +463,18 @@ struct MapLibreView: UIViewRepresentable {
             reportBearing(mapView)
         }
 
-        /// Sends the bearing to SwiftUI only when it really moved (avoids redraw storms).
+        /// Sends bearing and pitch to SwiftUI only when they really moved (avoids redraw storms).
         private func reportBearing(_ mapView: MLNMapView) {
             let bearing = mapView.direction
-            guard abs(bearing - lastBearing) >= 0.5 else { return }
-            lastBearing = bearing
-            onBearingChange?(bearing)
+            if abs(bearing - lastBearing) >= 0.5 {
+                lastBearing = bearing
+                onBearingChange?(bearing)
+            }
+            let pitch = Double(mapView.camera.pitch)
+            if abs(pitch - lastPitch) >= 0.5 {
+                lastPitch = pitch
+                onPitchChange?(pitch)
+            }
         }
 
         func mapView(_ mapView: MLNMapView, didUpdate userLocation: MLNUserLocation?) {

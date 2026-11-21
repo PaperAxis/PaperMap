@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { api } from '../lib/api.js';
+import '../lib/mapSources.js';
 import { buildMapStyle, MAP_MAX_ZOOM, resolveMapStyle } from '../lib/mapStyle.js';
 import {
   Map3DControl,

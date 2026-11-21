@@ -9,7 +9,8 @@ options:
 packages:
   MapLibre:
     url: https://github.com/maplibre/maplibre-gl-native-distribution
-    from: 6.8.0
+    # 6.10+: pmtiles://https://... vektor kaynagi (tiles.paperaxis.com)
+    from: 6.10.0
   SocketIO:
     url: https://github.com/socketio/socket.io-client-swift
     from: 16.1.1

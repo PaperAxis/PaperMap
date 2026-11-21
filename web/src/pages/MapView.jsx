@@ -21,6 +21,7 @@ import { watchPosition } from '../lib/geo.js';
 import { getBattery, batteryLabel } from '../lib/battery.js';
 import { timeAgo } from '../lib/time.js';
 import { useAuth } from '../lib/auth.jsx';
+import '../lib/mapSources.js';
 import { buildMapStyle, MAP_MAX_ZOOM, MAP_STYLES, resolveMapStyle } from '../lib/mapStyle.js';
 import {
   Map3DControl,
