@@ -899,6 +899,18 @@ button.link-row {
   filter: invert(1);
 }
 
+/* 2D / 3D gorunum dugmesi (navigasyon kontrolunun altinda) */
+.maplibregl-ctrl button.map-3d-toggle {
+  font-family: var(--font-family);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+.maplibregl-ctrl button.map-3d-toggle[aria-pressed='true'] {
+  color: var(--accent, #315bdb);
+}
+
 .map-avatar {
   width: 36px;
   height: 36px;

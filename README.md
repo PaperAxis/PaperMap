@@ -158,6 +158,33 @@ POI'ler, ev numaraları, havalimanları, il/ilçe sınırları, tarım/kumsal/su
 alanlar, patika ve tali yollar dahil tüm OpenMapTiles katmanları çizilir —
 renkler tema ile birlikte değişir.
 
+**3B harita.** Harita varsayılan olarak 3B açılır (sağ üstteki **3D / 2D**
+düğmesiyle değiştirilir; tercih cihazda saklanır):
+
+- **3B binalar** — OSM'deki yükseklik/kat sayısı (`render_height`) ile z14+
+  yükselir; yüksek binalar hafif koyu tonda çizilir. Native uygulamalarda harita
+  iki parmakla eğildiğinde aynı binalar görünür.
+- **Gerçek arazi** (yalnız web) — dağlar ve vadiler yükseklik verisiyle
+  kabartılır (1,3× vurgu), ufukta gökyüzü ve sis görünür.
+- **Kabartma gölgesi** (hillshade) — web ve native; yakınlaştıkça yumuşar.
+- Ek detaylar: otoyol / devlet yolu / tali yol hiyerarşisi, köprü ve tünel
+  ayrımı, tek yön okları (z16+), otoyol numaraları (D-100, O-4…), metro/tramvay,
+  feribot, teleferik, iskele, nehir ve park adları, IATA kodlu havalimanları ve
+  renk kategorisi genişletilmiş POI'ler.
+
+Yükseklik verisi AWS Open Data'daki [Terrain Tiles](https://registry.opendata.aws/terrain-tiles/)
+(Mapzen, terrarium PNG, z0-15) setidir. Tarayıcı bu servise **doğrudan bağlanmaz**:
+web nginx'i `/terrain/` isteklerini sunucudan yapar ve `/var/cache/nginx/terrain`
+altında 180 gün saklar (en fazla 6 GB). Böylece kullanıcının baktığı bölge üçüncü
+tarafa gitmez ve her kutucuk yalnız bir kez indirilir. Web konteyneri yeniden
+oluşturulursa önbellek boşalır, ilk bakışlarda yeniden dolar.
+
+Stil `mapStyle.js` içinde değişirse native stillerini yeniden üretin:
+
+```bash
+node apps/scripts/export-map-styles.mjs
+```
+
 **Detay seviyesi (maxzoom).** Betik varsayılan olarak **z15** üretir (planetiler'in
 kendi varsayılanı 14). z15; bina, POI ve sokak geometrisini çok daha ayrıntılı
 saklar, MapLibre bunları z16+ için büyüterek (overzoom) gösterir. Bedeli:

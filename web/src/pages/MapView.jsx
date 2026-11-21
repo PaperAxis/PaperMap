@@ -22,6 +22,15 @@ import { getBattery, batteryLabel } from '../lib/battery.js';
 import { timeAgo } from '../lib/time.js';
 import { useAuth } from '../lib/auth.jsx';
 import { buildMapStyle, MAP_MAX_ZOOM } from '../lib/mapStyle.js';
+import {
+  Map3DControl,
+  MAX_PITCH,
+  PITCH_3D,
+  applyTerrain,
+  load3DPref,
+  save3DPref,
+  set3D,
+} from '../lib/map3d.js';
 import { geofencesToGeoJSON, historyToGeoJSON } from '../lib/geojson.js';
 import PeerList from '../components/PeerList.jsx';
 import GeofencePanel from '../components/GeofencePanel.jsx';
@@ -72,6 +81,7 @@ export default function MapView() {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const appliedThemeRef = useRef(null);
+  const is3DRef = useRef(true);
   const peerMarkersRef = useRef({});
   const ownMarkerRef = useRef(null);
   const geofencesRef = useRef([]);
@@ -186,15 +196,36 @@ export default function MapView() {
   useEffect(() => {
     const theme = currentMapTheme();
     appliedThemeRef.current = theme;
+    const is3D = load3DPref();
+    is3DRef.current = is3D;
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: buildMapStyle(theme),
+      style: buildMapStyle(theme, { web: true }),
       center: TURKEY_CENTER,
       zoom: 5,
+      pitch: is3D ? PITCH_3D : 0,
+      maxPitch: MAX_PITCH,
       maxZoom: MAP_MAX_ZOOM,
       attributionControl: false,
     });
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+    // Pusula: harita dondurulup egildiginde gorunur, tiklayinca kuzeye/duz bakisa doner
+    map.addControl(
+      new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }),
+      'top-right',
+    );
+    map.addControl(
+      new Map3DControl({
+        enabled: is3D,
+        onToggle: (on) => {
+          is3DRef.current = on;
+          save3DPref(on);
+          set3D(map, on);
+        },
+      }),
+      'top-right',
+    );
+    // Tema degisiminde setStyle araziyi sifirlar; her stil yuklemesinde geri ac
+    map.on('style.load', () => applyTerrain(map, is3DRef.current));
     map.on('style.load', syncGeofenceLayers);
     map.on('style.load', syncHistoryLayers);
     mapRef.current = map;
@@ -229,7 +260,7 @@ export default function MapView() {
     const map = mapRef.current;
     if (!map || appliedThemeRef.current === mapTheme) return;
     appliedThemeRef.current = mapTheme;
-    map.setStyle(buildMapStyle(mapTheme));
+    map.setStyle(buildMapStyle(mapTheme, { web: true }));
   }, [mapTheme]);
 
   // Geofence'leri yukle

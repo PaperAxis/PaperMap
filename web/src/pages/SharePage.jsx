@@ -3,7 +3,8 @@ import { useParams } from 'react-router-dom';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { api } from '../lib/api.js';
-import { buildMapStyle } from '../lib/mapStyle.js';
+import { buildMapStyle, MAP_MAX_ZOOM } from '../lib/mapStyle.js';
+import { Map3DControl, MAX_PITCH, PITCH_3D, applyTerrain, load3DPref, save3DPref, set3D } from '../lib/map3d.js';
 import { timeAgo } from '../lib/time.js';
 
 const TURKEY_CENTER = [35.0, 39.0];
@@ -18,14 +19,33 @@ export default function SharePage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    let is3D = load3DPref();
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: buildMapStyle('light'),
+      style: buildMapStyle('light', { web: true }),
       center: TURKEY_CENTER,
       zoom: 5,
+      pitch: is3D ? PITCH_3D : 0,
+      maxPitch: MAX_PITCH,
+      maxZoom: MAP_MAX_ZOOM,
       attributionControl: false,
     });
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+    map.addControl(
+      new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }),
+      'top-right',
+    );
+    map.addControl(
+      new Map3DControl({
+        enabled: is3D,
+        onToggle: (on) => {
+          is3D = on;
+          save3DPref(on);
+          set3D(map, on);
+        },
+      }),
+      'top-right',
+    );
+    map.on('style.load', () => applyTerrain(map, is3D));
     mapRef.current = map;
     return () => {
       map.remove();
