@@ -11,8 +11,13 @@ const TERRAIN = `${API_BASE}/terrain`;
 // Uydu goruntusu kutucuklari: web nginx /satellite/ -> Esri World Imagery.
 // DEM gibi sunucu uzerinden gecer ve onbellege alinir (bkz. web/nginx.conf).
 const SATELLITE = `${API_BASE}/satellite`;
-// Turkiye sehirlerinde goruntu z19'a kadar var; otesi buyutulerek gosterilir.
-const SATELLITE_MAXZOOM = 19;
+// Esri goruntusu Turkiye'nin her yerinde z17'ye kadar guvenilir; bazi sehirlerde
+// z18-19 da var ama kirsalda yok. Olmayan seviyede Esri bos kutucuk yerine uzerinde
+// "Map data not yet available" yazan bir gorsel (HTTP 200) dondurur ve harita
+// gibi cizilirdi. Bu yuzden z17'de durulur, otesi buyutulerek (overzoom) gosterilir.
+// Not: yuksek DPI'li ekranlarda MapLibre raster kutucuklari bir seviye yukaridan
+// ister; sinira telefonda daha erken ulasilir.
+const SATELLITE_MAXZOOM = 17;
 
 // build-turkey-tiles.sh icindeki TILE_MAXZOOM ile ayni olmali.
 // z16 tilelar client tarafinda z17+ icin buyutulerek (overzoom) gosterilir.
