@@ -43,6 +43,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -84,6 +85,7 @@ import com.paperaxis.papermap.ui.theme.LocalDarkTheme
 import java.time.Instant
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.geometry.LatLngBounds
@@ -95,8 +97,10 @@ import org.maplibre.geojson.Feature
 import org.maplibre.geojson.FeatureCollection
 import org.maplibre.geojson.Point
 
-private fun loadStyleJson(context: Context, dark: Boolean): String =
-    context.assets.open(if (dark) "map-style-dark.json" else "map-style-light.json")
+/** Bundled style for a variant (light, dark, terrain, night, satellite); see apps/shared. */
+private fun loadStyleJson(context: Context, variant: String): String =
+    runCatching { context.assets.open("map-style-$variant.json") }
+        .getOrElse { context.assets.open("map-style-light.json") }
         .bufferedReader().use { it.readText() }
 
 private enum class Panel { People, Geofences, Places, Meetings }
@@ -152,7 +156,9 @@ fun MapScreen(vm: AppViewModel, user: User, mapVm: MapViewModel = viewModel()) {
 
     var map by remember { mutableStateOf<MapLibreMap?>(null) }
     var style by remember { mutableStateOf<Style?>(null) }
-    var styleDark by remember { mutableStateOf<Boolean?>(null) }
+    var styleVariant by remember { mutableStateOf<String?>(null) }
+    var styleChoice by remember { mutableStateOf(loadMapStyleChoice(context)) }
+    var bearing by remember { mutableDoubleStateOf(0.0) }
     var selection by remember { mutableStateOf<Selection?>(null) }
     var panel by remember { mutableStateOf<Panel?>(null) }
     var layersMenu by remember { mutableStateOf(false) }
@@ -277,16 +283,18 @@ fun MapScreen(vm: AppViewModel, user: User, mapVm: MapViewModel = viewModel()) {
         }
     }
 
-    // Load (or reload, when the theme flips) the map style with every overlay.
-    LaunchedEffect(map, dark) {
+    // Load (or reload, when the theme or the chosen map style changes) the map
+    // style with every overlay.
+    val variant = styleChoice.variant(dark)
+    LaunchedEffect(map, variant) {
         val m = map ?: return@LaunchedEffect
-        if (styleDark == dark) return@LaunchedEffect
-        styleDark = dark
+        if (styleVariant == variant) return@LaunchedEffect
+        styleVariant = variant
         style = null
         iconKeys.clear()
         val accentHex = String.format("#%06X", 0xFFFFFF and accent.toArgb())
-        m.setStyle(Style.Builder().fromJson(loadStyleJson(context, dark))) { s ->
-            addOverlayLayers(s, dark, accentHex)
+        m.setStyle(Style.Builder().fromJson(loadStyleJson(context, variant))) { s ->
+            addOverlayLayers(s, isDarkVariant(variant), accentHex)
             style = s
         }
     }
@@ -431,13 +439,16 @@ fun MapScreen(vm: AppViewModel, user: User, mapVm: MapViewModel = viewModel()) {
             factory = {
                 mapView.apply {
                     getMapAsync { m ->
-                        m.uiSettings.isCompassEnabled = true
+                        // Built-in compass is replaced by CompassButton (bottom-left, next to the style picker).
+                        m.uiSettings.isCompassEnabled = false
                         m.uiSettings.isAttributionEnabled = true
                         m.uiSettings.isLogoEnabled = false
                         // z16 tile'lari z22'ye kadar buyutulur (web/src/lib/mapStyle.js MAP_MAX_ZOOM).
                         m.setMaxZoomPreference(22.0)
                         m.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(39.0, 35.0), 5.0))
                         m.addOnMapClickListener { onMapClick(it) }
+                        m.addOnCameraMoveListener { bearing = m.cameraPosition.bearing }
+                        m.addOnCameraIdleListener { bearing = m.cameraPosition.bearing }
                         map = m
                     }
                 }
@@ -514,14 +525,33 @@ fun MapScreen(vm: AppViewModel, user: User, mapVm: MapViewModel = viewModel()) {
             }
         }
 
-        ExtendedFloatingActionButton(
-            onClick = { sosConfirm = true },
-            containerColor = SosRed,
-            contentColor = Color.White,
-            icon = { AppIcon(Lucide.TriangleAlert, contentDescription = null) },
-            text = { Text("SOS") },
+        // Bottom-left: map style picker and compass, right above the SOS button.
+        Column(
             modifier = Modifier.align(Alignment.BottomStart).padding(16.dp),
-        )
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                MapStylePicker(styleChoice) { choice ->
+                    styleChoice = choice
+                    saveMapStyleChoice(context, choice)
+                }
+                CompassButton(bearing) {
+                    val m = map ?: return@CompassButton
+                    m.animateCamera(
+                        CameraUpdateFactory.newCameraPosition(
+                            CameraPosition.Builder(m.cameraPosition).bearing(0.0).tilt(0.0).build(),
+                        ),
+                    )
+                }
+            }
+            ExtendedFloatingActionButton(
+                onClick = { sosConfirm = true },
+                containerColor = SosRed,
+                contentColor = Color.White,
+                icon = { AppIcon(Lucide.TriangleAlert, contentDescription = null) },
+                text = { Text("SOS") },
+            )
+        }
 
         Column(
             modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),

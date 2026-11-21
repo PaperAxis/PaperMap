@@ -819,6 +819,12 @@ button.link-row {
     linear-gradient(0deg, #94c0e6 22%, transparent 22%),
     #f3efe4;
 }
+.swatch-night {
+  background:
+    linear-gradient(115deg, transparent 44%, #e8a33d 44%, #e8a33d 52%, transparent 52%),
+    linear-gradient(25deg, transparent 60%, #3d4456 60%, #3d4456 65%, transparent 65%),
+    #07090e;
+}
 .swatch-satellite {
   background:
     linear-gradient(115deg, transparent 47%, rgba(255, 255, 255, 0.7) 47%, rgba(255, 255, 255, 0.7) 52%, transparent 52%),

@@ -25,7 +25,9 @@ enum Config {
         return URL(string: apiBase.absoluteString + (path.hasPrefix("/") ? path : "/" + path))
     }
 
-    static func mapStyleURL(dark: Bool) -> URL? {
-        Bundle.main.url(forResource: dark ? "map-style-dark" : "map-style-light", withExtension: "json")
+    /// Bundled style for a variant (light, dark, terrain, night, satellite); see apps/shared.
+    static func mapStyleURL(variant: String) -> URL? {
+        Bundle.main.url(forResource: "map-style-\(variant)", withExtension: "json")
+            ?? Bundle.main.url(forResource: "map-style-light", withExtension: "json")
     }
 }

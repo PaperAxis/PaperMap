@@ -37,15 +37,18 @@ export const MAP_STYLES = [
   { id: 'light', label: 'Açık', hint: 'Sade, aydınlık' },
   { id: 'dark', label: 'Koyu', hint: 'Gece için' },
   { id: 'terrain', label: 'Arazi', hint: 'Dağlar, orman' },
+  { id: 'night', label: 'Gece', hint: 'Gece navigasyonu: göz yormayan, yollar öne çıkar' },
   { id: 'satellite', label: 'Uydu', hint: 'Uydu görüntüsü' },
 ];
 export const DEFAULT_MAP_STYLE = 'auto';
 
+// Cizilebilen stil varyantlari ("auto" bunlardan birine cozulur). Native
+// uygulamalara her biri apps/shared/map-style-<varyant>.json olarak aktarilir.
+export const STYLE_VARIANTS = ['light', 'dark', 'terrain', 'night', 'satellite'];
+
 // Secilen stil + uygulama temasi -> cizilecek stil varyanti.
 export function resolveMapStyle(styleId, appTheme) {
-  if (styleId === 'light' || styleId === 'dark' || styleId === 'terrain' || styleId === 'satellite') {
-    return styleId;
-  }
+  if (STYLE_VARIANTS.includes(styleId)) return styleId;
   return appTheme === 'dark' ? 'dark' : 'light';
 }
 
@@ -244,6 +247,67 @@ PALETTES.terrain = {
   fog: '#f3efe4',
   horizon: '#eef2f0',
 };
+
+// Gece navigasyonu: cok koyu, dusuk parlaklikli zemin; yollar kehribar / gri
+// tonlarla belirgin, etiketler yumusak. Karanlikta gozu kamastirmaz.
+PALETTES.night = {
+  ...PALETTES.dark,
+  background: '#07090e',
+  landuse: '#0b0e15',
+  industrial: '#0c0e15',
+  commercial: '#0e0d12',
+  hospital: '#140c0f',
+  school: '#100f0b',
+  parking: '#0d0f16',
+  wood: '#0a120d',
+  grass: '#0b130e',
+  farmland: '#0c110c',
+  park: '#0b140e',
+  pitch: '#0b150e',
+  sand: '#13130e',
+  rock: '#0f1014',
+  water: '#08121f',
+  waterInt: '#0b1726',
+  waterLine: '#0f1d30',
+  building: '#11141d',
+  buildingLine: '#171b27',
+  building3dLow: '#131722',
+  building3dMid: '#181d2b',
+  building3dHigh: '#202739',
+  motorway: '#e8a33d',
+  motorwayCasing: '#3a2508',
+  trunk: '#c98b38',
+  trunkCasing: '#2e1f0b',
+  roadMajor: '#6b7488',
+  roadCasing: '#07090e',
+  roadMinor: '#3d4456',
+  roadMinorCasing: '#07090e',
+  roadService: '#2a303e',
+  bridgeCasing: '#000000',
+  tunnel: '#161a24',
+  tunnelCasing: '#0c0f16',
+  oneway: '#8a93a6',
+  rail: '#2a2f3c',
+  railHatch: '#07090e',
+  boundary: '#2f3546',
+  boundaryDistrict: '#2a2536',
+  text: '#8f98aa',
+  roadText: '#c3cad8',
+  placeText: '#d2d8e3',
+  waterText: '#4f7aa6',
+  parkText: '#4f7f57',
+  poiText: '#7b8496',
+  textHalo: '#05070b',
+  hillShadow: '#000000',
+  hillHighlight: '#1c2230',
+  hillAccent: '#000000',
+  sky: '#05080f',
+  horizon: '#0f1624',
+  fog: '#07090e',
+};
+
+// Gece stilinde surucuyu oyalayan ayrintilar cizilmez.
+const NIGHT_DROP = new Set(['housenumber', 'poi-label-all', 'path', 'track', 'aerialway', 'landuse-parking']);
 
 // Uydu (hibrit) stili: goruntu ustunde beyaz etiketler, koyu hale, yari saydam
 // yollar. Zemin dolgulari cizilmez; renkleri goruntu verir.
@@ -510,10 +574,14 @@ const poiLayers = (p) => {
 export function buildMapStyle(theme, opts = {}) {
   const variant = PALETTES[theme] ? theme : 'light';
   const p = PALETTES[variant];
-  const isDark = variant === 'dark';
+  const isDark = variant === 'dark' || variant === 'night';
   const roads = roadLayers(p);
   // Kabartma golgesi vurgusu [z5, z11, z14, z16]
-  const hill = variant === 'terrain' ? [0.75, 0.7, 0.5, 0.25] : isDark ? [0.55, 0.5, 0.3, 0.12] : [0.5, 0.45, 0.3, 0.12];
+  const hill =
+    variant === 'terrain' ? [0.75, 0.7, 0.5, 0.25]
+      : variant === 'night' ? [0.35, 0.3, 0.15, 0.05]
+        : isDark ? [0.55, 0.5, 0.3, 0.12]
+          : [0.5, 0.45, 0.3, 0.12];
 
   const demSource = {
     type: 'raster-dem',
@@ -1229,7 +1297,17 @@ export function buildMapStyle(theme, opts = {}) {
     ],
   };
   if (variant === 'satellite') toSatellite(style);
+  if (variant === 'night') toNight(style);
   return style;
+}
+
+// Gece navigasyonu: dikkat dagitan katmanlari atar, yol adlarini buyutur.
+function toNight(style) {
+  style.layers = style.layers.filter((l) => !NIGHT_DROP.has(l.id));
+  const roadLabel = style.layers.find((l) => l.id === 'road-label');
+  if (roadLabel) {
+    roadLabel.layout['text-size'] = ['interpolate', ['linear'], ['zoom'], 13, 12, 18, 15, 20, 18];
+  }
 }
 
 // Standart stili uydu (hibrit) stiline donusturur: goruntu katmani zeminin

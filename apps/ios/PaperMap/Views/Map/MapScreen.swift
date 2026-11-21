@@ -46,6 +46,13 @@ struct MapScreen: View {
     @State private var placing: PlacingMode?
     @State private var playIndex = 0
     @State private var playing = false
+    @AppStorage(MapStyleChoice.storageKey) private var mapStyle = MapStyleChoice.auto.rawValue
+    @State private var bearing = 0.0
+    @State private var resetNorth = 0
+
+    private var styleVariant: String {
+        (MapStyleChoice(rawValue: mapStyle) ?? .auto).variant(dark: colorScheme == .dark)
+    }
 
     private let playTimer = Timer.publish(every: 0.6, on: .main, in: .common).autoconnect()
 
@@ -63,7 +70,9 @@ struct MapScreen: View {
                 history: mapStore.history,
                 playbackIndex: playIndex,
                 pin: mapStore.pin,
-                dark: colorScheme == .dark,
+                styleVariant: styleVariant,
+                resetNorthRequest: resetNorth,
+                onBearingChange: { bearing = $0 },
                 recenterRequest: recenter,
                 focus: mapStore.focus,
                 placing: placing != nil,
@@ -89,6 +98,12 @@ struct MapScreen: View {
             VStack(spacing: 8) {
                 Spacer()
                 if historyPoints.count > 1 { playbackBar }
+                // Map style picker and compass, right above the SOS button.
+                HStack(spacing: 8) {
+                    MapStylePicker(selection: $mapStyle)
+                    CompassButton(bearing: bearing) { resetNorth += 1 }
+                    Spacer()
+                }
                 HStack(spacing: 12) {
                     sosButton
                     Spacer()

@@ -179,14 +179,16 @@ altında 180 gün saklar (en fazla 6 GB). Böylece kullanıcının baktığı b�
 tarafa gitmez ve her kutucuk yalnız bir kez indirilir. Web konteyneri yeniden
 oluşturulursa önbellek boşalır, ilk bakışlarda yeniden dolar.
 
-**Harita stilleri.** Katmanlar menüsünün (sağ üstteki katman simgesi) altındaki
-**Harita stili** bölümünden seçilir; seçim cihazda saklanır:
+**Harita stilleri.** Web'de katmanlar menüsünün altındaki **Harita stili**
+bölümünden; Android ve iOS'ta sol alttaki harita düğmesinden (SOS'un hemen
+üstünde, sağında pusula) seçilir. Seçim cihazda saklanır:
 
 | Stil | Açıklama |
 |------|----------|
 | Otomatik | Uygulama temasını izler (açık/koyu) — varsayılan |
 | Açık / Koyu | Temadan bağımsız sabit stil |
 | Arazi | Kâğıt tonlu zemin, doygun orman/tarla renkleri, belirgin dağ gölgeleri |
+| Gece | Gece navigasyonu: çok koyu zemin, kehribar ana yollar, sadeleştirilmiş detay |
 | Uydu | Uydu görüntüsü + yarı saydam yollar ve beyaz etiketler (hibrit) |
 
 Uydu görüntüsü [Esri World Imagery](https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9)
@@ -198,7 +200,8 @@ sağlayıcıya (ör. MapTiler Satellite) geçmek için `web/nginx.conf` içindek
 `$papermap_sat` ve `rewrite` satırlarını değiştirmek yeterlidir; istemci kodu
 aynı kalır. Kaynak atıfları haritanın sol altındaki "i" düğmesinde gösterilir.
 
-Native uygulamalar şimdilik açık/koyu stilleri kullanır (temaya göre).
+Her stil `apps/shared/map-style-<stil>.json` olarak native uygulamalara da
+paketlenir (3B arazi ve gökyüzü yalnız web'dedir).
 
 Stil `mapStyle.js` içinde değişirse native stillerini yeniden üretin:
 
