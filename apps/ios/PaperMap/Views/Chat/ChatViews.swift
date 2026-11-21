@@ -130,10 +130,13 @@ struct ChatView: View {
 
     @EnvironmentObject private var chats: ChatStore
     @EnvironmentObject private var session: Session
+    @EnvironmentObject private var mapStore: MapStore
+    @EnvironmentObject private var router: AppRouter
     @Environment(\.openURL) private var openURL
     @State private var draft = ""
     @State private var sending = false
     @State private var sendError: String?
+    @State private var showPlacePicker = false
 
     private var messages: [ChatMessage] { chats.messages[target.id] ?? [] }
     private var showSender: Bool { target.type != "direct" }
@@ -148,7 +151,8 @@ struct ChatView: View {
                                 message: message,
                                 mine: message.senderId == session.user?.id,
                                 showSender: showSender,
-                                openPlace: { open(message) }
+                                openPlace: { open(message) },
+                                openExternal: { openInAppleMaps(message) }
                             )
                             .id(message.id)
                         }
@@ -172,10 +176,25 @@ struct ChatView: View {
             await chats.loadMessages(target.id)
         }
         .onDisappear { chats.close(target.id) }
+        .sheet(isPresented: $showPlacePicker) {
+            PlacePickerSheet(conversationId: target.id) { message in
+                sendError = message
+            }
+            .presentationDetents([.medium, .large])
+        }
     }
 
     private var composer: some View {
         HStack(spacing: 8) {
+            Button {
+                showPlacePicker = true
+            } label: {
+                Image(systemName: "mappin.and.ellipse")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(Pa.text)
+                    .frame(width: 44, height: 44)
+            }
+            .accessibilityLabel("Konum paylaş")
             TextField("Mesaj yaz", text: $draft, axis: .vertical)
                 .lineLimit(1...5)
                 .padding(.horizontal, 12)
@@ -218,7 +237,14 @@ struct ChatView: View {
         }
     }
 
+    /// Shows the point on the in-app map (Harita tab).
     private func open(_ message: ChatMessage) {
+        guard let lat = message.placeLat, let lng = message.placeLng else { return }
+        mapStore.show(lat: lat, lng: lng, label: message.placeLabel ?? "Konum")
+        router.tab = .map
+    }
+
+    private func openInAppleMaps(_ message: ChatMessage) {
         guard let lat = message.placeLat, let lng = message.placeLng else { return }
         let label = message.placeLabel ?? "Konum"
         var comps = URLComponents(string: "http://maps.apple.com/")
@@ -239,11 +265,99 @@ struct ChatView: View {
     }
 }
 
+/// "Konum paylaş": send the current position or a saved place to a chat.
+struct PlacePickerSheet: View {
+    let conversationId: String
+    /// Reports a send error to the chat screen (nil clears it).
+    let onError: (String?) -> Void
+
+    @EnvironmentObject private var chats: ChatStore
+    @EnvironmentObject private var mapStore: MapStore
+    @EnvironmentObject private var location: LocationService
+    @Environment(\.dismiss) private var dismiss
+    @State private var busy = false
+    @State private var error: String?
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    Button {
+                        Task { await sendCurrent() }
+                    } label: {
+                        HStack {
+                            Label(busy ? "Konum alınıyor…" : "Şu anki konumum", systemImage: "location.fill")
+                            if busy {
+                                Spacer()
+                                ProgressView()
+                            }
+                        }
+                    }
+                    .disabled(busy)
+                }
+                if let error {
+                    Section { ErrorText(message: error) }
+                }
+                Section("Kayıtlı yerler") {
+                    if mapStore.places.isEmpty {
+                        Text("Kayıtlı yerin yok. Haritadan yer ekleyebilirsin.").foregroundColor(Pa.muted)
+                    }
+                    ForEach(mapStore.places) { place in
+                        Button {
+                            Task { await send(lat: place.lat, lng: place.lng, label: place.name) }
+                        } label: {
+                            HStack(spacing: 12) {
+                                Circle().fill(paColor(place.color, fallback: placeColors[0])).frame(width: 14, height: 14)
+                                Text(place.name).foregroundColor(Pa.text)
+                            }
+                        }
+                        .disabled(busy)
+                    }
+                }
+            }
+            .navigationTitle("Konum paylaş")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Vazgeç") { dismiss() }
+                }
+            }
+            .task { await mapStore.loadPlaces() }
+        }
+    }
+
+    @MainActor
+    private func sendCurrent() async {
+        busy = true
+        guard let loc = await location.currentLocation() else {
+            busy = false
+            error = "Konum alınamadı. Konum izni verildiğinden emin olun."
+            return
+        }
+        busy = false
+        await send(lat: loc.coordinate.latitude, lng: loc.coordinate.longitude, label: "Şu anki konumum")
+    }
+
+    @MainActor
+    private func send(lat: Double, lng: Double, label: String) async {
+        busy = true
+        defer { busy = false }
+        do {
+            try await chats.sendPlace(lat: lat, lng: lng, label: label, to: conversationId)
+            onError(nil)
+            dismiss()
+        } catch {
+            self.error = error.localizedDescription
+        }
+    }
+}
+
 struct MessageBubble: View {
     let message: ChatMessage
     let mine: Bool
     let showSender: Bool
     let openPlace: () -> Void
+    var openExternal: (() -> Void)? = nil
 
     var body: some View {
         HStack {
@@ -265,15 +379,28 @@ struct MessageBubble: View {
     private var content: some View {
         if message.isPlace {
             Button(action: openPlace) {
-                Label("Konum: \(message.placeLabel ?? "Konum")", systemImage: "mappin.and.ellipse")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundColor(mine ? Pa.onPrimary : Pa.text)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 10)
-                    .background(mine ? Pa.primary : Pa.surface)
-                    .clipShape(RoundedRectangle(cornerRadius: Pa.radiusMd))
+                VStack(alignment: .leading, spacing: 2) {
+                    Label(message.placeLabel ?? "Konum", systemImage: "mappin.and.ellipse")
+                        .font(.subheadline.weight(.medium))
+                    Text("Haritada göster").font(.caption)
+                }
+                .foregroundColor(mine ? Pa.onPrimary : Pa.text)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(mine ? Pa.primary : Pa.surface)
+                .clipShape(RoundedRectangle(cornerRadius: Pa.radiusMd))
             }
-            .accessibilityHint("Haritalar'da açar")
+            .accessibilityHint("Haritada gösterir")
+            .contextMenu {
+                Button(action: openPlace) {
+                    Label("Haritada göster", systemImage: "map")
+                }
+                if let openExternal {
+                    Button(action: openExternal) {
+                        Label("Haritalar'da aç", systemImage: "arrow.up.forward.app")
+                    }
+                }
+            }
         } else {
             Text(message.body ?? "")
                 .font(.body)

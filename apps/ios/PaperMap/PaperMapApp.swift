@@ -13,6 +13,10 @@ struct PaperMapApp: App {
     @StateObject private var location = LocationService()
     @StateObject private var chats = ChatStore()
     @StateObject private var notifications = NotificationStore()
+    @StateObject private var router = AppRouter()
+    @StateObject private var network = NetworkMonitor()
+    @StateObject private var branding = Branding()
+    @StateObject private var mapStore = MapStore()
 
     init() {
         UNUserNotificationCenter.current().delegate = NotificationDelegate.shared
@@ -26,6 +30,10 @@ struct PaperMapApp: App {
                 .environmentObject(location)
                 .environmentObject(chats)
                 .environmentObject(notifications)
+                .environmentObject(router)
+                .environmentObject(network)
+                .environmentObject(branding)
+                .environmentObject(mapStore)
                 .tint(Pa.primary)
         }
     }
@@ -37,6 +45,10 @@ struct RootView: View {
     @EnvironmentObject private var location: LocationService
     @EnvironmentObject private var chats: ChatStore
     @EnvironmentObject private var notifications: NotificationStore
+    @EnvironmentObject private var router: AppRouter
+    @EnvironmentObject private var network: NetworkMonitor
+    @EnvironmentObject private var branding: Branding
+    @EnvironmentObject private var mapStore: MapStore
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -47,11 +59,24 @@ struct RootView: View {
                 AuthFlowView()
             }
         }
+        .safeAreaInset(edge: .top, spacing: 0) {
+            if network.isOffline { OfflineBanner() }
+        }
+        .preferredColorScheme(Appearance.colorScheme(for: session.user?.theme ?? Appearance.cachedThemeId))
+        .sheet(item: $router.deepLink) { link in
+            DeepLinkView(link: link)
+        }
         .task(id: session.token) { await onTokenChange() }
+        .task { await branding.load() }
         .onOpenURL { url in
             // papermap://sso is normally delivered to ASWebAuthenticationSession;
-            // a stray callback (session already closed) is ignored, as is any other URL.
-            guard url.scheme == SSOFlow.callbackScheme else { return }
+            // a stray callback (session already closed) is ignored. Reset and
+            // verification links open their screen over whatever is showing.
+            if let link = DeepLink(url: url) { router.deepLink = link }
+        }
+        .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
+            // Only delivered once the app has an associated-domains entitlement.
+            if let url = activity.webpageURL, let link = DeepLink(url: url) { router.deepLink = link }
         }
         .onChange(of: scenePhase) { phase in
             if phase == .active, let token = session.token {
@@ -71,26 +96,46 @@ struct RootView: View {
             realtime.onMessage = nil
             realtime.onNotification = nil
             realtime.onConnect = nil
+            realtime.onSOS = nil
+            realtime.onLocationRequest = nil
+            realtime.onTripUpdate = nil
+            realtime.onTripEnded = nil
             realtime.disconnect()
             location.stop()
             location.onLocation = nil
             chats.reset()
             notifications.reset()
+            mapStore.reset()
+            router.tab = .map
             return
         }
         chats.session = session
         notifications.session = session
-        let c = chats, n = notifications, sess = session
+        mapStore.session = session
+        let c = chats, n = notifications, sess = session, m = mapStore
         realtime.onMessage = { [weak c, weak sess] event in
             c?.handle(event, myId: sess?.user?.id)
         }
         realtime.onNotification = { [weak n] item in
             n?.handle(item)
         }
-        realtime.onConnect = { [weak c, weak n] in
+        realtime.onSOS = { [weak m] event in
+            m?.sosAlert = event
+        }
+        realtime.onLocationRequest = { [weak m] event in
+            m?.locationRequest = event
+        }
+        realtime.onTripUpdate = { [weak m, weak sess] trip in
+            m?.handleTripUpdate(trip, myId: sess?.user?.id)
+        }
+        realtime.onTripEnded = { [weak m, weak sess] userId in
+            m?.handleTripEnded(userId, myId: sess?.user?.id)
+        }
+        realtime.onConnect = { [weak c, weak n, weak m] in
             Task {
                 await c?.loadConversations()
                 await n?.load()
+                await m?.loadAll()
             }
         }
         let s = session, r = realtime, l = location
@@ -104,6 +149,7 @@ struct RootView: View {
         notifications.requestAuthorization()
         await chats.loadConversations()
         await notifications.load()
+        await mapStore.loadAll()
     }
 }
 
@@ -111,7 +157,7 @@ struct RootView: View {
 /// Nothing is sent while sharing is off.
 @MainActor
 private func upload(_ loc: CLLocation, session: Session, realtime: RealtimeService, location: LocationService) {
-    guard session.user?.sharingEnabled == true else { return }
+    guard session.user?.sharingActive == true else { return }
     let payload = LocationPayload(
         lat: loc.coordinate.latitude,
         lng: loc.coordinate.longitude,
@@ -131,20 +177,26 @@ private func upload(_ loc: CLLocation, session: Session, realtime: RealtimeServi
 
 struct MainTabView: View {
     @EnvironmentObject private var chats: ChatStore
+    @EnvironmentObject private var router: AppRouter
 
     var body: some View {
-        TabView {
+        TabView(selection: $router.tab) {
             MapScreen()
                 .tabItem { Label("Harita", systemImage: "map") }
+                .tag(AppTab.map)
             NavigationStack { ConversationListView() }
                 .tabItem { Label("Sohbet", systemImage: "bubble.left.and.bubble.right") }
                 .badge(chats.unreadTotal)
+                .tag(AppTab.chat)
             NavigationStack { FriendsView() }
                 .tabItem { Label("Arkadaşlar", systemImage: "person.2") }
+                .tag(AppTab.friends)
             NavigationStack { FamilyListView() }
                 .tabItem { Label("Aile", systemImage: "house") }
+                .tag(AppTab.family)
             NavigationStack { ProfileView() }
                 .tabItem { Label("Profil", systemImage: "person.crop.circle") }
+                .tag(AppTab.profile)
         }
     }
 }

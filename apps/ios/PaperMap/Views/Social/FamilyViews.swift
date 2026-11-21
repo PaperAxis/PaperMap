@@ -150,17 +150,13 @@ struct FamilyDetailView: View {
                 }
                 Section("Üyeler") {
                     ForEach(detail.members) { m in
-                        HStack(spacing: 12) {
-                            AvatarView(name: m.displayName, color: m.avatarColor, path: m.avatarPath, size: 40)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(m.displayName).foregroundColor(Pa.text)
-                                if let u = m.username {
-                                    Text(verbatim: "@\(u)").font(.caption).foregroundColor(Pa.muted)
-                                }
-                            }
-                            Spacer()
-                            if m.id == detail.ownerId {
-                                Text("Yönetici").font(.caption).foregroundColor(Pa.muted)
+                        if m.id == session.user?.id {
+                            memberRow(m, ownerId: detail.ownerId)
+                        } else {
+                            NavigationLink {
+                                UserProfileView(userId: m.id)
+                            } label: {
+                                memberRow(m, ownerId: detail.ownerId)
                             }
                         }
                     }
@@ -190,6 +186,22 @@ struct FamilyDetailView: View {
             error = nil
         } catch {
             self.error = error.localizedDescription
+        }
+    }
+
+    private func memberRow(_ m: FamilyMember, ownerId: String?) -> some View {
+        HStack(spacing: 12) {
+            AvatarView(name: m.displayName, color: m.avatarColor, path: m.avatarPath, size: 40)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(m.displayName).foregroundColor(Pa.text)
+                if let u = m.username {
+                    Text(verbatim: "@\(u)").font(.caption).foregroundColor(Pa.muted)
+                }
+            }
+            Spacer()
+            if m.id == ownerId {
+                Text("Yönetici").font(.caption).foregroundColor(Pa.muted)
+            }
         }
     }
 

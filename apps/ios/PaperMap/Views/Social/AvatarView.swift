@@ -29,3 +29,39 @@ struct AvatarView: View {
         .accessibilityHidden(true)
     }
 }
+
+/// Profile banner image (or a plain surface) with the avatar overlapping its lower edge.
+struct ProfileBanner: View {
+    let name: String
+    let color: String?
+    let avatarPath: String?
+    let bannerPath: String?
+
+    var body: some View {
+        ZStack(alignment: .bottomLeading) {
+            VStack(spacing: 0) {
+                Group {
+                    if let url = Config.uploadURL(bannerPath) {
+                        AsyncImage(url: url) { phase in
+                            if let image = phase.image {
+                                image.resizable().scaledToFill()
+                            } else {
+                                Pa.surface
+                            }
+                        }
+                    } else {
+                        Pa.surface
+                    }
+                }
+                .frame(height: 128)
+                .frame(maxWidth: .infinity)
+                .clipped()
+                Color.clear.frame(height: 40)
+            }
+            AvatarView(name: name, color: color, path: avatarPath, size: 80)
+                .overlay(Circle().stroke(Pa.bg, lineWidth: 4))
+                .padding(.leading, 16)
+        }
+        .accessibilityHidden(true)
+    }
+}

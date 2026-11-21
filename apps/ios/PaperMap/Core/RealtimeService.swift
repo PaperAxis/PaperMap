@@ -23,6 +23,11 @@ final class RealtimeService: ObservableObject {
     /// Called on the main actor for each `message` / `notification` event.
     var onMessage: (@MainActor (MessageEvent) -> Void)?
     var onNotification: (@MainActor (NotificationItem) -> Void)?
+    /// Map events: emergency call, location request, trip ETA and trip end.
+    var onSOS: (@MainActor (SOSEvent) -> Void)?
+    var onLocationRequest: (@MainActor (LocationRequestEvent) -> Void)?
+    var onTripUpdate: (@MainActor (TripUpdate) -> Void)?
+    var onTripEnded: (@MainActor (String) -> Void)?
     /// Called on the main actor after every (re)connect.
     var onConnect: (@MainActor () -> Void)?
 
@@ -74,6 +79,22 @@ final class RealtimeService: ObservableObject {
         socket.on("notification") { [weak self] data, _ in
             guard let item = decodePayload(data.first, as: NotificationItem.self) else { return }
             Task { @MainActor in self?.onNotification?(item) }
+        }
+        socket.on("sos") { [weak self] data, _ in
+            guard let event = decodePayload(data.first, as: SOSEvent.self) else { return }
+            Task { @MainActor in self?.onSOS?(event) }
+        }
+        socket.on("location:request") { [weak self] data, _ in
+            guard let event = decodePayload(data.first, as: LocationRequestEvent.self) else { return }
+            Task { @MainActor in self?.onLocationRequest?(event) }
+        }
+        socket.on("trip:update") { [weak self] data, _ in
+            guard let trip = decodePayload(data.first, as: TripUpdate.self) else { return }
+            Task { @MainActor in self?.onTripUpdate?(trip) }
+        }
+        socket.on("trip:ended") { [weak self] data, _ in
+            guard let event = decodePayload(data.first, as: UserIdEvent.self) else { return }
+            Task { @MainActor in self?.onTripEnded?(event.userId) }
         }
 
         self.manager = manager

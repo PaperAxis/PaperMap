@@ -30,6 +30,23 @@ extension UIColor {
             alpha: 1
         )
     }
+
+    /// "#rrggbb" (lowercase, as the server stores colors); alpha is dropped.
+    var hexString: String {
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        if !getRed(&r, green: &g, blue: &b, alpha: &a) {
+            var white: CGFloat = 0
+            getWhite(&white, alpha: &a)
+            r = white; g = white; b = white
+        }
+        func byte(_ v: CGFloat) -> Int { Int((min(max(v, 0), 1) * 255).rounded()) }
+        return String(format: "#%02x%02x%02x", byte(r), byte(g), byte(b))
+    }
+}
+
+/// Color from a "#rrggbb" string, with a fallback.
+func paColor(_ hex: String?, fallback: String = "#315BDB") -> Color {
+    Color(UIColor(hex: hex) ?? UIColor(hex: fallback) ?? .systemBlue)
 }
 
 /// Primary action: one per screen, Axis Blue.

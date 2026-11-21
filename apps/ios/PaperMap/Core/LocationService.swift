@@ -50,6 +50,22 @@ final class LocationService: NSObject, ObservableObject, CLLocationManagerDelega
         manager.stopMonitoringSignificantLocationChanges()
     }
 
+    /// Latest fix for one-off use (sharing a location in chat). Updates run with a
+    /// 50 m distance filter, so the last fix is current until the device moves;
+    /// without one, waits up to `timeout` seconds. Nil without permission or fix.
+    func currentLocation(timeout: TimeInterval = 15) async -> CLLocation? {
+        if let l = lastLocation { return l }
+        let status = manager.authorizationStatus
+        guard status == .authorizedAlways || status == .authorizedWhenInUse else { return nil }
+        if !running { start() }
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if let l = lastLocation { return l }
+            try? await Task.sleep(nanoseconds: 500_000_000)
+        }
+        return nil
+    }
+
     var batteryPercent: Int? {
         let level = UIDevice.current.batteryLevel
         return level < 0 ? nil : Int((level * 100).rounded())
