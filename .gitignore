@@ -34,3 +34,7 @@ fcm/
 
 # Firebase yapılandırması — CI secret GOOGLE_SERVICES_JSON_BASE64 olarak tutulur
 google-services.json
+
+# Python
+__pycache__/
+*.pyc
