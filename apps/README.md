@@ -32,6 +32,10 @@ kaynağı bu sürümle yayınlanır:
 git tag v3.0.0 && git push origin v3.0.0
 ```
 
+Etiket push'layamıyorsanız: **Actions → Native Sürüm (APK + IPA) → Run workflow**,
+dal `main`, **version** `3.0.0`. İş akışı `v3.0.0` etiketini çalıştırılan commit'e
+kendisi atar ve aynı yayını yapar (etiket zaten varsa durur).
+
 Etiket `vX.Y.Z` biçiminde olmalıdır; değilse iş akışı durur. Etiketsiz
 çalışmalarda (dal derlemeleri, elle çalıştırma) sürüm son `vX.Y.Z` etiketinin
 `X.Y`'si + çalıştırma numarasıdır (ör. `3.0.42`), böylece elle yayınlar etiketli
