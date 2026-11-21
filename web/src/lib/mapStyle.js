@@ -232,21 +232,21 @@ const PALETTES = {
 // dag golgeleri ve sicak tonlu kabartma.
 PALETTES.terrain = {
   ...PALETTES.light,
-  background: '#f3efe4',
-  landuse: '#ebe6da',
-  water: '#94c0e6',
-  waterInt: '#b6d3ec',
-  waterLine: '#7eaedb',
-  wood: '#b3d19f',
-  grass: '#d0e4bb',
-  farmland: '#ebe5c2',
-  sand: '#efdfb4',
-  rock: '#d9d0c2',
-  wetland: '#c3dccb',
-  park: '#c4dfb2',
-  hillShadow: '#4a3d2e',
-  hillHighlight: '#fffbef',
-  hillAccent: '#6b5843',
+  background: '#ece3cf',
+  landuse: '#e6dece',
+  water: '#8cbbe3',
+  waterInt: '#addbf0',
+  waterLine: '#6f9fd0',
+  wood: '#9cc386',
+  grass: '#c6dda8',
+  farmland: '#e6dcae',
+  sand: '#ecd9a4',
+  rock: '#d3c6b2',
+  wetland: '#b5d6c0',
+  park: '#b5d8a0',
+  hillShadow: '#3d3023',
+  hillHighlight: '#fffaea',
+  hillAccent: '#5e4a35',
   peak: '#6b4f2a',
   parkText: '#3e6e35',
   fog: '#f3efe4',
@@ -312,7 +312,8 @@ PALETTES.night = {
 };
 
 // Gece stilinde surucuyu oyalayan ayrintilar cizilmez.
-const NIGHT_DROP = new Set(['housenumber', 'poi-label-all', 'path', 'track', 'aerialway', 'landuse-parking']);
+// Yakin zoomdaki mekan adlari (poi-label-all) gece de gosterilir.
+const NIGHT_DROP = new Set(['housenumber', 'path', 'track', 'aerialway', 'landuse-parking']);
 
 // Uydu (hibrit) stili: goruntu ustunde beyaz etiketler, koyu hale, yari saydam
 // yollar. Zemin dolgulari cizilmez; renkleri goruntu verir.
@@ -529,7 +530,10 @@ const poiLayers = (p) => {
       'circle-pitch-alignment': 'map',
     },
   };
-  const name = (id, minzoom, maxzoom, filter) => ({
+  // Yakin zoomda "tum yer adlari": ad noktanin altina sigmiyorsa ustune, sagina
+  // ya da soluna yerlestirilir (variable anchor); yazilar arasi bosluk ve satir
+  // genisligi kucuk tutulur. Boylece yogun sokaklarda adlarin cogu cizilir.
+  const name = (id, minzoom, maxzoom, filter, dense = false) => ({
     id,
     type: 'symbol',
     ...OMT,
@@ -541,10 +545,20 @@ const poiLayers = (p) => {
       'text-field': ['get', 'name'],
       'text-font': FONT,
       'text-size': ['interpolate', ['linear'], ['zoom'], 15, 10, 18, 11.5, 20, 13],
-      'text-anchor': 'top',
-      'text-offset': [0, 0.6],
-      'text-max-width': 8,
-      'text-padding': 1,
+      ...(dense
+        ? {
+            'text-variable-anchor': ['top', 'bottom', 'right', 'left'],
+            'text-radial-offset': 0.55,
+            'text-justify': 'auto',
+            'text-max-width': 6,
+            'text-padding': 0,
+          }
+        : {
+            'text-anchor': 'top',
+            'text-offset': [0, 0.6],
+            'text-max-width': 8,
+            'text-padding': 1,
+          }),
       'text-optional': true,
       'symbol-sort-key': ['coalesce', ['get', 'rank'], 999],
     },
@@ -558,7 +572,7 @@ const poiLayers = (p) => {
   return [
     dot,
     name('poi-label', 15, POI_ALL_FROM, ranked(16)),
-    name('poi-label-all', POI_ALL_FROM),
+    name('poi-label-all', POI_ALL_FROM, null, null, true),
   ];
 };
 
@@ -583,7 +597,7 @@ export function buildMapStyle(theme, opts = {}) {
   const roads = roadLayers(p);
   // Kabartma golgesi vurgusu [z5, z11, z14, z16]
   const hill =
-    variant === 'terrain' ? [0.75, 0.7, 0.5, 0.25]
+    variant === 'terrain' ? [0.9, 0.85, 0.6, 0.3]
       : variant === 'night' ? [0.35, 0.3, 0.15, 0.05]
         : isDark ? [0.55, 0.5, 0.3, 0.12]
           : [0.5, 0.45, 0.3, 0.12];
@@ -1301,9 +1315,41 @@ export function buildMapStyle(theme, opts = {}) {
       },
     ],
   };
+  if (variant === 'terrain' && opts.web) addElevationTint(style);
   if (variant === 'satellite') toSatellite(style);
   if (variant === 'night') toNight(style);
   return style;
+}
+
+// Arazi stili (yalniz web): yukseklige gore renklendirme (hipsometrik renk).
+// Ovalar yesil, yaylalar sari-kahve, daglar koyu kahve, zirveler beyaz.
+// MapLibre GL JS'in color-relief katmani DEM'den cizer; arazi ortusu (orman,
+// tarla) ustune yari saydam biner. Yakinlastikca soner ki sehir detayi kalsin.
+// Native MapLibre bu katman tipini tanimadigi icin native stile eklenmez.
+function addElevationTint(style) {
+  const at = style.layers.findIndex((l) => l.id === 'background') + 1;
+  style.layers.splice(at, 0, {
+    id: 'elevation-tint',
+    type: 'color-relief',
+    source: 'hillshade',
+    paint: {
+      'color-relief-color': [
+        'interpolate', ['linear'], ['elevation'],
+        -50, 'rgba(0,0,0,0)',
+        0, '#a9cc8e',
+        150, '#c0d896',
+        400, '#d9dc9e',
+        800, '#e4cf92',
+        1200, '#d8b27c',
+        1700, '#c29268',
+        2300, '#a8805f',
+        3000, '#b9aa9a',
+        3600, '#e6e0d8',
+        4500, '#ffffff',
+      ],
+      'color-relief-opacity': ['interpolate', ['linear'], ['zoom'], 5, 0.95, 11, 0.85, 14, 0.5, 16, 0.2],
+    },
+  });
 }
 
 // Gece navigasyonu: dikkat dagitan katmanlari atar, yol adlarini buyutur.
