@@ -13,6 +13,7 @@ import { uploadSingle, deleteUpload } from '../upload.js';
 import { config } from '../config.js';
 import { broadcastPeerUpdate } from '../socket.js';
 import { sendMail, smtpConfigured } from '../mailer.js';
+import { renderActionMail } from '../mail-templates.js';
 
 const router = Router();
 
@@ -38,11 +39,14 @@ async function sendVerifyEmail(user) {
   return sendMail({
     to: user.email,
     subject: 'PaperMap — E-posta doğrulama',
-    text:
-      `Merhaba ${user.displayName},\n\n` +
-      `E-posta adresini doğrulamak için aşağıdaki bağlantıya tıkla:\n` +
-      `${link}\n\n` +
-      `Bu hesabı sen oluşturmadıysan bu e-postayı yok sayabilirsin.`,
+    ...renderActionMail({
+      name: user.displayName,
+      heading: 'E-posta adresini doğrula',
+      intro: 'Bu e-posta adresinin sana ait olduğunu doğrulamak için aşağıdaki düğmeyi kullan.',
+      actionLabel: 'E-posta adresimi doğrula',
+      link,
+      note: 'Bu hesabı sen oluşturmadıysan bu e-postayı yok sayabilirsin.',
+    }),
     link,
   });
 }
@@ -175,11 +179,14 @@ router.post('/forgot', async (req, res) => {
     sendMail({
       to: user.email,
       subject: 'PaperMap — Şifre sıfırlama',
-      text:
-        `Merhaba ${user.displayName},\n\n` +
-        `Şifreni sıfırlamak için aşağıdaki bağlantıya tıkla (1 saat geçerli):\n` +
-        `${link}\n\n` +
-        `Bu isteği sen yapmadıysan bu e-postayı yok sayabilirsin.`,
+      ...renderActionMail({
+        name: user.displayName,
+        heading: 'Şifreni sıfırla',
+        intro: 'PaperMap hesabın için şifre sıfırlama isteği aldık. Yeni şifreni belirlemek için aşağıdaki düğmeyi kullan.',
+        actionLabel: 'Yeni şifre belirle',
+        link,
+        note: 'Bağlantı 1 saat geçerlidir. Bu isteği sen yapmadıysan bu e-postayı yok sayabilirsin; şifren değişmez.',
+      }),
       link,
     }).catch(() => {});
   }
