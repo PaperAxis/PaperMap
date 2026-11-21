@@ -5,6 +5,9 @@ name: Native Sürüm (APK + IPA)
 #  - main ve çalışma dallarında (ccr-*, dev): yalnızca derleme denetimi.
 #  - "v*" etiketi ya da elle çalıştırma (Actions > Run workflow): GitHub Release
 #    + PaperUpdates (papermap-android) + AltStore kaynağı.
+#  - Elle çalıştırmada "version" (ör. 3.0.0) girilirse sürüm odur; iş akışı
+#    v<version> etiketini çalıştırılan commit'e kendisi atar (etiket push'u
+#    gerekmez). Etiket zaten varsa çalışma durur.
 # Sürüm: "vX.Y.Z" etiketinde etiketten (v3.0.0 -> 3.0.0); diğer çalışmalarda
 # son v-etiketinin X.Y'si + çalıştırma no (bkz. .github/scripts/app-version.sh).
 # Android versionCode / iOS build numarası 200 + çalıştırma no (hep artar).
@@ -18,6 +21,11 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Sürüm (X.Y.Z, ör. 3.0.0). Boş: son etiketin X.Y + çalıştırma no. Doluysa v<sürüm> etiketi bu commit''e atılır.'
+        required: false
+        default: ''
 
 concurrency:
   group: native-${{ github.ref }}
@@ -28,13 +36,13 @@ permissions:
 
 env:
   PUBLISH: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
-  TAG: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('native-{0}', github.run_number) }}
 
 jobs:
   prepare:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.ver.outputs.version }}
+      tag: ${{ steps.ver.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -42,13 +50,17 @@ jobs:
 
       - name: Sürümü belirle
         id: ver
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
         run: .github/scripts/app-version.sh 2.0 --latest-tag
 
       - name: GitHub Release oluştur
         if: env.PUBLISH == 'true'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ env.TAG }}
+          tag_name: ${{ steps.ver.outputs.tag }}
+          # Etiket yoksa (elle çalıştırma) çalıştırılan commit'e atılır
+          target_commitish: ${{ github.sha }}
           name: PaperMap ${{ steps.ver.outputs.version }} (native)
           body: |
             PaperMap native sürüm ${{ steps.ver.outputs.version }}.
@@ -66,6 +78,7 @@ jobs:
     timeout-minutes: 45
     env:
       APP_VERSION: ${{ needs.prepare.outputs.version }}
+      TAG: ${{ needs.prepare.outputs.tag }}
       VERSION_CODE: ${{ github.run_number }}
     steps:
       - uses: actions/checkout@v4
@@ -181,6 +194,7 @@ jobs:
     timeout-minutes: 45
     env:
       APP_VERSION: ${{ needs.prepare.outputs.version }}
+      TAG: ${{ needs.prepare.outputs.tag }}
       BUILD_NUMBER: ${{ github.run_number }}
     steps:
       - uses: actions/checkout@v4
