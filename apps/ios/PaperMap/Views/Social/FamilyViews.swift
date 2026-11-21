@@ -21,9 +21,9 @@ struct FamilyListView: View {
             if families.isEmpty && loaded {
                 Section {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Henüz bir ailede değilsin").font(.headline).foregroundColor(Pa.text)
+                        Text("Henüz bir ailede değilsin").paFont(.headline).foregroundColor(Pa.text)
                         Text("Bir aile oluştur ve davet kodunu paylaş, ya da sana verilen kodla katıl.")
-                            .font(.subheadline).foregroundColor(Pa.muted)
+                            .paFont(.subheadline).foregroundColor(Pa.muted)
                     }
                     .padding(.vertical, 4)
                 }
@@ -35,7 +35,7 @@ struct FamilyListView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(family.name).foregroundColor(Pa.text)
                         Text(family.memberCount.map { "\($0) üye" } ?? "")
-                            .font(.caption).foregroundColor(Pa.muted)
+                            .paFont(.caption).foregroundColor(Pa.muted)
                     }
                 }
             }
@@ -132,7 +132,7 @@ struct FamilyDetailView: View {
                     Section {
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Davet kodu").font(.caption).foregroundColor(Pa.muted)
+                                Text("Davet kodu").paFont(.caption).foregroundColor(Pa.muted)
                                 Text(code).font(.system(.title3, design: .monospaced).weight(.semibold))
                                     .foregroundColor(Pa.text)
                                     .textSelection(.enabled)
@@ -195,12 +195,12 @@ struct FamilyDetailView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(m.displayName).foregroundColor(Pa.text)
                 if let u = m.username {
-                    Text(verbatim: "@\(u)").font(.caption).foregroundColor(Pa.muted)
+                    Text(verbatim: "@\(u)").paFont(.caption).foregroundColor(Pa.muted)
                 }
             }
             Spacer()
             if m.id == ownerId {
-                Text("Yönetici").font(.caption).foregroundColor(Pa.muted)
+                Text("Yönetici").paFont(.caption).foregroundColor(Pa.muted)
             }
         }
     }

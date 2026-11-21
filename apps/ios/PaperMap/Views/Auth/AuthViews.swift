@@ -34,7 +34,7 @@ struct LoginView: View {
                             ForgotPasswordView()
                         } label: {
                             Text("Şifreni mi unuttun?")
-                                .font(.subheadline)
+                                .paFont(.subheadline)
                                 .frame(minHeight: 44)
                         }
                     }
@@ -99,7 +99,7 @@ struct RegisterView: View {
                 LabeledField(label: "Görünen ad", text: $displayName, contentType: .name)
                 VStack(alignment: .leading, spacing: 4) {
                     LabeledField(label: "Şifre", text: $password, secure: true, contentType: .newPassword)
-                    Text("En az 8 karakter.").font(.caption).foregroundColor(Pa.muted)
+                    Text("En az 8 karakter.").paFont(.caption).foregroundColor(Pa.muted)
                 }
                 if let error { ErrorText(message: error) }
                 Button {
@@ -145,7 +145,7 @@ struct SSOButtons: View {
                 VStack(spacing: 12) {
                     HStack(spacing: 12) {
                         Rectangle().fill(Pa.muted.opacity(0.4)).frame(height: 1)
-                        Text("ya da").font(.subheadline).foregroundColor(Pa.muted)
+                        Text("ya da").paFont(.subheadline).foregroundColor(Pa.muted)
                         Rectangle().fill(Pa.muted.opacity(0.4)).frame(height: 1)
                     }
                     .accessibilityHidden(true)
@@ -191,7 +191,7 @@ struct CheckboxToggleStyle: ToggleStyle {
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: configuration.isOn ? "checkmark.square.fill" : "square")
-                    .font(.title3)
+                    .paFont(.title3)
                     .foregroundColor(configuration.isOn ? Pa.primary : Pa.muted)
                 configuration.label
                 Spacer(minLength: 0)

@@ -7,7 +7,7 @@ import UIKit
 struct OfflineBanner: View {
     var body: some View {
         Label("Çevrimdışısın — internet bağlantısı bekleniyor…", systemImage: "wifi.slash")
-            .font(.footnote.weight(.medium))
+            .paFont(.footnote, weight: .medium)
             .foregroundColor(Color(uiColor: .systemBackground))
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)

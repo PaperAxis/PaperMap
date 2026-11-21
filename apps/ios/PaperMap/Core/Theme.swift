@@ -55,7 +55,7 @@ struct PaPrimaryButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.body.weight(.semibold))
+            .paFont(.body, weight: .semibold)
             .frame(maxWidth: .infinity, minHeight: 44)
             .foregroundColor(Pa.onPrimary)
             .background(Pa.primary.opacity(configuration.isPressed ? 0.85 : 1))
@@ -68,7 +68,7 @@ struct PaPrimaryButtonStyle: ButtonStyle {
 struct PaSecondaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.body.weight(.medium))
+            .paFont(.body, weight: .medium)
             .frame(maxWidth: .infinity, minHeight: 44)
             .foregroundColor(Pa.text)
             .overlay(RoundedRectangle(cornerRadius: Pa.radiusSm).stroke(Pa.text, lineWidth: 1))
@@ -88,7 +88,7 @@ struct LabeledField: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(label).font(.subheadline.weight(.medium)).foregroundColor(Pa.text)
+            Text(label).paFont(.subheadline, weight: .medium).foregroundColor(Pa.text)
             HStack(spacing: 0) {
                 Group {
                     if secure && !revealed {
@@ -110,7 +110,7 @@ struct LabeledField: View {
                         revealed.toggle()
                     } label: {
                         Image(systemName: revealed ? "eye.slash" : "eye")
-                            .font(.body)
+                            .paFont(.body)
                             .foregroundColor(Pa.muted)
                             .frame(width: 44, height: 44)
                             .contentShape(Rectangle())
@@ -134,7 +134,7 @@ struct ErrorText: View {
     let message: String
     var body: some View {
         Label(message, systemImage: "exclamationmark.circle")
-            .font(.subheadline)
+            .paFont(.subheadline)
             .foregroundColor(Pa.danger)
             .frame(maxWidth: .infinity, alignment: .leading)
     }

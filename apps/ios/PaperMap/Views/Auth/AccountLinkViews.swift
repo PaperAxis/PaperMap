@@ -28,7 +28,7 @@ struct BrandHeader: View {
                     .accessibilityHidden(true)
             }
             Text(branding.appName)
-                .font(.largeTitle.weight(.bold))
+                .paFont(.largeTitle, weight: .bold)
                 .foregroundColor(Pa.text)
             if let subtitle {
                 Text(subtitle).foregroundColor(Pa.muted)
@@ -43,7 +43,7 @@ struct InfoText: View {
     let message: String
     var body: some View {
         Label(message, systemImage: "checkmark.circle")
-            .font(.subheadline)
+            .paFont(.subheadline)
             .foregroundColor(Pa.text)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -120,7 +120,7 @@ struct ResetPasswordView: View {
                     } else {
                         VStack(alignment: .leading, spacing: 4) {
                             LabeledField(label: "Yeni şifre", text: $newPassword, secure: true, contentType: .newPassword)
-                            Text("En az 8 karakter.").font(.caption).foregroundColor(Pa.muted)
+                            Text("En az 8 karakter.").paFont(.caption).foregroundColor(Pa.muted)
                         }
                         if let error { ErrorText(message: error) }
                         Button {

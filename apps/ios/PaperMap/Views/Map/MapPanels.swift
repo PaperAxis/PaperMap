@@ -41,7 +41,7 @@ struct CandidateChecklist: View {
                                 if allIn { selected.remove(m.id) } else { selected.insert(m.id) }
                             }
                         }
-                        .font(.caption.weight(.semibold))
+                        .paFont(.caption, weight: .semibold)
                         .textCase(nil)
                     }
                 }
@@ -165,7 +165,7 @@ struct CreateAtPointSheet: View {
                         }
                     } else {
                         Section {
-                            Text("Kimleri davet etmek istersin?").font(.subheadline.weight(.medium))
+                            Text("Kimleri davet etmek istersin?").paFont(.subheadline, weight: .medium)
                         }
                         list
                     }
@@ -232,7 +232,7 @@ struct GeofencesSheet: View {
                 Section {
                     if mapStore.geofences.isEmpty {
                         Text("Henüz alan yok. Yeni bir alan ekleyip seçtiğin kişiler girince/çıkınca bildirim al.")
-                            .font(.subheadline).foregroundColor(Pa.muted)
+                            .paFont(.subheadline).foregroundColor(Pa.muted)
                     }
                     ForEach(mapStore.geofences) { g in
                         NavigationLink {
@@ -241,7 +241,7 @@ struct GeofencesSheet: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(g.name).foregroundColor(Pa.text)
                                 Text("\(Int(g.radius)) m · \(g.watches.count) kişi izleniyor")
-                                    .font(.caption).foregroundColor(Pa.muted)
+                                    .paFont(.caption).foregroundColor(Pa.muted)
                             }
                         }
                         .swipeActions {
@@ -328,7 +328,7 @@ struct GeofenceDetailView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(w.displayName).foregroundColor(Pa.text)
                                 Text(w.inside == true ? "içeride" : w.inside == false ? "dışarıda" : "henüz bilinmiyor")
-                                    .font(.caption).foregroundColor(Pa.muted)
+                                    .paFont(.caption).foregroundColor(Pa.muted)
                             }
                             Spacer()
                             Button("Çıkar") { Task { await removeWatch(w.userId) } }
@@ -348,7 +348,7 @@ struct GeofenceDetailView: View {
                     }
                 } else {
                     Section {
-                        Text("Kişi ekle").font(.subheadline.weight(.medium))
+                        Text("Kişi ekle").paFont(.subheadline, weight: .medium)
                     }
                     checklist
                     Section {
@@ -452,7 +452,7 @@ struct PlacesSheet: View {
                 Section {
                     if mapStore.places.isEmpty {
                         Text("Henüz kayıtlı yer yok. Sık gittiğin yerleri haritaya işaretle.")
-                            .font(.subheadline).foregroundColor(Pa.muted)
+                            .paFont(.subheadline).foregroundColor(Pa.muted)
                     }
                     ForEach(mapStore.places) { p in
                         NavigationLink {
@@ -609,7 +609,7 @@ struct MeetingsSheet: View {
                 Section {
                     if mapStore.meetings.isEmpty {
                         Text("Henüz buluşma yok. Bir nokta seçip kişileri davet et; herkesin oraya varış süresini birlikte görün.")
-                            .font(.subheadline).foregroundColor(Pa.muted)
+                            .paFont(.subheadline).foregroundColor(Pa.muted)
                     }
                     ForEach(mapStore.meetings) { m in
                         NavigationLink {
@@ -618,7 +618,7 @@ struct MeetingsSheet: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(m.label).foregroundColor(Pa.text)
                                 Text("\(m.memberCount ?? 1) kişi" + (m.isOwner ? " · sahibisin" : ""))
-                                    .font(.caption).foregroundColor(Pa.muted)
+                                    .paFont(.caption).foregroundColor(Pa.muted)
                             }
                         }
                     }
@@ -671,7 +671,7 @@ struct MeetingDetailView: View {
                             AvatarView(name: member.displayName, color: member.avatarColor, path: member.avatarPath, size: 36)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(member.displayName + (member.isOwner ? " (sahip)" : "")).foregroundColor(Pa.text)
-                                Text(member.etaText).font(.caption).foregroundColor(Pa.muted)
+                                Text(member.etaText).paFont(.caption).foregroundColor(Pa.muted)
                             }
                         }
                         .accessibilityElement(children: .combine)

@@ -42,7 +42,7 @@ struct FriendsView: View {
             Section("Arkadaşlar") {
                 if data.friends.isEmpty && loaded {
                     Text("Henüz arkadaşın yok. Sağ üstten kullanıcı adıyla ekleyebilirsin.")
-                        .font(.subheadline).foregroundColor(Pa.muted)
+                        .paFont(.subheadline).foregroundColor(Pa.muted)
                 }
                 ForEach(data.friends) { entry in
                     HStack {
@@ -178,7 +178,7 @@ struct PersonRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(person.displayName).foregroundColor(Pa.text)
                 if let line = subtitle ?? person.username.map({ "@" + $0 }) {
-                    Text(line).font(.caption).foregroundColor(Pa.muted)
+                    Text(line).paFont(.caption).foregroundColor(Pa.muted)
                 }
             }
         }

@@ -25,7 +25,7 @@ struct UserProfileView: View {
                         avatarPath: user.avatarPath, bannerPath: user.bannerPath
                     )
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(user.displayName).font(.title2.weight(.semibold)).foregroundColor(Pa.text)
+                        Text(user.displayName).paFont(.title2, weight: .semibold).foregroundColor(Pa.text)
                         if let u = user.username {
                             Text(verbatim: "@\(u)").foregroundColor(Pa.muted)
                         }

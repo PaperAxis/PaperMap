@@ -17,6 +17,7 @@ struct PaperMapApp: App {
     @StateObject private var network = NetworkMonitor()
     @StateObject private var branding = Branding()
     @StateObject private var mapStore = MapStore()
+    @StateObject private var fonts = FontStore()
 
     init() {
         UNUserNotificationCenter.current().delegate = NotificationDelegate.shared
@@ -34,6 +35,11 @@ struct PaperMapApp: App {
                 .environmentObject(network)
                 .environmentObject(branding)
                 .environmentObject(mapStore)
+                .environmentObject(fonts)
+                // Profile font for every text that does not pick a style itself;
+                // `.paFont` call sites read the same typeface.
+                .paFont(.body)
+                .environment(\.paTypeface, fonts.typeface)
                 .tint(Pa.primary)
         }
     }
@@ -49,6 +55,7 @@ struct RootView: View {
     @EnvironmentObject private var network: NetworkMonitor
     @EnvironmentObject private var branding: Branding
     @EnvironmentObject private var mapStore: MapStore
+    @EnvironmentObject private var fonts: FontStore
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -68,6 +75,11 @@ struct RootView: View {
         }
         .task(id: session.token) { await onTokenChange() }
         .task { await branding.load() }
+        // A new pick (or the account's font after sign-in) applies at once;
+        // signed out, the last font stays.
+        .onChange(of: session.user?.fontPref) { value in
+            if session.user != nil { fonts.apply(fontId: value) }
+        }
         .onOpenURL { url in
             // papermap://sso is normally delivered to ASWebAuthenticationSession;
             // a stray callback (session already closed) is ignored. Reset and

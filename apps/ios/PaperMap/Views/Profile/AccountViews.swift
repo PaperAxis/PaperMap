@@ -31,7 +31,7 @@ struct LocationPrivacyView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(person.displayName).foregroundColor(Pa.text)
                                 Text(person.hidden ? "Konumunu göremez" : "Konumunu görebilir")
-                                    .font(.caption).foregroundColor(Pa.muted)
+                                    .paFont(.caption).foregroundColor(Pa.muted)
                             }
                         }
                     }
@@ -85,7 +85,7 @@ struct ShareLinksView: View {
         List {
             Section {
                 Text("Uygulaması olmayan birine, süreli bir bağlantıyla canlı konumunu gösterebilirsin. Süre dolunca bağlantı kendiliğinden geçersizleşir.")
-                    .font(.subheadline)
+                    .paFont(.subheadline)
                     .foregroundColor(Pa.text)
                 HStack(spacing: 8) {
                     durationButton("1 saat", minutes: 60)
@@ -107,7 +107,7 @@ struct ShareLinksView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Bağlantı").foregroundColor(Pa.text)
                                 Text("Bitiş: \(Format.dayTime(link.expiresAt) ?? "-")")
-                                    .font(.caption).foregroundColor(Pa.muted)
+                                    .paFont(.caption).foregroundColor(Pa.muted)
                             }
                             HStack(spacing: 8) {
                                 Button("Kopyala") { copy(link) }
@@ -205,7 +205,7 @@ struct PasswordView: View {
             VStack(alignment: .leading, spacing: 16) {
                 if !hasPassword {
                     Text("Hesabını Google ya da PaperApp ile açtın. Şifre belirlersen kullanıcı adınla da giriş yapabilirsin.")
-                        .font(.subheadline)
+                        .paFont(.subheadline)
                         .foregroundColor(Pa.muted)
                 } else {
                     LabeledField(label: "Mevcut şifre", text: $current, secure: true, contentType: .password)

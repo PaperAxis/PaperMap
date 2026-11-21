@@ -188,11 +188,11 @@ struct MapScreen: View {
             VStack(alignment: .leading, spacing: 2) {
                 TimelineView(.periodic(from: .now, by: 30)) { context in
                     Text(SharingText.label(for: session.user, now: context.date))
-                        .font(.subheadline.weight(.semibold))
+                        .paFont(.subheadline, weight: .semibold)
                         .foregroundColor(Pa.text)
                 }
                 Text(sharing ? "Arkadaşların ve ailen seni görebilir." : "Şu an kimse konumunu göremez.")
-                    .font(.caption)
+                    .paFont(.caption)
                     .foregroundColor(Pa.muted)
             }
             Spacer()
@@ -308,7 +308,7 @@ struct MapScreen: View {
             )
             .accessibilityLabel("Geçmişte konum")
             Text(Format.dayTime(points[idx].recordedAt) ?? "")
-                .font(.caption.monospacedDigit())
+                .paFont(.caption, monospacedDigit: true)
                 .foregroundColor(Pa.text)
                 .frame(minWidth: 84, alignment: .trailing)
         }
@@ -349,7 +349,7 @@ struct MapScreen: View {
     private var sosButton: some View {
         Button { confirmSOS = true } label: {
             Label("SOS", systemImage: "exclamationmark.triangle.fill")
-                .font(.subheadline.weight(.bold))
+                .paFont(.subheadline, weight: .bold)
                 .foregroundColor(.white)
                 .padding(.horizontal, 14)
                 .frame(height: 48)
@@ -460,11 +460,11 @@ struct MapBanner<Actions: View>: View {
                 .foregroundColor(tint)
                 .accessibilityHidden(true)
             Text(text)
-                .font(.footnote.weight(emphasized ? .semibold : .regular))
+                .paFont(.footnote, weight: emphasized ? .semibold : .regular)
                 .foregroundColor(Pa.text)
                 .frame(maxWidth: .infinity, alignment: .leading)
             HStack(spacing: 12) { actions() }
-                .font(.footnote.weight(.semibold))
+                .paFont(.footnote, weight: .semibold)
                 .buttonStyle(.borderless)
         }
         .padding(.horizontal, 12)
@@ -491,9 +491,9 @@ struct PeerDetailSheet: View {
                 HStack(spacing: 12) {
                     AvatarView(name: peer.displayName, color: peer.avatarColor, path: peer.avatarPath, size: 56)
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(peer.displayName).font(.title3.weight(.semibold)).foregroundColor(Pa.text)
+                        Text(peer.displayName).paFont(.title3, weight: .semibold).foregroundColor(Pa.text)
                         if let status = peer.statusText, !status.isEmpty {
-                            Text(status).font(.subheadline).foregroundColor(Pa.muted)
+                            Text(status).paFont(.subheadline).foregroundColor(Pa.muted)
                         }
                     }
                 }
@@ -517,7 +517,7 @@ struct PeerDetailSheet: View {
                         )
                     }
                 }
-                .font(.subheadline)
+                .paFont(.subheadline)
                 .foregroundColor(Pa.text)
                 HStack(spacing: 12) {
                     Button(action: onHistory) {
@@ -572,10 +572,10 @@ struct PeopleSheet: View {
                 }
                 if peers.isEmpty {
                     VStack(spacing: 8) {
-                        Image(systemName: "person.2").font(.largeTitle).foregroundColor(Pa.muted)
-                        Text("Haritada kimse yok").font(.headline).foregroundColor(Pa.text)
+                        Image(systemName: "person.2").paFont(.largeTitle).foregroundColor(Pa.muted)
+                        Text("Haritada kimse yok").paFont(.headline).foregroundColor(Pa.text)
                         Text("Konumunu paylaşan arkadaşların ve aile üyelerin burada görünür.")
-                            .font(.subheadline).foregroundColor(Pa.muted).multilineTextAlignment(.center)
+                            .paFont(.subheadline).foregroundColor(Pa.muted).multilineTextAlignment(.center)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(24)
@@ -589,12 +589,12 @@ struct PeopleSheet: View {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(peer.displayName).foregroundColor(Pa.text)
                                     if let status = peer.statusText, !status.isEmpty {
-                                        Text(status).font(.caption).foregroundColor(Pa.text)
+                                        Text(status).paFont(.caption).foregroundColor(Pa.text)
                                     }
-                                    Text(subtitle(peer)).font(.caption).foregroundColor(Pa.muted)
+                                    Text(subtitle(peer)).paFont(.caption).foregroundColor(Pa.muted)
                                     if let trip = trips[peer.userId] {
                                         Text("→ \(trip.destLabel)" + (trip.etaMinutes.map { " · ~\($0) dk" } ?? ""))
-                                            .font(.caption).foregroundColor(Pa.primary)
+                                            .paFont(.caption).foregroundColor(Pa.primary)
                                     }
                                 }
                                 Spacer(minLength: 0)
@@ -604,7 +604,7 @@ struct PeopleSheet: View {
                         .buttonStyle(.borderless)
                         Button("Geçmiş") { onHistory(peer.userId, peer.displayName) }
                             .buttonStyle(.bordered)
-                            .font(.subheadline)
+                            .paFont(.subheadline)
                     }
                 }
             }

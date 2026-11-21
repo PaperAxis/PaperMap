@@ -104,7 +104,7 @@ struct AdminView: View {
 
     private func statRow(_ label: String, _ value: Int) -> some View {
         HStack {
-            Text(verbatim: "\(value)").font(.body.weight(.semibold).monospacedDigit()).foregroundColor(Pa.text)
+            Text(verbatim: "\(value)").paFont(.body, weight: .semibold, monospacedDigit: true).foregroundColor(Pa.text)
             Text(label).foregroundColor(Pa.muted)
         }
         .accessibilityElement(children: .combine)
@@ -121,7 +121,7 @@ struct AdminView: View {
                         if u.disabled == true { tag("Devre dışı", color: Pa.danger) }
                     }
                     Text(verbatim: "@\(u.username ?? "") · \(u.email ?? "")")
-                        .font(.caption).foregroundColor(Pa.muted).lineLimit(1)
+                        .paFont(.caption).foregroundColor(Pa.muted).lineLimit(1)
                 }
             }
             if u.id != session.user?.id {
@@ -138,7 +138,7 @@ struct AdminView: View {
                     Button("Sil", role: .destructive) { pendingDelete = u }
                         .buttonStyle(.bordered)
                 }
-                .font(.subheadline)
+                .paFont(.subheadline)
             }
         }
         .padding(.vertical, 4)
@@ -146,7 +146,7 @@ struct AdminView: View {
 
     private func tag(_ text: String, color: Color) -> some View {
         Text(text)
-            .font(.caption2.weight(.semibold))
+            .paFont(.caption2, weight: .semibold)
             .foregroundColor(color)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)

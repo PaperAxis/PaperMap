@@ -15,9 +15,9 @@ struct ConversationListView: View {
             }
             if chats.conversations.isEmpty && chats.loaded {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Henüz sohbet yok").font(.headline).foregroundColor(Pa.text)
+                    Text("Henüz sohbet yok").paFont(.headline).foregroundColor(Pa.text)
                     Text("Arkadaşlar sekmesinden birine mesaj gönderebilir ya da sağ üstten grup açabilirsin. Aile sohbetleri burada kendiliğinden görünür.")
-                        .font(.subheadline).foregroundColor(Pa.muted)
+                        .paFont(.subheadline).foregroundColor(Pa.muted)
                 }
                 .padding(.vertical, 8)
             }
@@ -63,23 +63,23 @@ struct ConversationRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 HStack {
                     Text(conversation.title)
-                        .font(.body.weight(conversation.unread > 0 ? .semibold : .regular))
+                        .paFont(.body, weight: conversation.unread > 0 ? .semibold : .regular)
                         .foregroundColor(Pa.text)
                         .lineLimit(1)
                     Spacer()
                     if let rel = Format.relative(conversation.lastMessage?.createdAt ?? conversation.updatedAt) {
-                        Text(rel).font(.caption).foregroundColor(Pa.muted).lineLimit(1)
+                        Text(rel).paFont(.caption).foregroundColor(Pa.muted).lineLimit(1)
                     }
                 }
                 HStack {
                     Text(previewText)
-                        .font(.subheadline)
+                        .paFont(.subheadline)
                         .foregroundColor(conversation.unread > 0 ? Pa.text : Pa.muted)
                         .lineLimit(1)
                     Spacer()
                     if conversation.unread > 0 {
                         Text(verbatim: "\(conversation.unread)")
-                            .font(.caption.weight(.semibold).monospacedDigit())
+                            .paFont(.caption, weight: .semibold, monospacedDigit: true)
                             .foregroundColor(Pa.onPrimary)
                             .padding(.horizontal, 7)
                             .padding(.vertical, 2)
@@ -364,11 +364,11 @@ struct MessageBubble: View {
             if mine { Spacer(minLength: 48) }
             VStack(alignment: mine ? .trailing : .leading, spacing: 3) {
                 if showSender && !mine, let name = message.senderName {
-                    Text(name).font(.caption.weight(.semibold)).foregroundColor(Pa.muted)
+                    Text(name).paFont(.caption, weight: .semibold).foregroundColor(Pa.muted)
                 }
                 content
                 if let rel = Format.relative(message.createdAt) {
-                    Text(rel).font(.caption2).foregroundColor(Pa.muted)
+                    Text(rel).paFont(.caption2).foregroundColor(Pa.muted)
                 }
             }
             if !mine { Spacer(minLength: 48) }
@@ -381,8 +381,8 @@ struct MessageBubble: View {
             Button(action: openPlace) {
                 VStack(alignment: .leading, spacing: 2) {
                     Label(message.placeLabel ?? "Konum", systemImage: "mappin.and.ellipse")
-                        .font(.subheadline.weight(.medium))
-                    Text("Haritada göster").font(.caption)
+                        .paFont(.subheadline, weight: .medium)
+                    Text("Haritada göster").paFont(.caption)
                 }
                 .foregroundColor(mine ? Pa.onPrimary : Pa.text)
                 .padding(.horizontal, 12)
@@ -403,7 +403,7 @@ struct MessageBubble: View {
             }
         } else {
             Text(message.body ?? "")
-                .font(.body)
+                .paFont(.body)
                 .foregroundColor(mine ? Pa.onPrimary : Pa.text)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
@@ -443,7 +443,7 @@ struct NewGroupView: View {
                 Section("Üyeler") {
                     if friends.isEmpty {
                         Text("Gruba eklemek için önce arkadaş eklemelisin.")
-                            .font(.subheadline).foregroundColor(Pa.muted)
+                            .paFont(.subheadline).foregroundColor(Pa.muted)
                     }
                     ForEach(friends) { entry in
                         Button {
@@ -514,22 +514,22 @@ struct NotificationsView: View {
                 }
                 if notifications.items.isEmpty && notifications.loaded {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Bildirim yok").font(.headline).foregroundColor(Pa.text)
+                        Text("Bildirim yok").paFont(.headline).foregroundColor(Pa.text)
                         Text("Yeni mesajlar, alan giriş-çıkışları ve diğer olaylar burada görünür.")
-                            .font(.subheadline).foregroundColor(Pa.muted)
+                            .paFont(.subheadline).foregroundColor(Pa.muted)
                     }
                     .padding(.vertical, 8)
                 }
                 ForEach(notifications.items) { item in
                     VStack(alignment: .leading, spacing: 3) {
                         Text(item.title)
-                            .font(.body.weight(item.readAt == nil ? .semibold : .regular))
+                            .paFont(.body, weight: item.readAt == nil ? .semibold : .regular)
                             .foregroundColor(Pa.text)
                         Text(item.body)
-                            .font(.subheadline)
+                            .paFont(.subheadline)
                             .foregroundColor(item.readAt == nil ? Pa.text : Pa.muted)
                         if let rel = Format.relative(item.createdAt) {
-                            Text(rel).font(.caption).foregroundColor(Pa.muted)
+                            Text(rel).paFont(.caption).foregroundColor(Pa.muted)
                         }
                     }
                     .padding(.vertical, 4)
