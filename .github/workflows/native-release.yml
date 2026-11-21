@@ -5,7 +5,9 @@ name: Native Sürüm (APK + IPA)
 #  - main ve çalışma dallarında (ccr-*, dev): yalnızca derleme denetimi.
 #  - "v*" etiketi ya da elle çalıştırma (Actions > Run workflow): GitHub Release
 #    + PaperUpdates (papermap-android) + AltStore kaynağı.
-# Sürüm 2.0.<çalıştırma no>; Android versionCode 200 + çalıştırma no.
+# Sürüm: "vX.Y.Z" etiketinde etiketten (v3.0.0 -> 3.0.0); diğer çalışmalarda
+# son v-etiketinin X.Y'si + çalıştırma no (bkz. .github/scripts/app-version.sh).
+# Android versionCode / iOS build numarası 200 + çalıştırma no (hep artar).
 
 on:
   push:
@@ -25,35 +27,45 @@ permissions:
   contents: write
 
 env:
-  APP_VERSION: 2.0.${{ github.run_number }}
   PUBLISH: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
   TAG: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('native-{0}', github.run_number) }}
 
 jobs:
   prepare:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sürümü belirle
+        id: ver
+        run: .github/scripts/app-version.sh 2.0 --latest-tag
+
       - name: GitHub Release oluştur
         if: env.PUBLISH == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.TAG }}
-          name: PaperMap ${{ env.APP_VERSION }} (native)
+          name: PaperMap ${{ steps.ver.outputs.version }} (native)
           body: |
-            PaperMap native sürüm ${{ env.APP_VERSION }}.
+            PaperMap native sürüm ${{ steps.ver.outputs.version }}.
 
-            **Android** — `PaperMap-${{ env.APP_VERSION }}.apk`. Kurulu PaperMap'in
+            **Android** — `PaperMap-${{ steps.ver.outputs.version }}.apk`. Kurulu PaperMap'in
             üzerine güncelleme olarak kurulur; uygulama sonraki sürümleri kendisi bildirir.
 
             **iOS (AltStore)** — AltStore/SideStore'da kaynak ekleyin:
             `${{ github.server_url }}/${{ github.repository }}/releases/latest/download/altstore.json`
-            ya da `PaperMap-${{ env.APP_VERSION }}.ipa`'yı AltStore "My Apps > +" ile kurun.
+            ya da `PaperMap-${{ steps.ver.outputs.version }}.ipa`'yı AltStore "My Apps > +" ile kurun.
 
   android:
     needs: prepare
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
+      APP_VERSION: ${{ needs.prepare.outputs.version }}
       VERSION_CODE: ${{ github.run_number }}
     steps:
       - uses: actions/checkout@v4
@@ -168,6 +180,7 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 45
     env:
+      APP_VERSION: ${{ needs.prepare.outputs.version }}
       BUILD_NUMBER: ${{ github.run_number }}
     steps:
       - uses: actions/checkout@v4

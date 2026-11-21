@@ -111,7 +111,8 @@ Sunucuda bir kez:
 
 Mobil sürüm iş akışı Android APK'yı GitHub'ın runner'ında derler ve
 `updates.paperaxis.com/papermap-android/` altına yayınlar (`releases.android.json` +
-`PaperMap-<sürüm>.apk`). `versionCode` iş akışının çalıştırma numarasıdır.
+`PaperMap-<sürüm>.apk`). Sürüm adı `vX.Y.Z` etiketinden alınır (`v3.0.0` → `3.0.0`,
+bkz. `apps/README.md`); `versionCode` iş akışının çalıştırma numarasıdır.
 Uygulama açılışta günde en fazla bir kez bu dosyayı okur; daha yeni sürüm varsa
 altta "İndir ve kur" bandı çıkar, kurulum kullanıcının onayıyla yapılır.
 

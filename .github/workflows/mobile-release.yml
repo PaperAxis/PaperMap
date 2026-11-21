@@ -24,7 +24,17 @@ jobs:
   # Dosyalar artifact yerine doğrudan Release'e yüklenir (artifact kotasına takılmaz).
   prepare:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
     steps:
+      - uses: actions/checkout@v4
+
+      # Bir "vX.Y.Z" etiketi üzerinde çalıştırılırsa sürüm etiketten alınır,
+      # aksi halde 1.0.<çalıştırma no> (native 2.x+ sürümlerinin altında kalır).
+      - name: Sürümü belirle
+        id: ver
+        run: .github/scripts/app-version.sh 1.0
+
       - name: Backend adresini belirle
         id: cfg
         env:
@@ -62,8 +72,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      # Sürüm: versionCode workflow çalıştırma numarasıdır, hep artar.
-      APP_VERSION: 1.0.${{ github.run_number }}
+      # Sürüm adı prepare'den gelir; versionCode çalıştırma numarasıdır, hep artar.
+      APP_VERSION: ${{ needs.prepare.outputs.version }}
       VERSION_CODE: ${{ github.run_number }}
     outputs:
       api_url: ${{ steps.cfg.outputs.api_url }}
@@ -254,7 +264,7 @@ jobs:
       - name: İmzasız IPA derle
         working-directory: web/ios/App
         env:
-          APP_VERSION: 1.0.${{ github.run_number }}
+          APP_VERSION: ${{ needs.prepare.outputs.version }}
           BUILD_NUMBER: ${{ github.run_number }}
         run: |
           xcodebuild -workspace App.xcworkspace -scheme App \
@@ -280,7 +290,7 @@ jobs:
       - name: AltStore kaynağı oluştur
         id: altstore
         env:
-          APP_VERSION: 1.0.${{ github.run_number }}
+          APP_VERSION: ${{ needs.prepare.outputs.version }}
           REPO_URL: ${{ github.server_url }}/${{ github.repository }}
         run: |
           IPA="$GITHUB_WORKSPACE/papermap-unsigned.ipa"
