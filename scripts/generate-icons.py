@@ -5,8 +5,8 @@ Sources (branding/):
   papermap-icon.png  full-bleed app icon (ink background)
   papermap-mark.png  same mark on a transparent background
 Both are rendered from the matching .svg files. After changing an SVG, render
-it to a 1024 px PNG and run this script. CI builds the native Android/iOS icon
-sets from web/assets/* with @capacitor/assets.
+it to a 1024 px PNG and run this script. It writes the web favicons
+(web/public) and the native app icon sources (apps/assets).
 
 Requires: pip install Pillow
 Usage:    python3 scripts/generate-icons.py
@@ -16,7 +16,6 @@ from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BRAND = os.path.join(ROOT, "branding")
-ASSETS = os.path.join(ROOT, "web", "assets")    # @capacitor/assets sources
 PUBLIC = os.path.join(ROOT, "web", "public")     # web favicons
 NATIVE = os.path.join(ROOT, "apps", "assets")    # native app sources
 
@@ -50,12 +49,11 @@ def main():
     clear = (0, 0, 0, 0)
 
     # Adaptive icon: the mark must stay inside the 66% safe circle, hence 0.82.
-    for out in (ASSETS, NATIVE):
-        save(icon.resize((1024, 1024), Image.LANCZOS), os.path.join(out, "icon-only.png"))
-        save(fit(mark, 1024, 0.82, clear), os.path.join(out, "icon-foreground.png"))
-        save(Image.new("RGBA", (1024, 1024), INK), os.path.join(out, "icon-background.png"))
-        save(fit(mark, 2732, 0.40, PAPER), os.path.join(out, "splash.png"))
-        save(fit(mark, 2732, 0.40, INK), os.path.join(out, "splash-dark.png"))
+    save(icon.resize((1024, 1024), Image.LANCZOS), os.path.join(NATIVE, "icon-only.png"))
+    save(fit(mark, 1024, 0.82, clear), os.path.join(NATIVE, "icon-foreground.png"))
+    save(Image.new("RGBA", (1024, 1024), INK), os.path.join(NATIVE, "icon-background.png"))
+    save(fit(mark, 2732, 0.40, PAPER), os.path.join(NATIVE, "splash.png"))
+    save(fit(mark, 2732, 0.40, INK), os.path.join(NATIVE, "splash-dark.png"))
 
     save(icon.resize((180, 180), Image.LANCZOS), os.path.join(PUBLIC, "apple-touch-icon.png"))
     save(icon.resize((192, 192), Image.LANCZOS), os.path.join(PUBLIC, "icon-192.png"))

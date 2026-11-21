@@ -53,18 +53,9 @@ export const config = {
     (process.env.APP_URL || '').replace(/\/$/, '') || allowedOrigins[0] || '',
 };
 
-// Capacitor (APK/IPA) WebView origin'leri — her zaman izinli (mobil uygulama).
-const NATIVE_ORIGINS = new Set([
-  'capacitor://localhost',
-  'ionic://localhost',
-  'http://localhost',
-  'https://localhost',
-]);
-
 // Bir origin'in API'ye erismesine izin verilip verilmedigini soyler.
 export function isAllowedOrigin(origin) {
-  if (!origin) return true; // native uygulama / sunucu-ici istek
-  if (NATIVE_ORIGINS.has(origin)) return true;
+  if (!origin) return true; // native Android/iOS uygulamasi / sunucu-ici istek
   if (config.allowedOrigins.length === 0) return true; // yapilandirilmamis
   return config.allowedOrigins.includes(origin);
 }

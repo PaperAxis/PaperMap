@@ -912,48 +912,6 @@ button.link-row {
   padding: 6px 12px;
 }
 
-.update-banner {
-  position: fixed;
-  left: 12px;
-  right: 12px;
-  bottom: calc(var(--nav-h) + 12px + env(safe-area-inset-bottom));
-  z-index: 1900;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--card);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: 0 6px 20px rgb(0 0 0 / 0.18);
-  font-size: 14px;
-  padding: 10px 12px;
-}
-
-.update-banner > span {
-  flex: 1;
-  min-width: 0;
-}
-
-.update-banner button {
-  border: 0;
-  border-radius: 8px;
-  font: inherit;
-  font-size: 13px;
-  padding: 6px 10px;
-  cursor: pointer;
-}
-
-.update-banner-action {
-  background: var(--accent);
-  color: var(--on-accent);
-}
-
-.update-banner-close {
-  background: transparent;
-  color: var(--muted);
-}
-
 .map-canvas {
   flex: 1;
   width: 100%;
